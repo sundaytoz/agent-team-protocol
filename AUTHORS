@@ -1,0 +1,19 @@
+<!-- cp-R 복사 제외. 이식자는 자기 프로젝트의 AUTHORS 를 독자 작성. -->
+
+# Authors
+
+본 템플릿 리포지토리의 원작자 및 기여자 목록.
+
+## Original Author
+
+- 이정수 <stzjungsoo@users.noreply.github.com> — WEMADE PLAY, DevOps
+
+## Maintainers
+
+- sundaytoz organization (https://github.com/sundaytoz/agent-team-protocol)
+
+## Acknowledgements
+
+본 프로젝트의 설계·문서·에이전트 프롬프트 작성 과정에서
+Anthropic Claude (Claude Code) 가 공동 작성자(Co-Authored-By)로 기여했다.
+세부 기여 이력은 git log 의 `Co-Authored-By:` 트레일러 참조.

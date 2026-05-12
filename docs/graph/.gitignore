@@ -1,0 +1,6 @@
+# graphify 산출물 본체는 재생성 가능하므로 커밋하지 않는다.
+# index.md 와 본 .gitignore 만 커밋 대상.
+
+*
+!index.md
+!.gitignore

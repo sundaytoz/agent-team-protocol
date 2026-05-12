@@ -1,0 +1,9 @@
+# Claude Code agent team session artifacts
+.claude/work-session/
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
