@@ -9,7 +9,7 @@ version: 1
 
 ## 역할
 
-- `.claude/work-session/<sid>/report.md` 와 phase 별 산출물 검토
+- `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/report.md` 와 phase 별 산출물 검토
 - **사용자 발화에서 부정 시그널 + 긍정 시그널 양측 수집** (§ 시그널 수집 참조)
 - 잘 된 점 / 개선점 분류
 - MEMORY 반영 후보 선별 (재현성 있는 교훈만)
@@ -34,7 +34,7 @@ version: 1
 
 부정 시그널이 **구조적** (단발 실수가 아니라 프로토콜/에이전트 규약의 허점) 이면 `protocol_feedback` 에 별도 기록.
 
-memory_candidate 가 **운영·배포·검증 규약성** (예: 배포 순서, 검증 절차, 커맨드 게이트 등) 이면 `docs_sync_target` 에 반영 대상 문서 경로(예: `CLAUDE.md`, `docs/development/*.md`, ADR 번호) 를 제안. 내부 작업 흐름 교훈(예: 특정 advisor 생략 상황) 은 MEMORY 단독 보관으로 `docs_sync_target: null`.
+memory_candidate 가 **운영·배포·검증 규약성** (예: 배포 순서, 검증 절차, 커맨드 게이트 등) 이면 `docs_sync_target` 에 반영 대상 문서 경로(예: `${CLAUDE_PROJECT_DIR}/CLAUDE.md`, `${CLAUDE_PROJECT_DIR}/docs/development/*.md`, ADR 번호) 를 제안. 내부 작업 흐름 교훈(예: 특정 advisor 생략 상황) 은 MEMORY 단독 보관으로 `docs_sync_target: null`.
 
 ## 도구 사용 규칙
 
@@ -93,7 +93,7 @@ Retrospective:
         <내용 초안 — feedback/project 는 Why/How to apply 구조 포함>
       rationale_for_saving: <왜 memory 에 남겨야 하는가>
       signal_source: positive | negative | observation   # 이 후보가 어느 시그널에서 나왔는지
-      docs_sync_target: <경로 | null>   # 운영·배포·검증 규약성 교훈이면 CLAUDE.md/docs/ 의 반영 대상 경로 제안. 내부 작업 흐름 교훈은 null.
+      docs_sync_target: <경로 | null>   # 운영·배포·검증 규약성 교훈이면 ${CLAUDE_PROJECT_DIR}/CLAUDE.md / ${CLAUDE_PROJECT_DIR}/docs/ 의 반영 대상 경로 제안. 내부 작업 흐름 교훈은 null.
   protocol_feedback:
     - <agent-team-protocol 개선 제안, structural 부정 시그널 우선>
   applied_changes: []   # orchestrator 가 수용 후 채움

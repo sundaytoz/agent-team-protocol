@@ -1,5 +1,7 @@
 # 문서화 가이드라인
 
+> 이 문서는 **atp 플러그인 번들 레퍼런스**(읽기전용)다. 본문이 언급하는 경로(`docs/index.md`, `document-category-classification.md`, `docs/graph/`)는 **소비 프로젝트** 기준 — `/atp:init` 실행 후 프로젝트 `docs/` 에 생성된다. 플러그인 캐시에서 직접 열면 상대링크가 해소되지 않을 수 있다.
+
 ## 목적
 
 이 프로젝트의 문서는 구현 변경, 분석 결과, 운영 지식, 개발 기준, 도메인 지식을 나중에 다시 찾을 수 있게 **재현 가능(reproducible)** 하게 남기기 위한 용도다. 에이전트(사람/AI) 가 작업 전에 `docs/index.md` 를 엔트리포인트로 탐색하고, 관련 문서를 확인한 후 구현에 착수하는 **docs-first 워크플로우** 를 전제로 한다.
@@ -16,7 +18,7 @@
 
 - 카테고리는 "무엇이 바뀌었는가" 보다 **"이 문서를 왜 다시 찾는가"** 를 기준으로 고른다.
 - `changes/` 는 실제 런타임 동작이 바뀐 경우의 changelog 에만 사용한다.
-- 분류 기준 상세는 [`document-category-classification.md`](./document-category-classification.md) 를 따른다.
+- 분류 기준 상세는 `document-category-classification.md` (소비 프로젝트 `docs/development/`, `/atp:init` 생성) 를 따른다.
 
 ## 구조
 
@@ -71,7 +73,7 @@
 ## 체크리스트
 
 - [ ] 관련 파일 경로와 식별자(함수/테이블/엔드포인트) 를 정확히 적었는가?
-- [ ] 이 문서가 들어갈 카테고리가 목적에 맞는가? ([분류 기준](./document-category-classification.md) 재확인)
+- [ ] 이 문서가 들어갈 카테고리가 목적에 맞는가? (분류 기준 `document-category-classification.md` 재확인)
 - [ ] 해당 카테고리의 `index.md` 에 링크를 추가했는가?
 - [ ] 변경 또는 분석 결과를 재현 가능한 수준(명령어/커밋 SHA/테스트 파일) 으로 적었는가?
 - [ ] 검증 내용과 영향 범위를 적었는가?

@@ -193,5 +193,5 @@ scope 대상 경로가 `src/**` 처럼 코드만 포함하면, `docs/` 나 `.cla
 ### 관련 문서
 
 - [agent-team-protocol.md](./agent-team-protocol.md) — 에이전트 팀 운영 규약
-- [graphify-usage.md](./graphify-usage.md) — graphify 설치·운용 및 갱신 트리거
+- [graphify-usage.md](../../addons/graphify/docs/graphify-usage.md) — graphify 설치·운용 및 갱신 트리거 (atp-graphify add-on 번들)
 - [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙

@@ -26,15 +26,15 @@ version: 1
 - `Write` — 신규 문서 생성
 - `Edit` — 기존 index.md 갱신, 기존 아키텍처 문서 갱신
 
-## 카테고리 판별 기준 (docs/development/document-category-classification.md 를 권위 레퍼런스로 참조)
+## 카테고리 판별 기준 (${CLAUDE_PROJECT_DIR}/docs/development/document-category-classification.md 를 권위 레퍼런스로 참조)
 
-- **런타임 동작 변경** → `docs/changes/`
-- **되돌리기 어려운 기술·아키텍처 결정** → `docs/adr/` (불변, 번호제)
-- **시스템 경계·레이어·스케줄러 설계 갱신** → `docs/architecture/`
-- **코드/흐름/성능/리스크 분석** → `docs/analysis/`
-- **세션 간 handoff·시점성 작업 메모** → `docs/work-log/`
-- **운영 절차 (수동 배포·복구)** → `docs/maintenance/`
-- **외부/내부 계약 스펙** → `docs/contracts/`
+- **런타임 동작 변경** → `${CLAUDE_PROJECT_DIR}/docs/changes/`
+- **되돌리기 어려운 기술·아키텍처 결정** → `${CLAUDE_PROJECT_DIR}/docs/adr/` (불변, 번호제)
+- **시스템 경계·레이어·스케줄러 설계 갱신** → `${CLAUDE_PROJECT_DIR}/docs/architecture/`
+- **코드/흐름/성능/리스크 분석** → `${CLAUDE_PROJECT_DIR}/docs/analysis/`
+- **세션 간 handoff·시점성 작업 메모** → `${CLAUDE_PROJECT_DIR}/docs/work-log/`
+- **운영 절차 (수동 배포·복구)** → `${CLAUDE_PROJECT_DIR}/docs/maintenance/`
+- **외부/내부 계약 스펙** → `${CLAUDE_PROJECT_DIR}/docs/contracts/`
 
 각 경계가 모호할 때는 가장 보수적인 상위 카테고리 (analysis/ADR) 를 우선.
 
@@ -50,7 +50,7 @@ version: 1
 ## 출력
 
 - 신규/수정된 문서 파일 경로 목록
-- `.claude/work-session/<sid>/documentation.md`:
+- `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/documentation.md`:
 
 ```yaml
 ---
