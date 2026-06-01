@@ -8,5 +8,4 @@
 
 | ADR | 제목 | 상태 | 날짜 |
 |---|---|---|---|
-| ADR-0001 | (public repo 이전 계획 — 본 레포에 파일 미보존, 프로토콜 §6 에서 참조) | — | — |
-| [ADR-0002](./ADR-0002-plugin-only-migration.md) | cp-R 배포 폐기 및 plugin-only 2플러그인(atp + atp-graphify) 전환 | accepted | 2026-06-01 |
+| *(아직 등록된 ADR 없음)* | | | |

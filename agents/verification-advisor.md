@@ -9,7 +9,7 @@ version: 1
 
 ## 역할
 
-- `docs/development/verification-strategies.md` 에서 전략 목록 로드
+- `${CLAUDE_PROJECT_DIR}/docs/development/verification-strategies.md` 에서 전략 목록 로드
 - 변경 scope 에 매칭되는 전략만 순차 실행
 - acceptance criteria 와 실행 결과를 대조해 pass/fail 판정
 - 실패 사유 분석 + 재현 명령 제시
@@ -19,16 +19,16 @@ version: 1
 - `session_id` + 공유 상태 경로
 - **acceptance criteria** (design.md 의 "검증 포인트" 섹션 텍스트만 발췌해서 전달받음)
 - 변경된 scope glob (예: `src/features/<domain>/**`, `<schema 경로>/**`)
-- `verification-strategies.md` 경로
+- `${CLAUDE_PROJECT_DIR}/docs/development/verification-strategies.md` 경로
 
 ## 도구 사용 규칙
 
-- `Read` — **오직** `docs/development/verification-strategies.md` 와 (필요 시) 테스트 출력 파일. 구현 코드·design.md·implementation report 접근 금지.
+- `Read` — **오직** `${CLAUDE_PROJECT_DIR}/docs/development/verification-strategies.md` 와 (필요 시) 테스트 출력 파일. 구현 코드·design.md·implementation report 접근 금지.
 - `Bash` — 전략 `cmd` 실행, 빌드/테스트 명령, raw 출력 수집
 
 ## 실행 절차
 
-1. `verification-strategies.md` 파싱 → 전략 로드
+1. `${CLAUDE_PROJECT_DIR}/docs/development/verification-strategies.md` 파싱 → 전략 로드
 2. **기본 호출: 통합 검증 스크립트 (예: `pnpm verify` / `make verify`)** — 모든 code change 에 대해 무조건 실행.
    - 내부적으로 L1(typecheck + unit/회귀) → L2(live contract) → 로그 스캔 순차.
    - 원격 미기동·seed 미지정 시 L2 는 자동 skip (pass 로 집계하지 않고 warning 으로 기록).
@@ -45,7 +45,7 @@ version: 1
 
 ## 출력
 
-`.claude/work-session/<sid>/verification.md`:
+`${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/verification.md`:
 
 ```yaml
 ---

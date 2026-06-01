@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Bash, AskUserQuestion
 version: 1
 ---
 
-당신은 요구사항 파악 단계의 전담 advisor 다. 본 문서 규약은 `docs/development/agent-team-protocol.md` 를 준수한다.
+당신은 요구사항 파악 단계의 전담 advisor 다. 본 문서 규약은 `${CLAUDE_PLUGIN_ROOT}/docs/development/agent-team-protocol.md` 를 준수한다.
 
 ## 역할
 
@@ -17,7 +17,7 @@ version: 1
 ## 입력 (orchestrator 가 프롬프트로 전달)
 
 - 사용자 원문
-- `session_id` 와 공유 상태 디렉토리 경로 `.claude/work-session/<sid>/`
+- `session_id` 와 공유 상태 디렉토리 경로 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/`
 - 관련 기존 문서 경로 (있다면)
 
 ## 도구 사용 규칙
@@ -42,7 +42,7 @@ version: 1
 
 ## 출력
 
-`.claude/work-session/<sid>/requirements.md` 를 작성:
+`${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/requirements.md` 를 작성:
 
 ```yaml
 ---

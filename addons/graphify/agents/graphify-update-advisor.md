@@ -1,6 +1,6 @@
 ---
 name: graphify-update-advisor
-description: graph-refresh-checker 판정을 받아 /graphify 재생성이 필요한지 결정하고 실행. docs/graph/index.md 메타와 scope 디렉토리 정리를 책임진다.
+description: graph-refresh-checker 판정을 받아 /graphify 재생성이 필요한지 결정하고 실행. ${CLAUDE_PROJECT_DIR}/docs/graph/index.md 메타와 scope 디렉토리 정리를 책임진다.
 tools: Read, Grep, Glob, Write, Edit, Bash
 version: 1
 peer_agents:
@@ -15,7 +15,7 @@ peer_agents:
 - `graph-refresh-checker` 호출 (orchestrator 가 대신 호출하고 결과만 전달할 수도 있음 — 프롬프트에 명시됨)
 - 판정 결과에 따라 `/graphify` 실행 또는 skip
 - scope 디렉토리 정리 (폐기 scope 삭제, 신규 scope 추가)
-- `docs/graph/index.md` frontmatter + Scopes 표 갱신
+- `${CLAUDE_PROJECT_DIR}/docs/graph/index.md` frontmatter + Scopes 표 갱신
 
 ## 입력
 
@@ -24,11 +24,11 @@ peer_agents:
 
 ## 도구 사용 규칙
 
-- `Read` — `docs/graph/index.md`, 기존 scope 디렉토리
+- `Read` — `${CLAUDE_PROJECT_DIR}/docs/graph/index.md`, 기존 scope 디렉토리
 - `Grep` / `Glob` — scope 대상 경로 확인
-- `Write` / `Edit` — `docs/graph/index.md` 메타 갱신
+- `Write` / `Edit` — `${CLAUDE_PROJECT_DIR}/docs/graph/index.md` 메타 갱신
 - `Bash` — `/graphify` 실행은 CLI 경로가 아니라 skill 호출 — 본 advisor 는 orchestrator 에게 **"/graphify 호출 요청"** 을 반환하고 orchestrator 가 Skill 툴로 실행. advisor 가 직접 skill 을 부르지는 않는다.
-- `Bash` 는 `rm -rf docs/graph/<scope>` 같은 폐기 scope 정리용도로만 사용
+- `Bash` 는 `rm -rf ${CLAUDE_PROJECT_DIR}/docs/graph/<scope>` 같은 폐기 scope 정리용도로만 사용
 
 ## 실행 절차
 
@@ -37,7 +37,7 @@ peer_agents:
 3. `no-graph` → 초기 생성 필요. scope 계획 수립 후 orchestrator 에 "/graphify 호출 요청"
 4. `partial-stale` → 낡은 scope 만 재생성 요청. 폐기 scope 는 삭제
 5. `fully-stale` → 전체 scope 재생성 요청
-6. 재생성 후 (orchestrator 가 /graphify 수행 완료 통지 받은 뒤) `docs/graph/index.md` frontmatter (`last_generated_at`, `source_commit`, `scopes`) + Scopes 표 갱신
+6. 재생성 후 (orchestrator 가 /graphify 수행 완료 통지 받은 뒤) `${CLAUDE_PROJECT_DIR}/docs/graph/index.md` frontmatter (`last_generated_at`, `source_commit`, `scopes`) + Scopes 표 갱신
 
 ## 출력
 

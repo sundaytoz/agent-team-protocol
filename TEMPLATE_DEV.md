@@ -1,21 +1,22 @@
-# TEMPLATE_DEV — 템플릿 리포지토리 기여자·메타 문서
+# TEMPLATE_DEV — 플러그인 리포지토리 기여자·메타 문서
 
-> **복사 제외**. 이 파일은 **템플릿 리포지토리 자체의 개선 이력·백로그** 만 담는다. `cp -R <template>/...` 로 새 프로젝트에 이식할 때 **복사하지 않는다** (README §4.1 참조). 사용자 프로젝트에는 섞이면 안 된다.
+> 이 파일은 **`agent-team-protocol` 플러그인 레포 자체의 개선 이력·백로그** 만 담는다. 플러그인 배포(`atp@agent-team-protocol`)를 통해 소비 프로젝트로 전달되지 않는다 (커밋 대상이나 배포 산출물 아님). 사용자 프로젝트에는 포함되지 않는다.
 
 ---
 
 ## 1. 이 파일의 목적
 
-이 파일은 `sundaytoz/agent-team-protocol` 템플릿 **자체의** 품질 관리용 메타 문서다. 역할 분리:
+이 파일은 `sundaytoz/agent-team-protocol` 플러그인 **자체의** 품질 관리용 메타 문서다. 역할 분리:
 
-| 파일 | 독자 | 성격 | 복사 대상 |
+| 파일 | 독자 | 성격 | 소비 프로젝트 전달 |
 |---|---|---|---|
-| `README.md` | 템플릿 사용자 (이식자) | 설치·사용 가이드 | 아니오 (§4.1) |
-| `CLAUDE.md` | 이식된 프로젝트의 Claude Code | 프로젝트 루트 진입점 | 예 (병합) |
-| `docs/`, `.claude/` | 이식된 프로젝트의 Claude Code | 운영 규약·에이전트 정의 | 예 |
-| **`TEMPLATE_DEV.md`** | **템플릿 기여자** | **개선 백로그·이력** | **아니오** |
+| `README.md` | 플러그인 사용자 | 설치·사용 가이드 | 아니오 |
+| `CLAUDE.md` | 이 레포 기여자 | 레포 개발 가이드 (self-dogfooding) | 아니오 |
+| `docs/` (번들 레퍼런스) | 에이전트 런타임 (Read) | 운영 규약·에이전트 정의 | 플러그인 캐시 번들 (읽기전용) |
+| `templates/` | `/atp:init` 스킬 | 스캐폴딩 원본 | init 이 소비 프로젝트로 복사 |
+| **`TEMPLATE_DEV.md`** | **플러그인 기여자** | **개선 백로그·이력** | **아니오** |
 
-`docs/` 하위에 이 내용을 두면 이식된 신규 프로젝트에 섞여 잡음이 되므로 **루트 단일 파일** 로 유지한다.
+`docs/` 하위에 이 내용을 두면 번들 레퍼런스와 섞여 에이전트가 읽는 레퍼런스 목록에 잡음이 되므로 **루트 단일 파일** 로 유지한다.
 
 ---
 
@@ -70,7 +71,7 @@ Top 5 이슈 (혼합 심각도):
 |---|---|---|---|---|---|
 | **G-P0-1** | docs 카테고리 `index.md` 12개 스텁 포함 | [propagated] | Axis 1 #1, Axis 4 #1 | 없음 | 세션 1 |
 | **G-P0-2** | 보고서 스키마 SSoT 통합 (프로토콜 §8 권위화) | [propagated] | Axis 3 #1 | 없음 (독립) | 세션 2 |
-| **G-P0-3** | `CLAUDE.md` 이식 체크리스트 + placeholder 표기법 통일 | [propagated] | Axis 1 #2, Axis 1 #6, Axis 4 #2 | 없음 | 세션 3 |
+| **G-P0-3** | ~~`CLAUDE.md` 이식 체크리스트 + placeholder 표기법 통일~~ ✅ 완료(plugin-only 전환으로 해소 — CLAUDE.md 복사 폐기, /atp:init 이 안내 블록 멱등 생성, 세션 20260601-115424) | [propagated] | Axis 1 #2, Axis 1 #6, Axis 4 #2 | 없음 | ~~세션 3~~ |
 | **G-P0-4** | SKILL §5 "advisor 전체 스킵 vs verification 의무" 문구 정정 | [propagated] | Axis 3 #2 | G-P0-2 이후 권장 | 세션 2 또는 4 |
 
 ### 3.4 P1 묶음
@@ -78,13 +79,13 @@ Top 5 이슈 (혼합 심각도):
 | ID | 제목 | 태그 | 연관 이슈 | 예상 세션 |
 |---|---|---|---|---|
 | **G-P1-A** | 에이전트 권한 규범적 금기 강화 (verification Read / migration Bash / graphify rm -rf) | [propagated] | Axis 2 #1, #4, #5 | 세션 4 |
-| **G-P1-B** | 선택 파일 제거 절차를 FAQ → §5 "프로젝트 적응" 으로 승격 | [propagated] | Axis 1 #4 | 세션 5 |
+| **G-P1-B** | ~~선택 파일 제거 절차를 FAQ → §5 "프로젝트 적응" 으로 승격~~ ✅ 완료(plugin-only 전환으로 해소, 세션 20260601-115424) | [propagated] | Axis 1 #4 | ~~세션 5~~ |
 | **G-P1-C** | `verification-strategies.md` §5 / `search-tool-matrix.md` §5 placeholder 경고 박스 | [propagated] | Axis 1 #5, Axis 4 #3 | 세션 5 |
 | **G-P1-D** | research-advisor ↔ parallel-explorer WebSearch 비대칭 해소 | [propagated] | Axis 2 #2 | 세션 4 |
 | **G-P1-E** | documentation-advisor description — in-progress vs final 호출 시점 변별 | [propagated] | Axis 2 #3 | 세션 4 |
 | **G-P1-F** | graphify-lookup-advisor heuristic 과 graph-refresh-checker 경계 문서화 | [propagated] | Axis 2 #6 | 세션 4 |
-| **G-P1-G** | `<template>` 치환 모호 + 런타임 디렉토리 혼입 경고 (README §4.1) | [self] | Axis 1 #3 | 세션 0 (이번) |
-| **G-P1-H** | FAQ §15 의 "graphify 미도입 시 에이전트 파일 제거" 를 §5.4 로 승격 | [propagated] | Axis 1 #4 일부 | 세션 5 |
+| **G-P1-G** | ~~`<template>` 치환 모호 + 런타임 디렉토리 혼입 경고 (README §4.1)~~ ✅ 완료(plugin-only 전환으로 해소, 세션 20260601-115424) | [self] | Axis 1 #3 | ~~세션 0~~ |
+| **G-P1-H** | ~~FAQ §15 의 "graphify 미도입 시 에이전트 파일 제거" 를 §5.4 로 승격~~ ✅ 완료(plugin-only 전환으로 해소 — graphify 는 옵트인 add-on 으로 분리, 세션 20260601-115424) | [propagated] | Axis 1 #4 일부 | ~~세션 5~~ |
 | **G-P1-I** | 프로토콜 §12 "추가/수정" vs `docs_sync_target` 자동 편집 범위 문서화 | [propagated] | Axis 3 #3 | 세션 5 |
 | **G-P1-J** | "첫 호출 판단 기준" 명시 (요구 명확함 척도·메타 요청·feedback slug 판별) | [propagated] | Axis 3 #4 | 세션 5 |
 | **G-P1-K** | §13 실행 가능 상태 체크를 SKILL §9 종료 조건에 반영 | [propagated] | Axis 3 #5 | 세션 2 |
@@ -245,9 +246,9 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - SKILL §5 와 README §6.3 이 축자 일치.
 - 프로토콜 §13 실행 가능 상태 체크와 상호 참조 링크 추가.
 
-### G-P1-G: README §4.1 `<template>` 치환 모호 해소 + 복사 제외 확장 (이번 세션에 포함)
+### G-P1-G: README §4.1 `<template>` 치환 모호 해소 + 복사 제외 확장
 
-§5 (README §4.1 diff) 참조.
+✅ 완료 (plugin-only 전환으로 해소, 세션 20260601-115424). cp-R 복사 개념 자체가 폐기됨 — README 는 플러그인 설치 흐름으로 전면 재작성되어 이 항목이 대상으로 삼았던 "복사 제외"·"`<template>` 치환" 개념이 모두 소멸했다.
 
 ---
 
@@ -283,6 +284,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 |---|---|---|---|
 | 2026-05-06 | 20260506-170447 | 첫 공식 평가 (4축, blocker 3 / warn 21 / nit 11) | summary.md 원본은 gitignore 세션에 보존 |
 | 2026-05-06 | 20260506-172731 | TEMPLATE_DEV.md 신규, README §4.1 복사 제외 확장 | 세션 0 — 백로그 체계화 |
+| 2026-06-01 | 20260601-115424 | plugin-only 전환 (cp-R 폐기, 2-플러그인 atp+atp-graphify) | README/CLAUDE.md/TEMPLATE_DEV.md 재작성, G-P0-3·G-P1-B/G/H 완료 마킹 |
 
 ### 향후 확장 규약
 

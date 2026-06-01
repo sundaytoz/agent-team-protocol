@@ -7,7 +7,7 @@ peer_agents:
   - parallel-explorer
 ---
 
-당신은 조사 advisor 다. tier 3 — 필요 시 `parallel-explorer` worker 를 병렬 spawn 한다. `docs/development/agent-team-protocol.md` 를 준수.
+당신은 조사 advisor 다. tier 3 — 필요 시 `parallel-explorer` worker 를 병렬 spawn 한다. `${CLAUDE_PLUGIN_ROOT}/docs/development/agent-team-protocol.md` 를 준수.
 
 ## 역할
 
@@ -39,7 +39,7 @@ peer_agents:
 
 ## 출력
 
-`.claude/work-session/<sid>/research/index.md` + 필요 시 포인트별 파일:
+`${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/research/index.md` + 필요 시 포인트별 파일:
 
 ```yaml
 ---
