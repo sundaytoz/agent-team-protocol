@@ -10,7 +10,7 @@
 - **직접 작업을 수행하지 않는다.** 조사/설계/구현/검증/문서화는 모두 advisor 에게 위임한다.
 - 역할:
   1. 요청 해석 → 어떤 advisor 를 어떤 순서로 호출할지 결정
-  2. 각 호출에 대한 **스케일 평가** + 모델 선택 (§5)
+  2. 각 호출에 대한 **모델 선택** — phase 기본값 + escalation + 디스패치 크기 (§5)
   3. advisor 간 충돌 중재 (§4)
   4. 공유 상태(`.claude/work-session/<sid>/`) 관리 + 보고서 누적
   5. 파괴적 조작 게이트 (§6) 통과 확인
@@ -277,30 +277,79 @@ design-advisor 가 설계 문서의 "검증 포인트" 섹션을 작성할 때, 
 
 **배경**: 2026-05-07 세션(20260507-124344)에서 복사 제외 목록 7건 중 `docs/feedback/archive/` 1건이 AC 에 명시되지 않아 implementation 이 누락해도 verification 에서 FAIL 로 잡히지 않았다. §4.3 은 이 재발 방지 규약이다.
 
-## 5. 스케일 기반 모델 선택
+## 5. 모델 선택 정책
 
 에이전트 frontmatter 의 `model:` 필드는 **비워둔다.** Orchestrator 가 호출 시점에 Agent 툴의 `model` 파라미터로 override 한다.
 
-### 루브릭
+결정은 결정론적이어야 한다. 단계별 파이프라인:
 
-| 스케일 | 조건 (OR) | 모델 |
+```
+phase 기본값 (§5.1) → escalation 트리거 (§5.2) → 디스패치 크기 보정 (§5.3)
+                  → 탐색/기계적 성격 오버라이드 (§5.4) → 환경 fallback (§5.5) → 기록 (§5.6)
+```
+
+### 5.1 Phase × 기본 모델
+
+| Phase | 기본 모델 | 비고 |
 |---|---|---|
-| small | 파일 ≤ 1, rote 실행, 응답 짧음, 실수 비용 낮음 | `haiku` |
-| medium (기본값) | 파일 2–10, 단순 구현/조사 | `sonnet` |
-| large | 멀티 도메인 설계, 충돌 조정, DB 마이그레이션/보안, 보고서 합의 | `opus` |
+| analyze (사용자 발화 분류·근본 원인 탐색) | `opus` | 판단 비용 큼 |
+| design / planning | `opus` | trade-off 빈번 |
+| code-implementation (스펙 명확) | `sonnet` | 기계적 작성 |
+| validation — 정적 체크·타입·테스트 | `sonnet` | rote |
+| validation — 런타임·웹·시나리오 | `opus` | 주관적 회귀 판단 |
+| docs-sync | `sonnet` | 형식 위주 |
+| graphify 실행 | `sonnet` | 도구 실행 |
+| graphify 필요성 판단 | `opus` | 메타 판단 |
 
-### 기록
+### 5.2 Escalation 트리거 (1단 상승)
+
+phase 기본값 위에 다음 중 **하나라도** 해당되면 1단 상승. `sonnet` → `opus`, `haiku` → `sonnet`. 상승 사유를 보고서 `escalation_reason` 에 기록.
+
+- 스펙이 모호하거나 `open_questions` 미해소 상태로 진입.
+- Phase 도중 **trade-off** 가 드러나는 결정점이 노출됨.
+- 보안·인증·권한·결제·**되돌릴 수 없는 데이터 마이그레이션** 영역. §6 파괴적 게이트 발동 작업은 **자동 상승**.
+- 검증자가 **주관적 회귀 리스크** 를 판정해야 함.
+- Worker 가 고정 타깃을 따르지 않고 **무엇을 들여다볼지 스스로 결정** 해야 함 (탐색적).
+
+### 5.3 디스패치 크기 임계
+
+phase·escalation 결과 위에 크기로 보정. 기존 파일 수 단일축 루브릭(small/medium/large) 은 폐기하고, 파일 수는 보조 신호로만 본다.
+
+| 디스패치 크기 | 처리 경로 | 모델 보정 |
+|---|---|---|
+| tool calls < 5 + 단일 파일 + 스펙 명확 | orchestrator 직접 (§1 마이크로 편집 예외) | n/a — orchestrator 본 모델로 처리 |
+| 5–20 tool calls + 스펙 명확 | worker 디스패치 | `sonnet` 유지 |
+| > 20 tool calls 또는 판단 사슬 다단 | worker 디스패치 | `opus` 로 상승 |
+| 독립 영역 2–3개 병렬 | 영역별 worker 디스패치 | escalation 미발동 시 모두 `sonnet` |
+
+### 5.4 탐색 vs 기계적 성격 (오버라이드)
+
+Phase 이름만으로 결정하지 말 것. 본 항이 §5.1 과 충돌하면 **본 항 우선**.
+
+- 탐색적·판단 집중·"다음에 무엇을 볼지" 결정형 → **`opus`**.
+- 기계적·범위 고정·타깃 명시 → **`sonnet`** (또는 `haiku`).
+
+### 5.5 환경 Fallback
+
+- **확정되지 않은 모델 슬러그를 그대로 넘기지 않는다.** 호출 환경의 whitelist 에 슬러그가 없으면 **parent 모델 상속** 으로 fallback 하고 `fallback_reason` 에 사유 기록.
+- **비용 사유로 `opus` → `sonnet` silent 다운그레이드 금지.** `opus` phase 가 환경 미지원이면 **사용자 확인 후** 명시 다운그레이드.
+- §2.1 분할 호출 중 소켓 오류 fallback 은 모델 다운그레이드가 아니라 **분할 재시도** 로 처리한다.
+
+### 5.6 기록
 
 모든 호출은 보고서 `invocations[].model_choice` 에 다음을 남긴다:
 
 ```yaml
 model_choice:
+  phase: <analyze|design|code|validation-static|validation-runtime|docs|graphify-exec|graphify-judgment>
+  dispatch_size: <direct|small|medium|large|parallel>
   model: <haiku|sonnet|opus>
-  scale: <small|medium|large>
+  escalation_reason: <한 줄 | null>   # §5.2 트리거 적중 시
+  fallback_reason: <한 줄 | null>     # §5.5 환경 fallback 시
   rationale: <한 줄>
 ```
 
-**기본 지침**: 불확실하면 sonnet 에서 시작. 재호출 시 upgrade. 비용 하한선 유지.
+**기본 지침**: 불확실하면 `sonnet` 에서 시작, §5.2 트리거 적중 즉시 `opus` 상승. 비용 하한선 유지하되 §5.5 silent downgrade 금지가 우선.
 
 ## 6. 파괴적 조작 게이트
 
@@ -395,9 +444,12 @@ user_request: |
   output_digest: <요약 1줄>
   artifacts: [path1, path2]
   concerns: []
-  model_choice:
-    model: <...>
-    scale: <...>
+  model_choice:                # §5.6 스키마
+    phase: <...>
+    dispatch_size: <direct|small|medium|large|parallel>
+    model: <haiku|sonnet|opus>
+    escalation_reason: <한 줄 | null>
+    fallback_reason: <한 줄 | null>
     rationale: <...>
   token_usage:                 # 추정치 가능
     input: <n>
@@ -561,6 +613,6 @@ peer_agents:
 
 ## 관련 문서
 
-- [verification-strategies.md](./verification-strategies.md) — verification-advisor 가 읽는 전략 레지스트리
-- [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙
-- [document-category-classification.md](./document-category-classification.md) — 카테고리 분류 기준
+- `verification-strategies.md` — verification-advisor 가 읽는 전략 레지스트리 (편집형 — 소비 프로젝트 `docs/development/`, `/atp:init` 생성)
+- [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙 (번들 레퍼런스)
+- `document-category-classification.md` — 카테고리 분류 기준 (편집형 — 소비 프로젝트 `docs/development/`, `/atp:init` 생성)
