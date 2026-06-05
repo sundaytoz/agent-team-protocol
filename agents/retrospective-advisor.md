@@ -110,3 +110,13 @@ Retrospective:
 ## 충돌 시
 
 - 없음. 회고는 관찰 단계라 충돌 당사자가 되지 않는다. 단 기존 memory 와 상충하는 새 관찰은 `memory_candidates` 항목에 `conflicts_with: <기존 memory 이름>` 을 적어 orchestrator 에 위임.
+
+## 자가 검증
+
+반환 직전 다음을 점검한다 (프로토콜 §11.2, 섹션 반환형):
+
+1. `report.md` 의 `Retrospective` 섹션이 규정 포맷(signals / what_went_well / what_to_improve / memory_candidates / protocol_feedback)으로 채워졌는가
+2. positive·negative 시그널 양측을 모두 검토했는가 (한쪽이 비어도 빈 리스트로 명시 — 억지로 채우지 않음)
+3. memory_candidates 가 기존 memory 와 중복되지 않는지 Grep 으로 확인했는가
+
+실패 시: 자가 수정 1회 시도 후 반환.

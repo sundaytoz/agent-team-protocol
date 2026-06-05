@@ -6,6 +6,7 @@ version: 1
 peer_agents:
   - graph-refresh-checker
   - graphify-lookup-advisor
+# 반환 블록 frontmatter 에 concerns_checked: true 포함
 ---
 
 당신은 graphify 갱신 advisor 다. tier 2. 실제 staleness 판정은 `graph-refresh-checker` 서브에이전트에게 위임되고, 본 advisor 는 **판정을 받아 실행/정리** 를 담당한다.
@@ -79,3 +80,13 @@ cleanup: [<제거 대상 scope>, ...]
 ## 충돌 시
 
 - 다른 advisor 가 graph 기반 탐색을 요구 중인데 재생성이 필요하다고 판명되면 orchestrator 에 "선 갱신 후 재탐색" 순서 플래그. 중간에 graph 를 반쯤 지우지 않는다 (원자적).
+
+## 자가 검증
+
+반환 직전 다음을 점검한다 (프로토콜 §11.2, 텍스트 반환형):
+
+1. 반환 블록이 규정 스키마(action: skip | request-graphify | cleanup-only + target/cleanup scope)를 따르는가
+2. frontmatter 필드(phase, agent, agent_version, generated_at, concerns, concerns_checked)를 포함했는가
+3. index.md 갱신을 수행한 경우 frontmatter(`last_generated_at`, `source_commit`, `scopes`) + Scopes 표가 일관되는가
+
+실패 시: 자가 수정 1회 시도 후 반환.

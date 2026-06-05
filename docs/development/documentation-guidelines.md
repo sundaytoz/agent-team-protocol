@@ -20,6 +20,25 @@
 - `changes/` 는 실제 런타임 동작이 바뀐 경우의 changelog 에만 사용한다.
 - 분류 기준 상세는 `document-category-classification.md` (소비 프로젝트 `docs/development/`, `/atp:init` 생성) 를 따른다.
 
+## analysis 문서 — 분석 관점 명시
+
+`analysis/` 카테고리 문서는 작성 시점의 **분석 관점(perspective)** 을 frontmatter 에 명시한다. 같은 코드·데이터라도 어떤 전제로 분석했는지에 따라 결론이 달라지며, 후속 세션이 관점을 모른 채 결론만 채택하면 잘못된 전제 위에서 작업하게 된다.
+
+```yaml
+---
+kind: analysis
+perspective: backward-compat | redesign | neutral
+valid_starting_point_for: <이 분석을 출발점으로 삼아도 되는 작업 유형>
+superseded_note: <후속 결정으로 전제가 바뀌었다면 그 사실 — 없으면 생략>
+---
+```
+
+- **perspective**: 분석이 선 전제. 예 — `backward-compat`(기존 동작 보존 우선), `redesign`(재설계 여지를 열고 평가), `neutral`(전제 없이 현황만 기술). 프로젝트 도메인에 맞는 값을 추가해도 된다.
+- **valid_starting_point_for**: 이 분석을 그대로 출발점 삼아도 안전한 작업 유형. 범위를 좁혀 오용을 막는다.
+- **superseded_note**: 후속 결정으로 분석의 전제가 무효화됐다면 그 사실을 한 줄 남긴다. 문서를 지우지 않고 "이 결론은 X 결정 이후 더 이상 유효하지 않다" 를 표시해 후속 세션의 오채택을 막는다.
+
+배경: 특정 관점(예: 기존 호환 유지)으로 수행한 분석을 후속 세션이 전제 변경(재설계 채택) 후에도 그대로 인용해 방향이 어긋난 사례가 있었다. perspective 명시는 이 오채택 방지용이다.
+
 ## 구조
 
 - 모든 프로젝트 문서는 `docs/` 아래에 둔다 (소문자).
