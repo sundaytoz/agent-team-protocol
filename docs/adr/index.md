@@ -11,3 +11,4 @@
 | ADR-0001 | (public repo 이전 계획 — 본 레포에 파일 미보존, 프로토콜 §6 에서 참조) | — | — |
 | [ADR-0002](./ADR-0002-plugin-only-migration.md) | cp-R 배포 폐기 및 plugin-only 2플러그인(atp + atp-graphify) 전환 | accepted | 2026-06-01 |
 | [ADR-0003](./ADR-0003-consuming-project-generalization-backport.md) | v1.1.0 — 소비 프로젝트 일반화 자산 역이식 (계획 가시화·옵션설계·자가검증 계약) | accepted | 2026-06-05 |
+| [ADR-0004](./ADR-0004-consuming-project-generalization-backport-followup.md) | v1.2.0 — 소비 프로젝트 일반화 자산 후속 역이식 (호출 실패 처리·자가점검 2종·graph 이월금지·Decision Log·analysis perspective) | accepted | 2026-06-05 |

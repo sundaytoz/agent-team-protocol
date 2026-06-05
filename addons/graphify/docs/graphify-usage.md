@@ -169,6 +169,55 @@ scopes:
 - `--watch` — 파일 변경 감시 + 자동 재생성 (LLM 없이 구조적 변경만)
 - `/graphify query "<question>"` — 생성된 graph 에 질의 (BFS 탐색)
 
+## 10. graph 갱신 이월 금지(no-defer) 정책
+
+**핵심 원칙: graph 갱신을 다음 세션으로 미루지 않는다.** `graph-refresh-checker` 가 `partial-stale` / `fully-stale` / `no-graph` 판정을 내리면 **본 세션 또는 commit 시점**에 처리한다. 이월(deferral) 옵션 자체를 두지 않는다.
+
+### 10.1 처리 경로
+
+#### (A) 자동 처리 — 코드 전용 변경
+
+프로젝트가 post-commit hook 을 구성한 경우, 코드 디렉토리의 구조 변경은 commit 직후 hook 이 background 로 AST 만 재생성한다(LLM 불필요, commit 자체를 차단하지 않음). orchestrator 는 별도 행동 없이 보고서에 `graph_refresh.handled_by: post-commit-hook` 만 기록한다. hook 구현·트리거 경로·재생성 로그 위치는 **프로젝트별로 정의**한다(소비 프로젝트 hook). 세션 종료 직전 hook 재생성 로그를 1회 확인해 실패가 있으면 사용자에게 보고한다.
+
+#### (B) 즉시 또는 background 분리 — 문서/이미지 포함 변경
+
+문서·이미지 변경은 LLM semantic 추출이 필요해 AST hook 이 처리할 수 없다. 다음 두 경로 중 하나로 처리한다 — **이월(다음 세션) 금지**.
+
+- **(B-1) 인스턴스 내 즉시 처리**: 변경 규모가 작거나(파일 ≤ 5개) 사용자 대기가 수용 가능하면 본 세션에서 `/graphify <scope>` 를 직접 호출한다.
+- **(B-2) background subagent 분리**: 변경 규모가 크거나(파일 > 5개) 풀 scope 빌드면 `general-purpose` subagent 를 `run_in_background: true` 로 호출해 graphify 실행을 별도 컨텍스트로 분리한다. 본 세션은 사용자에게 한 줄 고지 후 종료 가능하다. 이월 금지 정책이므로 (A)/(B) 처리 경로를 사용자에게 묻지 않는다.
+
+### 10.2 의사결정 표
+
+| 변경 유형 | 처리 경로 | 사용자 인터럽트 |
+|---|---|---|
+| 코드 전용 | (A) hook | 없음 (자동) |
+| 문서/이미지 ≤ 5 파일 | (B-1) | 한 줄 고지 |
+| 문서/이미지 > 5 또는 풀 scope | (B-2) | 한 줄 고지 |
+| 코드 + 문서 혼합 | (A) + (B) | 한 줄 고지 |
+| `no-graph` (최초 생성) | (B-2) | 한 줄 고지 |
+
+### 10.3 금지 항목 (구 규약 — 폐기됨)
+
+- ❌ Open Items 에 "다음 세션 시작 시 자동 실행" 태그로 이월
+- ❌ deviation(이월) 옵션
+- ❌ `consecutive_defers` 카운터
+- ❌ `AskUserQuestion` 으로 (A)/(B) 처리 경로 결정을 사용자에게 위임 (이월 자체가 없으므로 묻지 않는다)
+
+### 10.4 보고서 기록
+
+`report.md` 의 `graph_refresh` 섹션에 판정과 처리를 기록한다:
+
+```yaml
+graph_refresh:
+  decision: handled_inline | handled_background | handled_by_hook | fresh | no-op
+  judgment: fresh | partial-stale | fully-stale | no-graph
+  scopes_processed: [...]
+  background_subagent_id: <id>   # (B-2) 의 경우만
+  reason: <한 줄>
+```
+
+**배경**: 운영 중 graph 갱신이 여러 세션에 걸쳐 반복 이월되는 것을 관찰하고 명시적 정정을 거친 결과, 이월 옵션 자체를 규약에서 제거했다.
+
 ## 관련 문서
 
 - [agent-team-protocol.md](./agent-team-protocol.md) — §9 확장 트리거 레지스트리 (graph scope ≥ 5 시 lookup 병렬 worker 승격)
