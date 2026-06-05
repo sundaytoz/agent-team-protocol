@@ -8,6 +8,8 @@
 
 - 사용자와의 유일한 대화 창구.
 - **직접 작업을 수행하지 않는다.** 조사/설계/구현/검증/문서화는 모두 advisor 에게 위임한다.
+- **계획 가시화 의무**: `/task` 진입 직후 어떤 advisor skip 기준이 충족되더라도 첫 코드 변경 전에 사용자에게 framing + 접근 + 영향 파일 또는 옵션 + Recommended 를 ExitPlanMode / AskUserQuestion / inline 요약 중 하나로 가시화하고 동의받는다. 이 의무는 §5 모델·skip 기준에 **우선** 적용되며, 사용자 명시 skip 지시("그냥 해", "advisor 없이", "간단히") 또는 1줄 마이크로 편집(신규 로직 0줄)에서만 면제된다.
+- **옵션 공간 판정 권한**: "이 문제는 해결책이 하나뿐(옵션 단일 수렴)" 이라는 판단으로 design-advisor / requirements-advisor 를 skip 할 수 없다 — 옵션 공간을 탐색하기 전에 단일성을 선언하는 순환 논리다. 옵션 공간은 design-advisor 산출 결론으로만 평가하고, requirements/research 가 도출하는 잠재 갭(신규 사용자 경험·운영 메트릭·회귀 범위) 은 코드/git log 에서 유도 불가하다.
 - 역할:
   1. 요청 해석 → 어떤 advisor 를 어떤 순서로 호출할지 결정
   2. 각 호출에 대한 **모델 선택** — phase 기본값 + escalation + 디스패치 크기 (§5)
@@ -277,6 +279,32 @@ design-advisor 가 설계 문서의 "검증 포인트" 섹션을 작성할 때, 
 
 **배경**: 2026-05-07 세션(20260507-124344)에서 복사 제외 목록 7건 중 `docs/feedback/archive/` 1건이 AC 에 명시되지 않아 implementation 이 누락해도 verification 에서 FAIL 로 잡히지 않았다. §4.3 은 이 재발 방지 규약이다.
 
+### 4.4 AskUserQuestion 옵션 설계 규약
+
+사용자에게 판단을 위임하는 `AskUserQuestion` 은 옵션 설계 품질이 마찰/라운드 수를 좌우한다. 다음 규약을 지킨다.
+
+1. **결정 축 명시**: 옵션 열거 전에 해당 질문이 묻는 축(axis) 을 한 줄로 기술. 예: "신규 외부 의존성 도입 여부", "결과를 스트리밍 vs 단건 노출".
+2. **축 커버 자기검증**: Option A/B/C 가 축의 양 극단과 중간을 덮는지 스스로 점검. 한쪽 편향이면 재설계 후 제시.
+3. **의존성 선스캔**: 외부 라이브러리(native/binary/네트워크) 도입이 섞인 옵션을 제시하려면, 사전에 프로젝트의 **의존성 매니페스트**(package.json / pyproject.toml / go.mod 등)를 훑어 기존 대체재가 있는지 확인한다. 있으면 "신규 의존성 0 경로" 를 Recommended 또는 옵션에 포함.
+4. **탈출구**: 마지막 옵션으로 "Other/직접 기술" 탈출구를 제공하거나, Recommended 이유를 명시해 사용자가 축을 무시하고 새 방향을 내도 되게 한다.
+
+#### 자가 점검 항목 (제시 전)
+
+1. **의존성 선스캔 완료 확인**: 외부 의존성 도입 옵션이면 매니페스트 스캔 결과를 옵션 설명에 인용.
+2. **축 커버 검증 확인**: A/B/C 가 양극+중간을 덮는지 제시 전 점검.
+3. **Recommended 근거 명시**: 사용자가 읽지 않아도 선택 가능한 수준의 한 줄 이유.
+4. **사용자 명시 언급 자료 포함 확인**: 이번 대화에서 사용자가 직접 URL/라이브러리/도구를 언급했다면 그 선택지를 옵션에서 빼지 말고 동등 비교에 포함하거나 옵션 본문에 배제 근거 한 줄을 기술한다.
+5. **표현·총량·인지부담 축 포함 확인**: 결함 후보 multiSelect 등에서 옵션이 모두 데이터/값/구조 축으로만 채워졌는지 점검. 가시성·UI·리포트류 도메인은 "표현 총량(출력 N개·총 라인 L)·스크롤·인지부담" 축이 핵심 결함일 가능성이 큰데 데이터 축에 시선이 쏠려 빠지기 쉽다. 사전 정량 분석에 표현 메트릭도 포함하고, 옵션에 이 축이 1개도 없으면 Other 탈출구 description 에 명시한다.
+
+### 4.5 clarify 요청 응대 분기
+
+사용자의 clarify 요청은 두 갈래로 해석한다.
+
+- **(a) 내용 clarify** ("A가 무슨 뜻?", "B는 어떤 동작?"): 옵션 의미를 재설명한다.
+- **(b) 범위/축 clarify** ("옵션이 좁다", "다른 방향 없나", "이런 거 말고", "왜 X 를 뺐어"): 옵션 자체를 다시 설계해 `AskUserQuestion` 을 한 번 더 보낸다.
+
+(b) 로 판정되면 "무엇을 더 설명할까?" 로 되묻지 않는다. 설계 부담은 orchestrator 가 진다. (b) 신호 어휘가 섞였는지 먼저 판단하고 분기하는 것이 기본값이다. 옵션 배제에 대한 반문("왜 X 를 안 썼어?")도 (b) 로 취급해 동등 비교로 옵션을 1회 재설계한다.
+
 ## 5. 모델 선택 정책
 
 에이전트 frontmatter 의 `model:` 필드는 **비워둔다.** Orchestrator 가 호출 시점에 Agent 툴의 `model` 파라미터로 override 한다.
@@ -544,6 +572,9 @@ peer_agents:                   # 선택. 같은 도메인 로직을 공유하는
 4. **출력 스키마** — 반환값 형식 (파일 경로 + 요약 리포트)
 5. **금기** — 인접 도메인 침범 금지 사항
 6. **충돌 시** — `concerns` 필드 사용법
+7. **자가 검증** — 반환 직전 체크리스트 (§11.2)
+
+파일을 산출하는 advisor 의 frontmatter 에는 `# 산출물 frontmatter 에 반드시 concerns_checked: true 포함` 주석을 둔다 (산출물 frontmatter 와 agent 정의 frontmatter 혼동 방지용 리마인더).
 
 ### 11.1 peer_agents 규약
 
@@ -577,6 +608,22 @@ peer_agents:
 ```
 
 **배경**: 과거 운영 세션에서 `graphify-lookup-advisor` 의 stale heuristic 이 `graph-refresh-checker` 의 판정 로직과 이원화된 채 방치된 드리프트가 발견됐다. 이 규약은 드리프트 재발 방지용이다.
+
+### 11.2 Advisor / Worker 산출물 자가 검증
+
+모든 advisor 는 산출물을 orchestrator 에 반환하기 **직전에** 다음 항목을 점검한다.
+
+| # | 항목 | 실패 시 |
+|---|---|---|
+| 1 | 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재 (텍스트 반환형 advisor 는 "반환 블록이 규정 스키마를 따르는가" 로 대체) | 즉시 작성/정정 후 재확인 |
+| 2 | frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 포함 | 누락 필드 추가 |
+| 3 | concerns 의도적 검토 완료 (비어있어도 OK — 검토 사실이 핵심) | `concerns_checked: true` 삽입 |
+
+실패 시 자가 수정 1회 → 여전히 실패면 concerns 에 `self_verification_failed: <항목>` 기록 후 반환한다. 결과는 반환값의 `self_verification.checklist_passed: <bool>` 로 포함한다.
+
+**Worker** 는 산출물을 advisor 에 반환하므로 기준이 다르다 — 2항목으로 축약: (1) 자신이 수정/생성한 파일 경로(read-only worker 는 인용)를 반환에 포함, (2) 담당 범위(파일 소유권·탐색 타겟) 밖을 건드리지 않음.
+
+**구현 advisor 추가 항목 (4번)**: 통합 타입체크는 unused 변수/파라미터를 잡지 못하는 경우가 많으므로, LSP unused 진단 0 또는 프로젝트 린터(예: `eslint --max-warnings=0`, `ruff` 등) 통과를 타입체크와 **별도 게이트**로 점검한다. design 시그니처를 그대로 따른 구현에서 dead parameter 가 발생하기 쉽다(§11 design-advisor 시그니처 inflate 방지 항목과 연계).
 
 ## 12. 회고 → MEMORY 반영 절차
 

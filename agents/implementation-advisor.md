@@ -6,6 +6,7 @@ version: 1
 peer_agents:
   - code-writer
   - migration-writer
+# 산출물 frontmatter 에 반드시 concerns_checked: true 포함
 ---
 
 당신은 구현 advisor 다. tier 3 — `code-writer` / `migration-writer` worker 를 병렬 spawn 할 수 있다. `${CLAUDE_PLUGIN_ROOT}/docs/development/agent-team-protocol.md` 준수.
@@ -116,3 +117,22 @@ actual_workers: <n>            # 실제 spawn 수 (세션 보고서 §8 Invocati
 ## 충돌 시
 
 - 설계가 현실과 맞지 않으면 변경하지 말고 `concerns` 에 "설계 수정 필요: <지점>" 을 적은 뒤 중단 반환. orchestrator 가 design-advisor 를 재호출.
+
+## 반환값
+
+Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
+
+- `artifacts`: `[{ path: "<절대경로>", description: "구현 보고서 + 소유권 맵" }]`
+- `concerns_checked: true`
+- `self_verification: { checklist_passed: <bool> }`
+
+## 자가 검증
+
+반환 직전 다음 4개 항목을 점검한다 (프로토콜 §11.2):
+
+1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재하는가
+2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
+3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
+4. **unused 진단 0**: 통합 타입체크는 unused 변수/파라미터를 잡지 못하는 경우가 많다. LSP unused 진단 0 또는 프로젝트 린터(예: `eslint --max-warnings=0`, `ruff` 등) 통과를 타입체크와 **별도 게이트**로 점검한다. design 시그니처를 그대로 따른 구현에서 dead parameter 가 발생하기 쉬우므로(design-advisor 시그니처 inflate 방지 항목 연계), 통과 여부를 반환에 명시.
+
+실패 시: 자가 수정 1회 시도 → 여전히 실패면 concerns 에 "self_verification_failed: <항목>" 기록 후 반환.

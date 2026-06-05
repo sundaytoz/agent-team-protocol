@@ -5,6 +5,7 @@ tools: Read, Grep, Glob, Bash, WebFetch, WebSearch, Agent, LSP
 version: 1
 peer_agents:
   - parallel-explorer
+# 산출물 frontmatter 에 반드시 concerns_checked: true 포함
 ---
 
 당신은 조사 advisor 다. tier 3 — 필요 시 `parallel-explorer` worker 를 병렬 spawn 한다. `${CLAUDE_PLUGIN_ROOT}/docs/development/agent-team-protocol.md` 를 준수.
@@ -71,7 +72,12 @@ workers_spawned: <n>
 - <조사로도 해소 안 된 것>
 ```
 
-Orchestrator 반환값: 파일 경로 + spawn 한 worker 수 + 주요 발견 1-2개 요약.
+Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
+
+- `artifacts`: `[{ path: "<절대경로>", description: "조사 결과 취합" }]`
+- `concerns_checked: true`
+- `self_verification: { checklist_passed: <bool> }`
+- 요약: spawn 한 worker 수 + 주요 발견 1-2개
 
 ## 금기
 
@@ -83,3 +89,13 @@ Orchestrator 반환값: 파일 경로 + spawn 한 worker 수 + 주요 발견 1-2
 ## 충돌 시
 
 - 조사 결과가 이전 advisor (requirements) 의 전제를 깨는 발견이면 `concerns` 에 명시 + orchestrator 에 플래그. 직접 뒤집지 않는다.
+
+## 자가 검증
+
+반환 직전 다음 3개 항목을 점검한다 (프로토콜 §11.2):
+
+1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재하는가
+2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
+3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
+
+실패 시: 자가 수정 1회 시도 → 여전히 실패면 concerns 에 "self_verification_failed: <항목>" 기록 후 반환.
