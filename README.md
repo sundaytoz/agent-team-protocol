@@ -1,12 +1,12 @@
-# Claude Code Agent Team Protocol
+# Agent Team Protocol
 
-Claude Code 세션을 **Orchestrator + Advisor + Worker 3-tier 에이전트 팀** 으로 운영하기 위한 Claude Code 플러그인. `/atp:task` 로 명시 호출할 때만 팀 모드에 진입하고, 작은 작업은 메인 에이전트가 직접 처리한다.
+Claude Code 및 Codex 세션을 **Orchestrator + Advisor + Worker 3-tier 에이전트 팀** 으로 운영하기 위한 플러그인. `/atp:task` 로 명시 호출할 때만 팀 모드에 진입하고, 작은 작업은 메인 에이전트가 직접 처리한다.
 
 ---
 
 ## 1. 왜 이 플러그인인가
 
-Claude Code 를 단일 에이전트로 모든 작업을 시키면 세 가지 문제가 발생한다.
+Claude Code/Codex 를 단일 에이전트로 모든 작업을 시키면 세 가지 문제가 발생한다.
 
 - **컨텍스트 오염**: 구현 다음 검증까지 같은 세션에서 하면, 에이전트가 자기가 쓴 코드에 합리화해 판정이 편향된다.
 - **모델 비용 불균형**: 단순 조사에도 최상위 모델이 돌아가거나, 설계 단계에 작은 모델이 쓰여 품질이 무너진다.
@@ -95,9 +95,12 @@ orchestrator 가 프로토콜을 읽고 `.claude/work-session/<sid>/` 를 생성
 
 ```
 agent-team-protocol/                      (레포 = 마켓플레이스 agent-team-protocol = base 플러그인 atp)
-├── .claude-plugin/
+├── .claude-plugin/                       (Claude Code manifest)
 │   ├── plugin.json                       (name: atp)
 │   └── marketplace.json                  (name: agent-team-protocol, plugins: [atp, atp-graphify])
+├── .codex-plugin/                        (Codex manifest mirror)
+│   ├── plugin.json                       (name: atp)
+│   └── marketplace.json                  (same marketplace metadata)
 ├── agents/                               (base 에이전트 10개)
 ├── skills/
 │   ├── task/SKILL.md                     (/atp:task — 작업 진입)
@@ -112,7 +115,8 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 ├── templates/                            (/atp:init 스캐폴딩 원본)
 └── addons/
     └── graphify/                         (옵트인 add-on 플러그인 atp-graphify)
-        ├── .claude-plugin/plugin.json    (name: atp-graphify, dependencies: ["atp"])
+        ├── .claude-plugin/plugin.json    (Claude Code manifest; name: atp-graphify, dependencies: ["atp"])
+        ├── .codex-plugin/plugin.json     (Codex manifest mirror)
         ├── agents/                       (graphify 에이전트 3개)
         └── docs/graphify-usage.md
 ```

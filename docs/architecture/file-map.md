@@ -24,9 +24,13 @@ last_reviewed: 2026-06-01
 ```
 agent-team-protocol/                      (레포 루트 = 마켓플레이스 = base 플러그인 atp)
 │
-├── .claude-plugin/
+├── .claude-plugin/                       ← Claude Code manifest
 │   ├── plugin.json                       ← base 플러그인 정의 (name: atp)
 │   └── marketplace.json                  ← 마켓플레이스 정의 (name: agent-team-protocol, plugins: [atp, atp-graphify])
+│
+├── .codex-plugin/                        ← Codex manifest mirror
+│   ├── plugin.json                       ← base 플러그인 정의 (name: atp)
+│   └── marketplace.json                  ← 동일 마켓플레이스 정의
 │
 ├── agents/                               ← base atp 에이전트 10개 (graphify 3종 제외)
 │   ├── requirements-advisor.md
@@ -90,8 +94,10 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 = 
 │
 └── addons/
     └── graphify/                         ← add-on 플러그인 atp-graphify 루트
-        ├── .claude-plugin/
+        ├── .claude-plugin/              ← Claude Code add-on manifest
         │   └── plugin.json               ← add-on 정의 (name: atp-graphify, dependencies: ["atp"])
+        ├── .codex-plugin/               ← Codex add-on manifest mirror
+        │   └── plugin.json               ← 동일 add-on 정의
         ├── agents/                       ← graphify 에이전트 3개
         │   ├── graph-refresh-checker.md
         │   ├── graphify-lookup-advisor.md

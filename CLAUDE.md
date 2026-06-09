@@ -1,6 +1,6 @@
 # agent-team-protocol (플러그인 소스 레포)
 
-이 레포는 Claude Code 플러그인 **`atp`** (base) 와 **`atp-graphify`** (옵트인 add-on) 의 소스다. 마켓플레이스명은 레포명과 같은 `agent-team-protocol`.
+이 레포는 Claude Code/Codex 플러그인 **`atp`** (base) 와 **`atp-graphify`** (옵트인 add-on) 의 소스다. 마켓플레이스명은 레포명과 같은 `agent-team-protocol`.
 
 > 소비 프로젝트의 CLAUDE.md 에 삽입되는 안내 블록·placeholder 템플릿은 `templates/` 와 `skills/init/SKILL.md` 에 있다. 이 파일(레포 루트 CLAUDE.md)은 **이 레포 자체를 개발하는 기여자용** 가이드다.
 
@@ -10,13 +10,15 @@
 
 ```
 agent-team-protocol/
-├── .claude-plugin/          (base atp 매니페스트: plugin.json, marketplace.json)
+├── .claude-plugin/          (Claude Code base atp 매니페스트: plugin.json, marketplace.json)
+├── .codex-plugin/           (Codex base atp 매니페스트 mirror: plugin.json, marketplace.json)
 ├── agents/                  (base 에이전트 10개)
 ├── skills/task/, skills/init/  (base 스킬)
 ├── docs/                    (번들 레퍼런스 — 에이전트가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)
 ├── templates/               (/atp:init 스캐폴딩 원본)
 └── addons/graphify/         (옵트인 add-on atp-graphify)
-    ├── .claude-plugin/      (add-on 매니페스트)
+    ├── .claude-plugin/      (Claude Code add-on 매니페스트)
+    ├── .codex-plugin/       (Codex add-on 매니페스트 mirror)
     ├── agents/              (graphify 에이전트 3개)
     └── docs/graphify-usage.md
 ```
