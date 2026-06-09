@@ -109,7 +109,7 @@ ATP 내부의 공통 명령 식별자는 `task`, `init` 이다. 스킬 파일명
 #### 미해결 마커 목록
 
 - [TODO:실측] Codex 플러그인 번들 skill 정확 호출 토큰 (`@atp` vs `@task` vs `/task`; `@` prefix 자체는 cited).
-- [TODO:실측] Codex 설치 CLI 정본(`codex plugin add <name>@<marketplace>` 동작 여부 — 공식 build 는 marketplace add/list/upgrade/remove 만 노출).
+- [verified-empirical 2026-06-09 · codex-cli 0.138.0] Codex 설치 CLI 정본 확인 — `codex plugin {add,list,remove,marketplace}` 실제 서브명령. `atp@agent-team-protocol` 1.4.0 / `atp-graphify` 1.2.0 = installed+enabled, marketplace=`.agents/plugins/marketplace.json`, cache=`~/.codex/plugins/cache/agent-team-protocol/atp/1.4.0`(local 아닌 버전드). 공식 OpenAI 마켓플레이스도 전부 `.agents/plugins/marketplace.json`+`plugins/<name>` 실서브디렉토리 사용 → F-3PLAT-5 정본 방향 corroborate.
 - [TODO:실측] `.codex-plugin/plugin.json` 의 `skills` 선언이 skill 노출 충분조건인지 (필요조건=정본 스키마 정합은 확인).
 - [TODO:실측] Codex `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성.
 - [TODO:실측] Gemini `${extensionPath}`/`${workspacePath}` 의 skill/agent 본문 가용성.
