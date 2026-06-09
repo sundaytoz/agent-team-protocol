@@ -14,7 +14,7 @@
   1. 요청 해석 → 어떤 advisor 를 어떤 순서로 호출할지 결정
   2. 각 호출에 대한 **모델 선택** — phase 기본값 + escalation + 디스패치 크기 (§5)
   3. advisor 간 충돌 중재 (§4)
-  4. 공유 상태(`.claude/work-session/<sid>/`) 관리 + 보고서 누적
+  4. 공유 상태(`.atp/work-session/<sid>/`) 관리 + 보고서 누적
   5. 파괴적 조작 게이트 (§6) 통과 확인
   6. 사용자에게 최종 보고
 - **예외적으로 직접 수행이 허용되는 것**: 공유 상태 파일 갱신, 사용자 질의, 타이트한 오타/URL/한 줄 수정 같은 마이크로 편집, 메타 작업(회고 결과를 MEMORY 인덱스에 반영).
@@ -481,7 +481,7 @@ model_choice:
 ## 7. 공유 상태 레이아웃
 
 ```
-.claude/work-session/<sid>/
+.atp/work-session/<sid>/
 ├── report.md              # §8 스키마
 ├── requirements.md        # requirements-advisor 산출
 ├── research/              # research-advisor 산출 (탐색 결과 묶음)
@@ -501,7 +501,7 @@ model_choice:
 
 ### 세션 핸드오프 (미래 확장 예약)
 
-장기 세션이 컨텍스트를 초과할 경우 `.claude/work-session/<sid>/handoff.md` 에 다음 세션 인수인계 내용을 기록한다. 포맷:
+장기 세션이 컨텍스트를 초과할 경우 `.atp/work-session/<sid>/handoff.md` 에 다음 세션 인수인계 내용을 기록한다. 포맷:
 
 ```yaml
 ---
@@ -694,7 +694,7 @@ peer_agents:
 
 | # | 항목 | 실패 시 |
 |---|---|---|
-| 1 | 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재 (텍스트 반환형 advisor 는 "반환 블록이 규정 스키마를 따르는가" 로 대체) | 즉시 작성/정정 후 재확인 |
+| 1 | 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/` 에 존재 (텍스트 반환형 advisor 는 "반환 블록이 규정 스키마를 따르는가" 로 대체) | 즉시 작성/정정 후 재확인 |
 | 2 | frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 포함 | 누락 필드 추가 |
 | 3 | concerns 의도적 검토 완료 (비어있어도 OK — 검토 사실이 핵심) | `concerns_checked: true` 삽입 |
 

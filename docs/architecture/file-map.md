@@ -117,7 +117,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 = 
 │
 ├── CLAUDE.md                             ← 기존 파일 하단에 <!-- atp:begin --> 블록 멱등 append
 │                                             (docs-first 정책 + /atp:task 진입 안내 포함)
-├── .gitignore                            ← .claude/work-session/ 라인 추가 (없는 경우)
+├── .gitignore                            ← .atp/work-session/ 라인 추가 (없는 경우)
 │
 └── docs/
     ├── index.md                          ← docs-first 허브
@@ -152,7 +152,7 @@ init 후 설정 절차는 [../usage/setup-checklist.md](../usage/setup-checklist
 `/atp:task` 실행 시 세션마다 생성된다. `.gitignore` 로 커밋 제외.
 
 ```
-.claude/work-session/<sid>/         ← 세션 공유 상태. sid = YYYYMMDD-HHMMSS
+.atp/work-session/<sid>/            ← 세션 공유 상태. sid = YYYYMMDD-HHMMSS
     ├── report.md                   ← 모든 의사결정·invocation·회고 누적
     ├── requirements.md
     ├── research/

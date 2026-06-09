@@ -51,7 +51,7 @@ version: 1
 ## 출력
 
 - 신규/수정된 문서 파일 경로 목록
-- `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/documentation.md`:
+- `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/documentation.md`:
 
 ```yaml
 ---
@@ -98,7 +98,7 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 
 반환 직전 다음 3개 항목을 점검한다 (프로토콜 §11.2):
 
-1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재하는가 (+ 새 문서를 만들었다면 해당 카테고리 index.md 링크 추가 완료)
+1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/` 에 존재하는가 (+ 새 문서를 만들었다면 해당 카테고리 index.md 링크 추가 완료)
 2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
 3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
 

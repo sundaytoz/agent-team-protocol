@@ -81,7 +81,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
   - `AGENTS.md` 존재 시: `$task` 안내 블록 삽입 (TODO:실측 caveat 포함)
   - `GEMINI.md` 존재 시: `/atp:task` 안내 블록 삽입 (TODO:실측 caveat 포함)
   - 지침파일 없으면 `CLAUDE.md` 기본 생성. `--all` 또는 `--platforms=` 로 3개 생성 가능.
-- `.gitignore` 에 `.claude/work-session/` 라인 보장
+- `.gitignore` 에 `.atp/work-session/` 라인 보장
 
 초기화 후 `docs/development/verification-strategies.md` 의 `cmd` 값을 프로젝트 실제 명령으로 교체하면 준비 완료다.
 
@@ -93,7 +93,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
 - Codex: `$task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (TODO:실측 — namespace 확정 전)
 - Gemini: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (TODO:실측 — 배포형 확정 전)
 
-orchestrator 가 프로토콜을 읽고 `.claude/work-session/<sid>/` 를 생성하면 성공.
+orchestrator 가 프로토콜을 읽고 `.atp/work-session/<sid>/` 를 생성하면 성공.
 
 ---
 

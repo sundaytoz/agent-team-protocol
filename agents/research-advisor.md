@@ -40,7 +40,7 @@ peer_agents:
 
 ## 출력
 
-`${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/research/index.md` + 필요 시 포인트별 파일:
+`${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/index.md` + 필요 시 포인트별 파일:
 
 ```yaml
 ---
@@ -105,7 +105,7 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 
 반환 직전 다음 3개 항목을 점검한다 (프로토콜 §11.2):
 
-1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재하는가
+1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/` 에 존재하는가
 2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
 3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
 4. **출처 신뢰도 게이트**: 외부 사실 항목마다 신뢰도 마커(`확인됨`/`추정`/`미확인`)가 있는가. 1차 출처 차단으로 추정을 쓴 항목이 있는데 `concerns` 가 비어있지 않은가. `source_confidence` 가 실제 항목 분포와 일치하는가. (`mixed`/`low` 인데 concern 누락이면 즉시 보강)

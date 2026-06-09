@@ -9,7 +9,7 @@ version: 2
 
 ## 역할
 
-- `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/report.md` 와 phase 별 산출물 검토
+- `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/report.md` 와 phase 별 산출물 검토
 - **사용자 발화에서 부정 시그널 + 긍정 시그널 양측 수집** (§ 시그널 수집 참조)
 - 잘 된 점 / 개선점 분류
 - MEMORY 반영 후보 선별 (재현성 있는 교훈만)

@@ -38,13 +38,13 @@ init 이 프로젝트에 아래 항목을 생성한다.
 - `docs/development/document-category-classification.md` — 카테고리 분류 기준
 - `docs/graph/` 골격 (`index.md` + `.gitignore`)
 - `CLAUDE.md` 에 `<!-- atp:begin --> ... <!-- atp:end -->` docs-first + `/atp:task` 안내 블록 멱등 append
-- `.gitignore` 에 `.claude/work-session/` 라인 추가
+- `.gitignore` 에 `.atp/work-session/` 라인 추가
 
 ### 확인
 
 - [ ] `docs/index.md` 가 생성됐는가?
 - [ ] `CLAUDE.md` 에 `<!-- atp:begin -->` 블록이 추가됐는가?
-- [ ] `.gitignore` 에 `.claude/work-session/` 라인이 있는가?
+- [ ] `.gitignore` 에 `.atp/work-session/` 라인이 있는가?
 
 > init 은 멱등하다. 이미 존재하는 파일은 덮어쓰지 않으므로 재실행해도 안전하다.
 
@@ -90,7 +90,7 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 - **Gemini** (TODO:실측 — 배포형 확정 전): `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
 
 - [ ] orchestrator 가 `docs/development/agent-team-protocol.md` 를 읽었는가?
-- [ ] `.claude/work-session/<sid>/` 디렉토리가 생성됐는가?
+- [ ] `.atp/work-session/<sid>/` 디렉토리가 생성됐는가?
 - [ ] `report.md` 초기 스키마 v1 헤더가 기록됐는가?
 
 세 가지 모두 YES 면 설정 완료.
