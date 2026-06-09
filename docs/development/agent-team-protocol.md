@@ -8,7 +8,7 @@
 
 - 사용자와의 유일한 대화 창구.
 - **직접 작업을 수행하지 않는다.** 조사/설계/구현/검증/문서화는 모두 advisor 에게 위임한다.
-- **계획 가시화 의무**: `/task` 진입 직후 어떤 advisor skip 기준이 충족되더라도 첫 코드 변경 전에 사용자에게 framing + 접근 + 영향 파일 또는 옵션 + Recommended 를 ExitPlanMode / AskUserQuestion / inline 요약 중 하나로 가시화하고 동의받는다. 이 의무는 §5 모델·skip 기준에 **우선** 적용되며, 사용자 명시 skip 지시("그냥 해", "advisor 없이", "간단히") 또는 1줄 마이크로 편집(신규 로직 0줄)에서만 면제된다.
+- **계획 가시화 의무**: `/task` 진입 직후 어떤 advisor skip 기준이 충족되더라도 첫 코드 변경 전에 사용자에게 framing + 접근 + 영향 파일 또는 옵션 + Recommended 를 ExitPlanMode / AskUserQuestion / inline 요약 중 하나로 가시화하고 동의받는다. 이 의무는 §5 모델·skip 기준에 **우선** 적용되며, 사용자 명시 skip 지시("그냥 해", "advisor 없이", "간단히") 또는 1줄 마이크로 편집(신규 로직 0줄)에서만 면제된다. 또한 research/조사 산출이 세션 초반 가정을 뒤집으면 설계 진입 전 plan 게이트를 추가한다(트리거 조건은 §2.7).
 - **옵션 공간 판정 권한**: "이 문제는 해결책이 하나뿐(옵션 단일 수렴)" 이라는 판단으로 design-advisor / requirements-advisor 를 skip 할 수 없다 — 옵션 공간을 탐색하기 전에 단일성을 선언하는 순환 논리다. 옵션 공간은 design-advisor 산출 결론으로만 평가하고, requirements/research 가 도출하는 잠재 갭(신규 사용자 경험·운영 메트릭·회귀 범위) 은 코드/git log 에서 유도 불가하다.
 - 역할:
   1. 요청 해석 → 어떤 advisor 를 어떤 순서로 호출할지 결정
@@ -246,13 +246,40 @@ orchestrator 가 하위 산출(조사 결과 등)을 상위 산출(report·desig
 2. **결합 트랙은 설계 게이트를 공유한다.** coupled 트랙 중 하나만 먼저 구현 단계로 보내지 않는다. requirements·조사·설계가 **결합 범위 전체**에서 수렴한 뒤 구현에 진입한다. 먼저 구현한 트랙이 건드린 공유 지점을 나중 트랙의 설계가 바꾸면 재작업이 발생한다.
 3. **독립이 확인되면 병렬 가능.** 공유 자원이 없음을 실제로 확인했으면 트랙별 병렬 진행은 허용된다(§5.3 독립 영역 병렬과 정합).
 4. **결합인데 일부를 먼저 출시해야 하면 사용자 결정.** orchestrator 단독으로 "기능이 독립적이니 먼저 구현" 판정 금지. 어떤 공유 자원이 나중 설계로 바뀔 수 있는지(재작업 리스크)를 명시해 `AskUserQuestion` 으로 위임한다.
+5. **research 가 세션 초반 가정을 뒤집으면 설계 진입 전 plan 게이트.** research/조사 산출이 세션 초반 orchestrator 의 가정(seed assumption)을 공식문서 인용으로 뒤집으면, orchestrator 단독으로 반전을 단정·반영하지 않는다. 설계(design-advisor) 진입 **전에** `AskUserQuestion` plan 게이트를 1회 추가해 ① 반전 요약 1줄(가정 → 뒤집힌 결론) ② 옵션(반전 채택 vs 보수적 유지) ③ Recommended ④ 근거(인용 출처) 를 제시하고 사용자 확정을 받는다. seed 가정은 종종 설계 전체의 토대이므로, 검증 없이 자동 반영하면 하류 설계가 미확정 전제 위에 쌓인다.
 
 #### 자가 점검 (트랙 분할 직후, 구현 진입 전)
 
 - 이 트랙이 건드리는 DB 엔티티·상태 전이·플로우를, 아직 설계되지 않은 다른 트랙도 건드리는가? → 예이면 결합. 설계 게이트 공유.
 - "독립이다" 판정의 근거가 **기능 명칭 차이**뿐인가? → 그렇다면 공유 자원 수준에서 재판정.
+- 조사 산출이 세션 초반 가정과 상충하는가? → 예이면 설계 진입 전 plan 게이트(반전 요약 + 옵션 + Recommended + 근거) 필수. orchestrator 단독 반영 금지.
 
 **배경**: 한 요청을 두 트랙으로 나눈 세션에서, 두 트랙이 동일 상태 전이(한 엔티티의 특정 상태 진입)를 공유하는데도 "기능적으로 독립" 으로 보고 한 트랙을 다른 트랙의 조사·설계 전에 구현 완료한 사례가 있다. 이후 트랙의 설계가 그 공유 전이의 의미를 바꿔 먼저 구현한 트랙이 재작업 대상이 됐다. forward 척추(설계 완료 후 구현)를 트랙 병렬화가 우회한 전형이다.
+
+또한 2026-06-09 세션(20260609-125316)에서 orchestrator 가 "Codex/Gemini 는 spawn 미확인이니 Tier B" 라는 seed 가정을 세웠으나, research 가 1차 공식문서 인용으로 Codex=Tier A / Gemini=Tier A-flat 으로 뒤집었다. 이때 단정 대신 plan 게이트 2질문으로 사용자에게 위임한 것이 항목 5 명문화의 직접 계기다.
+
+### 2.8 플랫폼 capability tier 와 위임 토폴로지
+
+§2 의 호출 모델(orchestrator → Tier-3 advisor → worker)은 호스트 CLI 가 **서브에이전트 spawn** 을 지원한다는 전제에서 출발한다. ATP 는 Claude Code 외에 Codex CLI / Gemini CLI 도 지원하며, 플랫폼마다 spawn 능력·토폴로지 제약이 달라 이 호출 모델이 평탄화·격하될 수 있다. 플랫폼 capability tier 의 **권위 정의는 `platform-adapters.md` Layer 1** 이며, 본 절은 그 요약 + 연결만 둔다(중복 SSoT 금지).
+
+#### 용어 구분 — "역할 tier" 와 "플랫폼 capability tier" 는 직교 두 축
+
+두 곳에서 "Tier" 라는 단어를 쓰지만 **서로 다른 축**이다. 혼동하면 평탄화 규칙을 잘못 적용한다.
+
+| 축 | 값 | 무엇을 가리키나 | 정의처 |
+|---|---|---|---|
+| **역할 tier** | Tier-2 / Tier-3 advisor | advisor 가 내부에서 worker 를 spawn 하는가 (Tier-3 만 `Agent` 툴 보유) | 본 문서 §1·§2 |
+| **플랫폼 capability tier** | Tier A / A-flat / B | 호스트 CLI 가 무엇을 지원하는가 (spawn 가능·재귀 제약·spawn 불가) | `platform-adapters.md` Layer 1 |
+
+예: `implementation-advisor` 는 **역할 tier-3**(worker 를 spawn 하는 advisor)이다. 이 advisor 가 Gemini(**플랫폼 Tier A-flat**)에서 돌면, 역할 tier-3 의 "advisor-내부-spawn" 이 "orchestrator-직접-spawn" 으로 평탄화될 뿐 역할 정의 자체는 그대로다. 두 축은 곱해져서 쓰인다.
+
+#### 플랫폼 tier 별 이 프로토콜의 동작 (요약)
+
+- **Tier A** (Claude Code 확정 / Codex doc-cited): §2 표준 그대로. Tier-3 advisor 가 내부에서 worker 를 병렬 spawn 하는 2단 위임 체인(orchestrator → advisor → worker).
+- **Tier A-flat** (Gemini): subagent→subagent 재귀가 막히므로, **역할 tier-3 advisor 의 내부 spawn 을 orchestrator-직접 fan-out 으로 평탄화**한다. advisor 는 "계획 반환 → orchestrator 가 worker spawn → advisor 취합" 으로 역할만 이동하고, 게이트(§6)·보고서 v1(§8)·검증규율(§13)·forward phase-gate(§2.7)·집합 전수 AC(§4.3)는 **전량 불변**. 평탄화 매핑은 `platform-adapters.md` §1.4.
+- **Tier B** (spawn 실측 실패 또는 사용자 명시 단일-agent 요청): 단일 agent 가 phase 척추를 **순차 self-check** 로 수행한다. 병렬 advisor·worker 만 격하되고 나머지 규율은 유지. phase별 체크리스트 전문은 `platform-adapters.md` §1.5.
+
+플랫폼별 tier 판정(어느 CLI 가 어느 tier 인지)·격하 트리거·명령 문법은 모두 `platform-adapters.md` 가 권위다. 코어 프로토콜의 게이트·report 스키마·검증규율은 **호출 토폴로지와 독립**이므로 어느 tier 에서도 동일하게 적용된다.
 
 ## 3. 도메인 매핑
 
@@ -741,4 +768,5 @@ peer_agents:
 
 - `verification-strategies.md` — verification-advisor 가 읽는 전략 레지스트리 (편집형 — 소비 프로젝트 `docs/development/`, `/atp:init` 생성)
 - [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙 (번들 레퍼런스)
+- [platform-adapters.md](./platform-adapters.md) — 플랫폼 capability tier(A/A-flat/B) 와 플랫폼별 명령 문법·경로 어댑터 (Tier 정의 SSoT — §2.8 에서 참조)
 - `document-category-classification.md` — 카테고리 분류 기준 (편집형 — 소비 프로젝트 `docs/development/`, `/atp:init` 생성)
