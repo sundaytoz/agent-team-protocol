@@ -144,8 +144,10 @@ upsert_block() {
   fi
   MARKER_BEGIN="<!-- atp:""begin -->"
   if grep -q "$MARKER_BEGIN" "$target"; then
-    # 마커 사이 교체 (perl 없으면 sed 대체)
-    perl -i -0pe 's|<!--\s*atp:begin\s*-->.*?<!--\s*atp:end\s*-->|'"$block"'|s' "$target"
+    # 마커 사이 교체. block 은 반드시 env var 로 넘겨 perl replacement 의 변수 보간을
+    # 회피한다 — 블록 본문에 `$task` 같은 `$` 토큰이 있으면 직접 박을 때 perl 이
+    # 변수로 해석해 삭제해 버린다(Codex 블록의 `$task` 소실 회귀 방지).
+    BLOCK="$block" perl -i -0pe 's|<!--\s*atp:begin\s*-->.*?<!--\s*atp:end\s*-->|$ENV{BLOCK}|s' "$target"
     echo "update: $target"
   else
     echo "" >> "$target"; echo "$block" >> "$target"
