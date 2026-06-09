@@ -287,6 +287,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-01 | 20260601-115424 | plugin-only 전환 (cp-R 폐기, 2-플러그인 atp+atp-graphify) | README/CLAUDE.md/TEMPLATE_DEV.md 재작성, G-P0-3·G-P1-B/G/H 완료 마킹 |
 | 2026-06-09 | 20260609-125316 | 3-플랫폼 지원(Claude/Codex/Gemini): platform-adapters 3층, capability matrix, Tier A/A-flat/B, init 3-지침파일, AGENTS.md 교정, init `$task` upsert 버그 fix | 커밋 4e9d9ea·3472883. 후속 §7 등재 |
 | 2026-06-09 | 20260609-125316 | F-3PLAT-3: single-read `.atp/work-session` 전환(본문 14건 치환) + 자기삭제 마이그레이션 블록(init 삽입·task §0.5 실행) + platform-adapters 권위 반전 | 커밋 3eb0bf2. 12/12 AC + 동적 스모크 PASS. 잔여: version bump(release) |
+| 2026-06-09 | 20260609-125316 | F-3PLAT-1/2: 코어 protocol §2.8 capability tier 동기화(역할tier↔capability tier 직교) + §2.7 research-반전 plan게이트 트리거 | 커밋 5b5a909. 9/9 AC PASS. 3-1 release-ready |
 
 ### 향후 확장 규약
 
@@ -300,12 +301,14 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 
 본 세션은 문서·tier 체계·init 규칙까지 완료. 아래는 scope 확장이라 이월된 후속.
 
-### F-3PLAT-1 — Tier A-flat 를 코어 `agent-team-protocol.md` 에 동기화 (3-1a)
+### F-3PLAT-1 — Tier A-flat 를 코어 `agent-team-protocol.md` 에 동기화 (3-1a) ✅ 완료 (커밋 5b5a909)
+> §2.8 신설(capability tier 요약+포인터, 역할tier↔capability tier 직교 박스) + platform-adapters cross-ref. SSoT 는 platform-adapters Layer 1 유지. 9/9 AC PASS.
 - 현재 Tier A-flat 는 `docs/development/platform-adapters.md` Layer 1 에만 존재. 코어 프로토콜 §1~§2 는 spawn 가능 전제의 3-tier 위임만 기술.
 - **이름 충돌 주의**: 코어의 "Tier-2/Tier-3 advisor"(역할 tier) vs 신규 "Tier A/B/A-flat"(플랫폼 capability tier) = 직교 두 축. 동기화 시 명시 구분 필수.
 - 우선순위 P1. 영향: 코어 1문서 + agent-catalog 정합 점검. blast 작음.
 
-### F-3PLAT-2 — plan 게이트 "research 반전" 트리거 명문화 (3-1b)
+### F-3PLAT-2 — plan 게이트 "research 반전" 트리거 명문화 (3-1b) ✅ 완료 (커밋 5b5a909)
+> §2.7 항목5 + 자가점검 bullet + 배경, §1·SKILL §5.0 포인터. 9/9 AC PASS.
 - §5.0 / §2.7 에 "research 가 세션 초반 가정과 상충하면 설계 진입 전 plan 게이트 질문 필수" 한 줄.
 - 근거 memory: `research-seed-reversal-plan-gate-delegation`. 우선순위 P2.
 
