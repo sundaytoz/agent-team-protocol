@@ -285,9 +285,44 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-05-06 | 20260506-170447 | 첫 공식 평가 (4축, blocker 3 / warn 21 / nit 11) | summary.md 원본은 gitignore 세션에 보존 |
 | 2026-05-06 | 20260506-172731 | TEMPLATE_DEV.md 신규, README §4.1 복사 제외 확장 | 세션 0 — 백로그 체계화 |
 | 2026-06-01 | 20260601-115424 | plugin-only 전환 (cp-R 폐기, 2-플러그인 atp+atp-graphify) | README/CLAUDE.md/TEMPLATE_DEV.md 재작성, G-P0-3·G-P1-B/G/H 완료 마킹 |
+| 2026-06-09 | 20260609-125316 | 3-플랫폼 지원(Claude/Codex/Gemini): platform-adapters 3층, capability matrix, Tier A/A-flat/B, init 3-지침파일, AGENTS.md 교정, init `$task` upsert 버그 fix | 커밋 4e9d9ea·3472883. 후속 §7 등재 |
 
 ### 향후 확장 규약
 
 - 세션 수가 ≥10 누적되거나 본 문서 길이가 ≥600 라인을 넘으면 `.meta/` 디렉토리로 분할 이관 검토. 그 시점 전까지는 단일 파일 유지.
 - 공식 평가 세션은 재생성 가능 (`/task 템플릿 이식성 재평가`) 하므로 `.claude/work-session/` 보존 불필요.
 - 중요한 구조적 결정 (예: 스키마 v2 bump) 은 도입 후 `docs/adr/` 에 영구 기록.
+
+---
+
+## 7. 3-플랫폼 후속 백로그 (세션 20260609-125316 발생)
+
+본 세션은 문서·tier 체계·init 규칙까지 완료. 아래는 scope 확장이라 이월된 후속.
+
+### F-3PLAT-1 — Tier A-flat 를 코어 `agent-team-protocol.md` 에 동기화 (3-1a)
+- 현재 Tier A-flat 는 `docs/development/platform-adapters.md` Layer 1 에만 존재. 코어 프로토콜 §1~§2 는 spawn 가능 전제의 3-tier 위임만 기술.
+- **이름 충돌 주의**: 코어의 "Tier-2/Tier-3 advisor"(역할 tier) vs 신규 "Tier A/B/A-flat"(플랫폼 capability tier) = 직교 두 축. 동기화 시 명시 구분 필수.
+- 우선순위 P1. 영향: 코어 1문서 + agent-catalog 정합 점검. blast 작음.
+
+### F-3PLAT-2 — plan 게이트 "research 반전" 트리거 명문화 (3-1b)
+- §5.0 / §2.7 에 "research 가 세션 초반 가정과 상충하면 설계 진입 전 plan 게이트 질문 필수" 한 줄.
+- 근거 memory: `research-seed-reversal-plan-gate-delegation`. 우선순위 P2.
+
+### F-3PLAT-3 — `.claude/work-session` → `.atp/work-session` 경로 이전 전파 (3-2, 조사 완료)
+- 조사: `.claude/work-session/20260609-125316/research/plugin-update-propagation.md`.
+- **결론**: 플러그인 업데이트는 plugin 내부 경로참조만 갱신, **소비 프로젝트의 `.gitignore`·기존 디렉토리는 불가침**(3사 공통). install/update lifecycle 훅 **3사 모두 부재**(cited). → 소비측 변경은 사용자 액션(init 재실행) 경유 불가피.
+- **권장안(조사 우열)**: **(d) dual-read backward-compat + (b) init 재실행 보강** + (a) 플러그인 업데이트(내부 참조 갱신 필수 동반재).
+  - (d): 플러그인이 신(`.atp`)·구(`.claude`) 경로 양쪽 읽기 → 하드 이동의 추적누락·leftover 리스크 제거.
+  - (b): 남는 단 하나 소비측 surface 인 `.gitignore` 신라인 → init §3 에 신라인 grep-append 추가가 전제.
+- blast radius: 경로 참조 13파일(base agent 7 + skill 2 + docs 4)·~20건. dual-read 채택 시 "신경로 쓰기 + 양쪽 읽기" 로 한 커밋 전수.
+- 우선순위 P1. **design phase 필요**(dual-read 구현 형태·init §3 패치 형태).
+
+### F-3PLAT-4 — Gemini 실제 배포 산출물 생성
+- `gemini-extension.json` + `commands/*.toml`(또는 skills/) + 에이전트 미러 = **신규 파일, 순수 additive**. 기존 agents/skills 무수정.
+- 선행: F-3PLAT-1(Tier A-flat 코어동기화)·F-3PLAT-3(경로) 정합 후 미러가 정합 소스 복제. 우선순위 P2.
+
+### needs_user_verification (install 스모크 — 마커 승격 게이트)
+- Codex per-plugin 업데이트 명령·auto-update·version 트리거 존재 여부.
+- Codex/Gemini 훅의 소비 프로젝트 파일 수정 권한.
+- Codex 번들 skill namespace(`$task` vs `$atp-task`), Gemini 배포형·`${workspacePath}` 본문 가용성.
+- 3사 install→update 후 신버전 본문 경로참조 실제 전환 스모크.
