@@ -2,7 +2,7 @@
   "name": "agent-team-protocol",
   "owner": { "name": "sundaytoz" },
   "description": "Agent Team Protocol marketplace (self-hosted): base orchestration plugin + optional graphify add-on",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "plugins": [
     {
       "name": "atp",
