@@ -13,3 +13,4 @@
 | [ADR-0003](./ADR-0003-consuming-project-generalization-backport.md) | v1.1.0 — 소비 프로젝트 일반화 자산 역이식 (계획 가시화·옵션설계·자가검증 계약) | accepted | 2026-06-05 |
 | [ADR-0004](./ADR-0004-consuming-project-generalization-backport-followup.md) | v1.2.0 — 소비 프로젝트 일반화 자산 후속 역이식 (호출 실패 처리·자가점검 2종·graph 이월금지·Decision Log·analysis perspective) | accepted | 2026-06-05 |
 | [ADR-0005](./ADR-0005-orchestrator-bidirectional-flow-control.md) | v1.3.0 — orchestrator 양방향 흐름 제어 (backward 회귀 재디스패치·forward 트랙 설계 게이트) + 시그널 세탁 방지 + 조사 출처 신뢰도 게이팅 | accepted | 2026-06-08 |
+| [ADR-0006](./ADR-0006-three-platform-support.md) | v1.4.0 — 3-플랫폼 지원 (Claude Code / Codex / Gemini): capability tier + single-read 경로 마이그레이션 | accepted | 2026-06-09 |
