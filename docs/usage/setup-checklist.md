@@ -81,13 +81,13 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 
 ---
 
-## 3단계. `/atp:task` 스모크 테스트
+## 3단계. 스모크 테스트
 
-새 Claude Code 세션에서:
+플랫폼별 입력:
 
-```
-/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘
-```
+- **Claude Code**: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
+- **Codex** (TODO:실측 — namespace 확정 전): `$task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
+- **Gemini** (TODO:실측 — 배포형 확정 전): `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
 
 - [ ] orchestrator 가 `docs/development/agent-team-protocol.md` 를 읽었는가?
 - [ ] `.claude/work-session/<sid>/` 디렉토리가 생성됐는가?

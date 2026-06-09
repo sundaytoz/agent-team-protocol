@@ -124,22 +124,33 @@ A. 통합 스크립트를 만들지 말고 `../development/verification-strategi
 
 ## self-dogfooding (이 레포에서 개발)
 
-### Q. 이 레포 자체에서 `/atp:task` 를 쓰고 싶다.
+### Q. 이 레포 자체에서 `/atp:task` (또는 Codex/Gemini 동등 명령) 를 쓰고 싶다.
 
 A. 로컬 플러그인 enable 이 필요하다.
 
+**Claude Code:**
 ```
 /plugin marketplace add ./
 /plugin install atp@agent-team-protocol
 ```
 
-graphify add-on 도 사용하려면:
+**Codex (TODO:실측 — namespace 확정 전):**
+```
+# Codex 플러그인 설치 명령 및 정확한 호출 표기는 install 스모크로 확정 예정.
+```
+
+**Gemini (TODO:실측 — extension 배포형·namespace 확정 전):**
+```
+# Gemini extension 설치 명령 및 정확한 호출 표기(/atp:task 콜론 추정)는 install 스모크로 확정 예정.
+```
+
+graphify add-on 도 사용하려면 (Claude Code):
 
 ```
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-이후 새 세션에서 `/atp:task` 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
+이후 새 세션에서 `/atp:task` (Claude Code) / `$task` (Codex, TODO:실측) / `/atp:task` (Gemini, TODO:실측) 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
 
 ---
 
