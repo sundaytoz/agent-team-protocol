@@ -78,7 +78,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
 - `docs/` 골격 (index.md, 카테고리 index 14개, verification-strategies, document-category-classification, graph 골격)
 - 플랫폼 지침파일에 `docs-first` + 호출 안내 블록 append (`<!-- atp:begin -->` 마커, 멱등):
   - `CLAUDE.md` 존재 시: `/atp:task` 안내 블록 삽입
-  - `AGENTS.md` 존재 시: `$task` 안내 블록 삽입 (TODO:실측 caveat 포함)
+  - `AGENTS.md` 존재 시: `@task` 안내 블록 삽입 (TODO:실측 caveat 포함)
   - `GEMINI.md` 존재 시: `/atp:task` 안내 블록 삽입 (TODO:실측 caveat 포함)
   - 지침파일 없으면 `CLAUDE.md` 기본 생성. `--all` 또는 `--platforms=` 로 3개 생성 가능.
 - `.gitignore` 에 `.atp/work-session/` 라인 보장
@@ -90,7 +90,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
 플랫폼별 입력:
 
 - Claude Code: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
-- Codex: `$task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (TODO:실측 — namespace 확정 전)
+- Codex: `@task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (TODO:실측 — `@` prefix cited, 정확 토큰 확정 전)
 - Gemini: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (TODO:실측 — 배포형 확정 전)
 
 orchestrator 가 프로토콜을 읽고 `.atp/work-session/<sid>/` 를 생성하면 성공.
@@ -104,9 +104,11 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 ├── .claude-plugin/                       (Claude Code manifest)
 │   ├── plugin.json                       (name: atp)
 │   └── marketplace.json                  (name: agent-team-protocol, plugins: [atp, atp-graphify])
-├── .codex-plugin/                        (Codex manifest mirror)
-│   ├── plugin.json                       (name: atp)
-│   └── marketplace.json                  (same marketplace metadata)
+├── .codex-plugin/                        (Codex plugin manifest; marketplace 정본은 .agents/plugins/)
+│   ├── plugin.json                       (name: atp; skills: "./skills/")
+│   └── marketplace.json                  (Claude 미러 — Codex 는 읽지 않음)
+├── .agents/plugins/marketplace.json      (Codex marketplace 정본 — 객체형 source: atp→./plugins/atp, atp-graphify→./addons/graphify)
+├── plugins/atp -> ..                     (interim symlink — Codex base source. 비정본·root 우회. plugins/README.md 경고 참조)
 ├── agents/                               (base 에이전트 10개)
 ├── skills/
 │   ├── task/SKILL.md                     (/atp:task — 작업 진입)

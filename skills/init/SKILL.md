@@ -110,8 +110,8 @@ EOF
 ## 문서화 정책 (docs-first)
 작업 시작 전 `docs/index.md` → 카테고리 `index.md` → 구체 문서 순으로 읽는다.
 ## 에이전트 팀 운영 (Codex)
-`$task [요청]` 으로 Orchestrator+Advisor+Worker 3-tier 모드 진입(명시 호출 전용).
-※ 플러그인 번들 skill 의 정확한 namespace 표기(`$task` vs `$atp-task`)는 install 스모크로 확정 예정 (TODO:실측).
+`@task [요청]` 으로 Orchestrator+Advisor+Worker 3-tier 모드 진입(명시 호출 전용).
+※ 플러그인/번들 skill 멘션은 `@` prefix (cited). 정확 토큰(`@atp` vs `@task` vs `/task`)은 install 스모크로 확정 예정 (TODO:실측).
 권위 레퍼런스: atp 플러그인 번들 `docs/development/agent-team-protocol.md`.
 <!-- atp:end -->
 EOF
@@ -226,7 +226,7 @@ grep -qxF '.atp/work-session/' "$GI" 2>/dev/null || echo '.atp/work-session/' >>
 - 생성/skip 파일 수 요약.
 - 생성된 지침파일 목록 + 각 플랫폼 호출 문법 안내:
   - CLAUDE.md 생성/갱신 → "Claude Code: `/atp:task [요청]`"
-  - AGENTS.md 생성/갱신 → "Codex: `$task [요청]` (TODO:실측 — namespace 확정 전)"
+  - AGENTS.md 생성/갱신 → "Codex: `@task [요청]` (TODO:실측 — `@` prefix cited, 정확 토큰 확정 전)"
   - GEMINI.md 생성/갱신 → "Gemini: `/atp:task [요청]` (TODO:실측 — 배포형 확정 전)"
 - 채워야 할 placeholder: `docs/development/verification-strategies.md` 의 `cmd`(프로젝트 검증 명령), `docs/development/document-category-classification.md` 의 불필요 카테고리 정리.
 - 스모크: Claude Code `/atp:task 안녕, 에이전트 팀 로드 확인` 안내.

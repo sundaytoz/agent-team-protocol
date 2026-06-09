@@ -11,7 +11,9 @@
 ```
 agent-team-protocol/
 ├── .claude-plugin/          (Claude Code base atp 매니페스트: plugin.json, marketplace.json)
-├── .codex-plugin/           (Codex base atp 매니페스트 mirror: plugin.json, marketplace.json)
+├── .codex-plugin/           (Codex base atp plugin manifest: plugin.json[skills:"./skills/"], marketplace.json은 Claude 미러)
+├── .agents/plugins/marketplace.json  (Codex marketplace 정본 — 객체형 source)
+├── plugins/atp -> ..        (interim symlink — Codex base source, 비정본·root 우회; plugins/README.md 참조)
 ├── agents/                  (base 에이전트 10개)
 ├── skills/task/, skills/init/  (base 스킬)
 ├── docs/                    (번들 레퍼런스 — 에이전트가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)
@@ -39,20 +41,20 @@ agent-team-protocol/
 이 레포 자체에서 Codex 로 작업하려면 **로컬 플러그인 enable 이 선행**되어야 한다. 미설치 상태에선 `${CLAUDE_PLUGIN_ROOT}` 가 치환되지 않아 에이전트가 레퍼런스 문서를 읽지 못한다.
 
 ```bash
-# 이 레포 루트에서 한 번만 (Codex 설치 명령 — TODO:실측: namespace 확정 전)
-$init
+# 이 레포 루트에서 한 번만 (Codex 설치 명령 — TODO:실측: 정확 토큰 확정 전)
+@init
 
 # graphify 에이전트 검증 시 추가
-# (Codex 플러그인 번들 skill 의 정확한 호출 표기는 install 스모크로 확정 예정)
+# (Codex 플러그인 번들 skill 의 정확한 호출 토큰은 install 스모크로 확정 예정)
 ```
 
 로컬 enable 후:
 
-- 작업 진입: `$task [요청]` (TODO:실측 — `$task` vs `$atp-task` namespace 확정 전)
+- 작업 진입: `@task [요청]` (TODO:실측 — `@` prefix cited; 정확 토큰 `@atp`/`@task`/`/task` 확정 전)
 - 권위 레퍼런스: `docs/development/agent-team-protocol.md`
 - 에이전트 정의: `agents/*.md` (base), `addons/graphify/agents/*.md` (add-on)
 
-작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `$task` 명시 호출 시에만 진입한다(TODO:실측).
+작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `@task` 명시 호출 시에만 진입한다(TODO:실측).
 
 ---
 

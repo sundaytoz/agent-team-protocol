@@ -11,7 +11,9 @@
 ```
 agent-team-protocol/
 ├── .claude-plugin/          (Claude Code base atp 매니페스트: plugin.json, marketplace.json)
-├── .codex-plugin/           (Codex base atp 매니페스트 mirror: plugin.json, marketplace.json)
+├── .codex-plugin/           (Codex base atp plugin manifest: plugin.json[skills:"./skills/"], marketplace.json은 Claude 미러)
+├── .agents/plugins/marketplace.json  (Codex marketplace 정본 — 객체형 source)
+├── plugins/atp -> ..        (interim symlink — Codex base source, 비정본·root 우회; plugins/README.md 참조)
 ├── agents/                  (base 에이전트 10개)
 ├── skills/task/, skills/init/  (base 스킬)
 ├── docs/                    (번들 레퍼런스 — 에이전트가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)

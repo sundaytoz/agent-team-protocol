@@ -28,9 +28,17 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 = 
 │   ├── plugin.json                       ← base 플러그인 정의 (name: atp)
 │   └── marketplace.json                  ← 마켓플레이스 정의 (name: agent-team-protocol, plugins: [atp, atp-graphify])
 │
-├── .codex-plugin/                        ← Codex manifest mirror
-│   ├── plugin.json                       ← base 플러그인 정의 (name: atp)
-│   └── marketplace.json                  ← 동일 마켓플레이스 정의
+├── .codex-plugin/                        ← Codex plugin manifest (marketplace 정본 아님)
+│   ├── plugin.json                       ← base 플러그인 정의 (name: atp; skills: "./skills/")
+│   └── marketplace.json                  ← Claude 미러 (Codex 는 읽지 않음)
+│
+├── .agents/                              ← Codex marketplace 정본 루트
+│   └── plugins/
+│       └── marketplace.json              ← Codex marketplace 정본 (객체형 source: atp→./plugins/atp, atp-graphify→./addons/graphify)
+│
+├── plugins/                              ← Codex interim symlink 컨테이너 (plugins/README.md 경고)
+│   ├── README.md                         ← 비정본·Windows 취약성 경고
+│   └── atp -> ..                         ← interim symlink → repo root (base source; 비정본·root 우회)
 │
 ├── agents/                               ← base atp 에이전트 10개 (graphify 3종 제외)
 │   ├── requirements-advisor.md

@@ -288,6 +288,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-09 | 20260609-125316 | 3-플랫폼 지원(Claude/Codex/Gemini): platform-adapters 3층, capability matrix, Tier A/A-flat/B, init 3-지침파일, AGENTS.md 교정, init `$task` upsert 버그 fix | 커밋 4e9d9ea·3472883. 후속 §7 등재 |
 | 2026-06-09 | 20260609-125316 | F-3PLAT-3: single-read `.atp/work-session` 전환(본문 14건 치환) + 자기삭제 마이그레이션 블록(init 삽입·task §0.5 실행) + platform-adapters 권위 반전 | 커밋 3eb0bf2. 12/12 AC + 동적 스모크 PASS. 잔여: version bump(release) |
 | 2026-06-09 | 20260609-125316 | F-3PLAT-1/2: 코어 protocol §2.8 capability tier 동기화(역할tier↔capability tier 직교) + §2.7 research-반전 plan게이트 트리거 | 커밋 5b5a909. 9/9 AC PASS. 3-1 release-ready |
+| 2026-06-09 | 20260609-173743 | Codex 구조 정정(interim): `.agents/plugins/marketplace.json` 정본 커밋 + `plugins/atp` symlink(비정본 명시) + `.codex-plugin/plugin.json` skills 선언 + platform-adapters 호출문법 `@`-반전(정확토큰 TODO:실측 보존) + README/CLAUDE/AGENTS/file-map `.codex-plugin` 설명 정정 + init AGENTS 블록 `@` 교정 | F-3PLAT-5/6 후속 등재. 정본 subdir 재배치는 백로그 |
 
 ### 향후 확장 규약
 
@@ -334,3 +335,16 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - Codex/Gemini 훅의 소비 프로젝트 파일 수정 권한.
 - Codex 번들 skill namespace(`$task` vs `$atp-task`), Gemini 배포형·`${workspacePath}` 본문 가용성.
 - 3사 install→update 후 신버전 본문 경로참조 실제 전환 스모크.
+
+### F-3PLAT-5 — Codex 정본 subdir 재배치 (interim symlink 해소)
+- 현 interim: `.agents/plugins/marketplace.json`(정본 위치) + `plugins/atp -> ..` 상향 symlink(base source, 비정본·root 우회). atp-graphify 는 `./addons/graphify` 실디렉토리 직접 source.
+- **비정본 사유(cited)**: 공식 제약 "source.path 는 marketplace root 내부 유지". symlink 타깃이 repo root(marketplace root 밖) → 우회. install 스모크는 통과하나 정본 아님.
+- **정본 목표**: base 자산(agents/·skills/·docs/·templates/·`.codex-plugin/plugin.json`)을 `plugins/atp/` **실디렉토리**로 격리, marketplace source.path 가 root 내부 실서브트리를 가리키게. symlink 제거.
+- **블로커**: Claude 라이브 레이아웃(`.claude-plugin/`+root `agents/`/`skills/`)이 root 자산 의존 → 재배치 시 Claude 경로 동시 정합 필요(대규모). 라이브 세션 안전 게이트 필요.
+- **Windows 게이트**: git symlink 는 `core.symlinks=false`(일부 Windows)에서 깨짐. Codex on Windows 지원 전 F-3PLAT-5 선행.
+- 우선순위 P2(scope 큼). 선행: 라이브 플러그인 레이아웃 분리 전략 설계.
+
+### F-3PLAT-6 — `.codex-plugin/plugin.json` skills 선언 충분성 실측 (install 스모크)
+- interim 에서 `skills:"./skills/"` 선언 추가(필요조건=정본 스키마 정합). **충분조건(=skill 실제 노출) 미확정** → install 스모크 1회.
+- 동시 확인: Codex 번들 skill 정확 호출 토큰(`@atp`/`@task`/`/task`), `codex plugin add` 명령 정본 여부.
+- needs_user_verification. 마커 승격 게이트.

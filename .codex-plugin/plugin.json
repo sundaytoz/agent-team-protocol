@@ -13,5 +13,6 @@
     "agents",
     "workflow",
     "protocol"
-  ]
+  ],
+  "skills": "./skills/"
 }
