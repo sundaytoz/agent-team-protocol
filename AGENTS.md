@@ -41,20 +41,22 @@ agent-team-protocol/
 이 레포 자체에서 Codex 로 작업하려면 **로컬 플러그인 enable 이 선행**되어야 한다. 미설치 상태에선 `${CLAUDE_PLUGIN_ROOT}` 가 치환되지 않아 에이전트가 레퍼런스 문서를 읽지 못한다.
 
 ```bash
-# 이 레포 루트에서 한 번만 (Codex 설치 명령 — TODO:실측: 정확 토큰 확정 전)
-@init
+# 이 레포 루트에서 한 번만 (Codex, verified-empirical 2026-06-10 · codex-cli 0.138.0)
+codex plugin marketplace add .
+codex plugin add atp@agent-team-protocol
 
-# graphify 에이전트 검증 시 추가
-# (Codex 플러그인 번들 skill 의 정확한 호출 토큰은 install 스모크로 확정 예정)
+# graphify add-on 필요시
+codex plugin add atp-graphify@agent-team-protocol
+# 초기화는 세션에서 /init (skill id atp:init) 호출
 ```
 
 로컬 enable 후:
 
-- 작업 진입: `@task [요청]` (TODO:실측 — `@` prefix cited; 정확 토큰 `@atp`/`@task`/`/task` 확정 전)
+- 작업 진입: `/task [요청]` (skill id `atp:task`, verified-empirical 2026-06-10)
 - 권위 레퍼런스: `docs/development/agent-team-protocol.md`
 - 에이전트 정의: `agents/*.md` (base), `addons/graphify/agents/*.md` (add-on)
 
-작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `@task` 명시 호출 시에만 진입한다(TODO:실측).
+작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `/task` (skill id `atp:task`) 명시 호출 시에만 진입한다.
 
 ---
 

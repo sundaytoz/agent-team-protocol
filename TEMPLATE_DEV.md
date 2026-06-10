@@ -344,8 +344,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - **Windows 게이트**: git symlink 는 `core.symlinks=false`(일부 Windows)에서 깨짐. Codex on Windows 지원 전 F-3PLAT-5 선행.
 - 우선순위 P2(scope 큼). 선행: 라이브 플러그인 레이아웃 분리 전략 설계.
 
-### F-3PLAT-6 — `.codex-plugin/plugin.json` skills 선언 충분성 실측 (install 스모크)
-- interim 에서 `skills:"./skills/"` 선언 추가(필요조건=정본 스키마 정합). **충분조건(=skill 실제 노출) 미확정** → install 스모크 1회.
-- 동시 확인: Codex 번들 skill 정확 호출 토큰(`@atp`/`@task`/`/task`) — **REPL 필요, 미해소**.
-- 2026-06-09 codex-cli 0.138.0 실측 **해소분**: `codex plugin add` 등 CLI 정본 확인, install 성공(atp 1.4.0 enabled), cache=1.4.0(버전드), marketplace=`.agents/plugins/`. **잔여**: (a) 정확 호출 토큰, (b) skills 선언 추가본 재설치 후 skill 실노출 — 둘 다 대화형 codex 세션(REPL)에서 `@`·`/skills` 로 확인.
-- needs_user_verification(잔여 a/b). 마커 승격 게이트.
+### F-3PLAT-6 — `.codex-plugin/plugin.json` skills 선언 충분성 실측 ✅ 대부분 해소 (2026-06-10, codex exec 0.138.0)
+- **해소**: `skills:"./skills/"` 선언 후 재설치(`codex plugin add`) → `codex exec -s read-only` 런타임 레지스트리에 `atp:task`/`atp:init` **노출 확인**(충분조건 충족). 번들 skill namespace = `plugin:skill` 콜론(`atp:task`), 호출 토큰 `/task`(런타임 보고). `codex plugin {add,list,remove,marketplace}` CLI 정본·cache 1.4.0·marketplace `.agents/plugins/` 도 확인.
+- **잔여(소)**: `@` 멘션 UI 의 정확 토큰은 대화형 REPL 미관측(런타임은 `/task` 보고). env var `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성.
+- 마커: platform-adapters 의 Codex 호출문법·namespace 셀 verified-empirical 승격 완료.
