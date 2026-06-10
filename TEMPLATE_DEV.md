@@ -349,5 +349,6 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 ### F-3PLAT-6 — `.codex-plugin/plugin.json` skills 선언 충분성 실측 ✅ 대부분 해소 (2026-06-10, codex exec 0.138.0)
 - **해소**: `skills:"./skills/"` 선언 후 재설치(`codex plugin add`) → `codex exec -s read-only` 런타임 레지스트리에 `atp:task`/`atp:init` **노출 확인**(충분조건 충족). 번들 skill namespace = `plugin:skill` 콜론(`atp:task`). 호출 = **`$atp:task`** (사용자 대화형 전사 2026-06-10 — 명시 호출 인식·SKILL 본문/plugin.json Read·설치 버전 1.4.0 정확 보고. 공식 docs `$` skill 멘션 접두 cited). `codex plugin {add,list,remove,marketplace}` CLI 정본·cache 1.4.0·marketplace `.agents/plugins/` 도 확인.
 - **정정 이력**: 호출 토큰을 codex exec 런타임 self-report 근거로 `/task` 단정했던 것은 오류 — self-report 는 컨텍스트 주입값(skill id)에만 유효, UI 입력 토큰 근거 불가. 사용자 대화형 전사로 `$atp:task` 확정 후 전 문서 정정.
-- **잔여(소)**: 단축형 `$task` 수용 여부. env var `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성. 3-tier 팀 모드 E2E(subagent spawn 실동작).
+- **추가 해소 (2026-06-10)**: 단축형 `$task` 도 동일 skill 로 해석 — 사용자 전사 확인. 호출 토큰 완전 확정 (`$atp:task` 전체형 + `$task` 단축형).
+- **잔여(소)**: env var `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성. 3-tier 팀 모드 E2E(subagent spawn 실동작).
 - 마커: platform-adapters 의 Codex 호출문법·namespace 셀 verified-empirical 유지(근거 교체: 런타임 self-report → 사용자 실측+cited).

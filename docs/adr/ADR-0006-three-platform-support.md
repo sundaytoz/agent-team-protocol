@@ -54,7 +54,7 @@ ATP 는 Claude Code 를 기준으로 설계됐다. v1.4.0 개발 세션(20260609
 2. **Gemini subagent recursion 제약**: Gemini 는 subagent 가 다른 subagent 를 호출하는 것이 플랫폼 수준에서 금지된다(`cited` — github.com/google-gemini/gemini-cli docs/core/subagents.md). 이는 ATP 의 orchestrator→advisor→worker **2단 위임 체인의 L2→L3 간선**과 충돌한다.
 
 미확정 항목(install 스모크 전):
-- ~~[TODO:실측] Codex 플러그인 번들 skill 호출 namespace~~ → **해소 (2026-06-10)**: skill id `atp:task`(`plugin:skill` 콜론, 런타임 레지스트리), 호출 `$atp:task`(사용자 대화형 전사 — 명시 호출 인식·본문 로드·버전 보고. 공식 docs `$` 접두 cited). 단축형 `$task` 수용 여부만 잔여 TODO:실측.
+- ~~[TODO:실측] Codex 플러그인 번들 skill 호출 namespace~~ → **해소 (2026-06-10)**: skill id `atp:task`(`plugin:skill` 콜론, 런타임 레지스트리), 호출 `$atp:task` 및 단축형 `$task` 모두 동작(사용자 대화형 전사 — 명시 호출 인식·본문 로드·버전 보고. 공식 docs `$` 접두 cited). 잔여 없음.
 - [TODO:실측] Codex `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성.
 - [TODO:실측] Gemini `${extensionPath}`/`${workspacePath}` 의 skill/agent 본문 가용성.
 - [needs_user_verification] 세 플랫폼 실제 install 후 `task`/`init` 스모크.

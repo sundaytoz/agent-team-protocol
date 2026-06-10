@@ -7,7 +7,7 @@ Claude Code / Codex / Gemini CLI 세션을 **Orchestrator + Advisor + Worker 3-t
 | 플랫폼 | 상태 | 호출 | 지침파일 | 검증 수준 |
 |---|---|---|---|---|
 | Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
-| Codex CLI | ✅ 지원 | `$atp:task` | `AGENTS.md` | 설치·skill 노출·호출·본문 로드 실측 (2026-06-10, codex-cli 0.138.0). subagent spawn 은 공식 문서 근거(cited) — 팀 모드 E2E 스모크 권장 |
+| Codex CLI | ✅ 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | 설치·skill 노출·호출·본문 로드 실측 (2026-06-10, codex-cli 0.138.0). subagent spawn 은 공식 문서 근거(cited) — 팀 모드 E2E 스모크 권장 |
 | Gemini CLI | 🚧 계획 | `/atp:task` (예정, TODO:실측) | `GEMINI.md` | 문서 근거 설계 완료(Tier A-flat) — 배포 산출물 미생성 |
 
 Codex 테스트 완료 항목 (2026-06-10, codex-cli 0.138.0):
@@ -15,7 +15,7 @@ Codex 테스트 완료 항목 (2026-06-10, codex-cli 0.138.0):
 - [x] 마켓플레이스 등록 (`codex plugin marketplace add <repo>`) — `.agents/plugins/marketplace.json` 인식
 - [x] 플러그인 설치 (`codex plugin add atp@agent-team-protocol`) — 버전드 cache (`~/.codex/plugins/cache/<marketplace>/<plugin>/<version>/`) 에 설치·enable
 - [x] 번들 skill 노출 — `atp:task`/`atp:init` (`plugin:skill` 콜론 namespace)
-- [x] 명시 호출 — `$atp:task` 멘션 인식 (Codex 가 "explicitly invoked" 로 응답, 단축형 `$task` 수용 여부는 미확인)
+- [x] 명시 호출 — `$atp:task` (콜론 전체형) 및 `$task` (단축형) 모두 atp:task skill 로 해석·인식
 - [x] skill 본문(SKILL.md)·plugin.json 메타데이터 Read 동작 — 설치 버전 정확 보고
 - [ ] 3-tier 팀 모드 E2E (subagent spawn 실동작) — 미실시
 
