@@ -1,7 +1,7 @@
 {
   "name": "atp-graphify",
   "description": "Optional graphify add-on for Agent Team Protocol — knowledge-graph lookup/update/refresh advisors. Requires the atp base plugin.",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "author": { "name": "sundaytoz" },
   "homepage": "https://github.com/sundaytoz/agent-team-protocol",
   "repository": "https://github.com/sundaytoz/agent-team-protocol",
