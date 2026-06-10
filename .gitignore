@@ -8,3 +8,6 @@
 # Editor
 .vscode/
 .idea/
+
+# serena MCP local artifacts
+.serena/
