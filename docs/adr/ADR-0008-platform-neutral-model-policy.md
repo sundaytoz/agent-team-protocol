@@ -8,7 +8,8 @@ deciders:
   - template-maintainer
   - stzjungsoo
 supersedes: []
-related_commits: []   # feat/platform-neutral-model-policy 브랜치 — 머지 시 기입
+related_commits:
+  - 719aa11
 ---
 
 # ADR-0008: 모델 선택 정책 플랫폼 중립화 + cap 규칙 + report 스키마 v2
