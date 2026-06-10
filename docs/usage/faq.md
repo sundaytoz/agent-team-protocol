@@ -100,9 +100,9 @@ A. `../../plugins/atp/docs/development/agent-team-protocol.md` §4 충돌 조정
 
 A. `implementation-advisor` 의 파일 소유권 맵을 확인. 한 파일에 2개 worker 가 할당되지 않았는지 검사. Worker 가 "한계" 로 반환했다면 advisor 가 재할당한다.
 
-### Q. 모델이 항상 opus 만 써서 비용이 크다.
+### Q. 모델이 항상 large tier 만 써서 비용이 크다.
 
-A. `report.md` 의 `invocations[].model_choice` 를 확인. `phase` / `escalation_reason` / `dispatch_size` 가 `../../plugins/atp/docs/development/agent-team-protocol.md` §5 정책과 일치하는지 점검. `escalation_reason: null` 인데 `model: opus` 가 반복되면 orchestrator 프롬프트에 "기본 sonnet, §5.2 트리거 적중 시에만 opus 상승" 을 명시적으로 상기시킨다.
+A. `report.md` 의 `invocations[].model_choice` 를 확인. `phase` / `escalation_reason` / `dispatch_size` / `capped` 가 `../../plugins/atp/docs/development/agent-team-protocol.md` §5 정책과 일치하는지 점검. `escalation_reason: null` 인데 `tier: large` 가 반복되면 orchestrator 프롬프트에 "기본 medium, §5.2 트리거 적중 시에만 large 상승" 을 명시적으로 상기시킨다. tier 는 플랫폼 중립(small/medium/large) — 실제 모델 슬러그는 `resolved_model` 로 확인한다(플랫폼별 매핑: platform-adapters §1.6).
 
 ### Q. 세션이 중간에 끊겼다. 이어서 하려면?
 

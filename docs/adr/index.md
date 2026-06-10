@@ -15,3 +15,4 @@
 | [ADR-0005](./ADR-0005-orchestrator-bidirectional-flow-control.md) | v1.3.0 — orchestrator 양방향 흐름 제어 (backward 회귀 재디스패치·forward 트랙 설계 게이트) + 시그널 세탁 방지 + 조사 출처 신뢰도 게이팅 | accepted | 2026-06-08 |
 | [ADR-0006](./ADR-0006-three-platform-support.md) | v1.4.0 — 3-플랫폼 지원 (Claude Code / Codex / Gemini): capability tier + single-read 경로 마이그레이션 | accepted | 2026-06-09 |
 | [ADR-0007](./ADR-0007-plugin-root-subdirectory.md) | v2.0.0 — 플러그인 루트 서브디렉토리 전환 (plugins/atp/, plugins/atp-graphify/) + Gemini manifest 위치 확정 | accepted | 2026-06-10 |
+| [ADR-0008](./ADR-0008-platform-neutral-model-policy.md) | 모델 선택 정책 플랫폼 중립화 (tier S/M/L + effort 직교 노브) + orchestrator cap 규칙 + report 스키마 v2 | accepted | 2026-06-10 |

@@ -39,7 +39,7 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | 문제 | 해법 |
 |---|---|
 | 컨텍스트 오염 | advisor 단위로 격리 — 특히 `verification-advisor` 는 **구현 코드·설계 문서 접근 금지** |
-| 모델 비용 | orchestrator 가 호출 시점에 스케일 평가(`small`/`medium`/`large`) 후 `haiku`/`sonnet`/`opus` override |
+| 모델 비용 | orchestrator 가 호출 시점에 판단 천장 평가(tier `small`/`medium`/`large`) 후 호스트 CLI 의 per-call override 로 지정 — 플랫폼별 슬러그 매핑은 platform-adapters §1.6 |
 | 파일 경합 | `implementation-advisor` 가 **파일 소유권 맵** 으로 1파일 1worker 보장 + 의존 있는 건 순차 |
 
 ---

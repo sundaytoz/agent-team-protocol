@@ -42,7 +42,7 @@ trigger: /task
 
 반드시 다음 문서를 **전문 읽기** 하여 세션 컨텍스트에 주입:
 
-- `${CLAUDE_PLUGIN_ROOT}/docs/development/agent-team-protocol.md` — 호출 모델 / 충돌 조정 / 스케일 루브릭 / 보고서 스키마 v1 / 파괴적 조작 게이트 / 확장 트리거
+- `${CLAUDE_PLUGIN_ROOT}/docs/development/agent-team-protocol.md` — 호출 모델 / 충돌 조정 / 스케일 루브릭 / 보고서 스키마(§8) / 파괴적 조작 게이트 / 확장 트리거
 
 그 외 참조가 필요할 수 있는 문서 (Read 는 필요 시):
 
@@ -66,7 +66,7 @@ mkdir -p ${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/{research,implementation,
 
 ### 3. report.md 초기화
 
-해당 디렉토리에 `report.md` 를 프로토콜 §8 스키마 v1 로 생성. 최초엔 헤더 + `user_request` + `Invocations: []` 만.
+해당 디렉토리에 `report.md` 를 프로토콜 §8 스키마(현행 `schema_version`)로 생성. 최초엔 헤더 + `user_request` + `Invocations: []` 만.
 
 생성 직후 **Advisor Invocation Decision Log** 섹션을 함께 둔다:
 
@@ -139,7 +139,12 @@ requirements-advisor
 
 ### 6. 각 호출에 모델 override
 
-프로토콜 §5 루브릭으로 스케일 평가 후 Agent 툴 `model` 파라미터로 `haiku` / `sonnet` / `opus` 지정. 근거 한 줄을 `report.md` 의 `invocations[].model_choice.rationale` 에 기록.
+프로토콜 §5 루브릭으로 판단 천장(tier: `small` / `medium` / `large`)을 평가한 뒤 호스트 CLI 의 per-call override 문법으로 지정한다(플랫폼별 문법·슬러그 매핑: platform-adapters §1.6 — 예: Claude Code 는 Agent 툴 `model` 파라미터, Codex/Gemini 는 agent 파일/frontmatter `model`, 생략 시 parent inherit).
+
+- **effort** (§5.5): 직교 노브 — 미지원 플랫폼은 no-op.
+- **cap** (§5.6): orchestrator 자기 tier 를 초과하는 지정 금지 — 초과 산출 시 자동 clamp + `capped`/`capped_from` 기록. 자기 tier 판정 불가 시 override 미지정(parent 상속).
+
+근거 한 줄을 `report.md` 의 `invocations[].model_choice.rationale` 에 기록 (스키마 전체: 프로토콜 §5.8).
 
 ### 7. 충돌 중재
 
