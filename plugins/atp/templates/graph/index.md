@@ -9,7 +9,7 @@ scopes: []
 
 이 디렉토리는 `/graphify` 가 생성하는 지식 그래프 산출물의 **메타 정보만** 커밋한다. HTML/JSON/audit 본체는 `.gitignore` 대상이며 재생성 가능하다.
 
-> 설치·적용 가이드는 [../../addons/graphify/docs/graphify-usage.md](../../addons/graphify/docs/graphify-usage.md) 참조.
+> 설치·적용 가이드는 `atp-graphify` add-on 번들의 `graphify-usage.md` 참조.
 
 ## 엔트리포인트 사용법
 

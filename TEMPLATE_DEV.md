@@ -145,7 +145,7 @@ G-P0-3 ─┘
 ```markdown
 # <카테고리명> — <용도 한 줄>
 
-> 분류 기준: [../development/document-category-classification.md](../development/document-category-classification.md)
+> 분류 기준: [plugins/atp/templates/document-category-classification.md](plugins/atp/templates/document-category-classification.md)
 
 ## 문서 목록
 
@@ -339,7 +339,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - 3사 install→update 후 신버전 본문 경로참조 실제 전환 스모크.
 
 ### F-3PLAT-5 — Codex 정본 subdir 재배치 (interim symlink 해소)
-- 현 interim: `.agents/plugins/marketplace.json`(정본 위치) + `plugins/atp -> ..` 상향 symlink(base source, 비정본·root 우회). atp-graphify 는 `./addons/graphify` 실디렉토리 직접 source.
+- 현 interim: `.agents/plugins/marketplace.json`(정본 위치) + `plugins/atp -> ..` 상향 symlink(base source, 비정본·root 우회). atp-graphify 는 `./plugins/atp-graphify` 실디렉토리 직접 source.
 - **비정본 사유(cited)**: 공식 제약 "source.path 는 marketplace root 내부 유지". symlink 타깃이 repo root(marketplace root 밖) → 우회. install 스모크는 통과하나 정본 아님.
 - **정본 목표**: base 자산(agents/·skills/·docs/·templates/·`.codex-plugin/plugin.json`)을 `plugins/atp/` **실디렉토리**로 격리, marketplace source.path 가 root 내부 실서브트리를 가리키게. symlink 제거.
 - **블로커**: Claude 라이브 레이아웃(`.claude-plugin/`+root `agents/`/`skills/`)이 root 자산 의존 → 재배치 시 Claude 경로 동시 정합 필요(대규모). 라이브 세션 안전 게이트 필요.

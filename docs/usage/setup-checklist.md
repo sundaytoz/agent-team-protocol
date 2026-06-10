@@ -100,7 +100,7 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 ## 관련 문서
 
 - [faq.md](./faq.md) — 설치 실패·명령 미인식·graphify skip 등 문제 해결
-- [`../development/agent-team-protocol.md`](../development/agent-team-protocol.md) — 3-tier 운영 프로토콜 전문
-- [`../development/verification-strategies.md`](../development/verification-strategies.md) — 검증 전략 레지스트리 (2-A 에서 편집)
-- [`../development/document-category-classification.md`](../development/document-category-classification.md) — 카테고리 분류 기준 (2-B 에서 편집)
-- [`../../addons/graphify/docs/graphify-usage.md`](../../addons/graphify/docs/graphify-usage.md) — atp-graphify add-on 설치·통합 (옵트인)
+- [`../../plugins/atp/docs/development/agent-team-protocol.md`](../../plugins/atp/docs/development/agent-team-protocol.md) — 3-tier 운영 프로토콜 전문
+- `verification-strategies.md` — 검증 전략 레지스트리 (`/atp:init` 이 소비 프로젝트 `docs/development/` 에 생성, 2-A 에서 편집)
+- `document-category-classification.md` — 카테고리 분류 기준 (`/atp:init` 이 생성, 2-B 에서 편집)
+- [`../../plugins/atp-graphify/docs/graphify-usage.md`](../../plugins/atp-graphify/docs/graphify-usage.md) — atp-graphify add-on 설치·통합 (옵트인)

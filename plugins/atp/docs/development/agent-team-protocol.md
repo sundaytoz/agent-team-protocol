@@ -492,7 +492,7 @@ model_choice:
 
 단일 게이트로 묶으면 사용자가 복합 리스크를 한 번에 판단해야 하므로 승인률이 낮아지고 오판 가능성이 커진다. 2단계 분리 + 각 단계 preview 제공이 판단 비용을 낮춘다는 실전 사례는 ADR-0001 §5.3 T4(이력 재작성) + 후속 force push 시퀀스에서 검증됨.
 
-> **실전 적용 사례**: [ADR-0001 §4, §5.3](../adr/ADR-0001-public-repo-migration-plan.md) — git 이력 재작성(T4) 및 GitHub repo transfer(T7) 의 이중 파괴적 게이트 절차와 롤백 경로. 2026-05-07 세션(20260507-121142) 에서 T4 + force push 를 2단계 게이트로 분리 승인하여 실제 적용 완료.
+> **실전 적용 사례**: ADR-0001 §4, §5.3 (비공개 이력 — 소스 레포 결정 기록) — git 이력 재작성(T4) 및 GitHub repo transfer(T7) 의 이중 파괴적 게이트 절차와 롤백 경로. 2026-05-07 세션(20260507-121142) 에서 T4 + force push 를 2단계 게이트로 분리 승인하여 실제 적용 완료.
 
 ## 7. 공유 상태 레이아웃
 
@@ -677,7 +677,7 @@ peer_agents:                   # 선택. 같은 도메인 로직을 공유하는
 
 **수정 시 교차 점검 의무**: `peer_agents` 를 가진 파일을 수정할 때는 반드시 peer 파일 전체를 읽고 도메인 로직 정합성을 확인한 뒤 반영한다. 드리프트를 발견하면 **같은 커밋 내에서** 함께 수정한다.
 
-**대칭성 원칙**: A 의 `peer_agents` 에 B 가 있으면 B 의 `peer_agents` 에도 A 가 있어야 한다. 단방향 선언은 정합성 위반. 기계 검증: `grep -l "peer_agents:" agents/*.md addons/graphify/agents/*.md` 로 목록 추출 후 교차 확인.
+**대칭성 원칙**: A 의 `peer_agents` 에 B 가 있으면 B 의 `peer_agents` 에도 A 가 있어야 한다. 단방향 선언은 정합성 위반. 기계 검증: `grep -l "peer_agents:" plugins/atp/agents/*.md plugins/atp-graphify/agents/*.md` 로 목록 추출 후 교차 확인.
 
 **선택 필드**: `peer_agents` 가 없는 에이전트는 "독립" 으로 간주한다. 과도한 peer 선언은 수정 부담만 늘리므로, 실제 도메인 로직이 공유되는 관계에만 적용한다.
 

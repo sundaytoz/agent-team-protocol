@@ -10,7 +10,7 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 <p align="center">
   <a href="docs/usage/setup-checklist.en.md">Install</a> ·
   <a href="docs/index.en.md">Docs</a> ·
-  <a href="docs/development/agent-team-protocol.md">Protocol</a> ·
+  <a href="plugins/atp/docs/development/agent-team-protocol.md">Protocol</a> ·
   <a href="docs/usage/faq.en.md">FAQ</a>
 </p>
 
@@ -22,7 +22,7 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 | Codex CLI | Supported | `$atp:task` or `$task` | `AGENTS.md` | Install, skill exposure, invocation, and body loading verified on 2026-06-10 with codex-cli 0.138.0; subagent spawn is based on cited official docs, so team-mode E2E smoke testing is recommended |
 | Gemini CLI | Planned | `/atp:task` planned | `GEMINI.md` | Design documented as Tier A-flat; release artifact not generated yet |
 
-The canonical platform matrix, invocation syntax, and capability tiers live in [docs/development/platform-adapters.md](docs/development/platform-adapters.md).
+The canonical platform matrix, invocation syntax, and capability tiers live in [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md).
 
 ---
 
@@ -63,7 +63,7 @@ The role names remain intentionally stable:
 - **Advisor**: owns one domain such as requirements, design, implementation, verification, documentation, or retrospective.
 - **Worker**: performs one narrow task under an advisor-owned scope.
 
-The full protocol is in [docs/development/agent-team-protocol.md](docs/development/agent-team-protocol.md).
+The full protocol is in [plugins/atp/docs/development/agent-team-protocol.md](plugins/atp/docs/development/agent-team-protocol.md).
 
 ---
 
@@ -71,7 +71,7 @@ The full protocol is in [docs/development/agent-team-protocol.md](docs/developme
 
 Use [docs/usage/setup-checklist.en.md](docs/usage/setup-checklist.en.md) for the current installation and smoke-test flow. The exact command syntax differs by platform.
 
-For this repository's self-dogfooding flow, see [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md). The graphify knowledge graph integration is an optional add-on; see [addons/graphify/docs/graphify-usage.md](addons/graphify/docs/graphify-usage.md).
+For this repository's self-dogfooding flow, see [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md). The graphify knowledge graph integration is an optional add-on; see [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md).
 
 ---
 
@@ -81,15 +81,18 @@ The detailed file map is maintained in [docs/architecture/file-map.md](docs/arch
 
 ```
 agent-team-protocol/
-├── .claude-plugin/                       Claude Code plugin manifest
-├── .codex-plugin/                        Codex plugin manifest
-├── .agents/plugins/marketplace.json      Codex marketplace metadata
-├── plugins/                              compatibility shim
-├── agents/                               base agent definitions
-├── skills/                               atp:init and atp:task skills
-├── docs/                                 bundled reference docs
-├── templates/                            atp:init scaffolding sources
-└── addons/graphify/                      optional atp-graphify add-on
+├── .claude-plugin/marketplace.json       Claude Code marketplace manifest
+├── .codex-plugin/marketplace.json        Claude mirror
+├── .agents/plugins/marketplace.json      Codex marketplace manifest
+├── plugins/
+│   ├── atp/                              base plugin root — only this subtree ships in the bundle
+│   │   ├── .claude-plugin/ .codex-plugin/  plugin manifests
+│   │   ├── agents/                       base agent definitions
+│   │   ├── skills/                       atp:init and atp:task skills
+│   │   ├── docs/development/             runtime reference docs
+│   │   └── templates/                    atp:init scaffolding sources
+│   └── atp-graphify/                     optional atp-graphify add-on
+└── docs/                                 human-facing docs — excluded from the bundle
 ```
 
 ---
@@ -99,14 +102,14 @@ agent-team-protocol/
 | Topic | Link |
 |---|---|
 | Documentation index | [docs/index.en.md](docs/index.en.md) |
-| Protocol reference | [docs/development/agent-team-protocol.md](docs/development/agent-team-protocol.md) |
-| Agent catalog | [docs/development/agent-catalog.md](docs/development/agent-catalog.md) |
-| Platform adapters | [docs/development/platform-adapters.md](docs/development/platform-adapters.md) |
+| Protocol reference | [plugins/atp/docs/development/agent-team-protocol.md](plugins/atp/docs/development/agent-team-protocol.md) |
+| Agent catalog | [plugins/atp/docs/development/agent-catalog.md](plugins/atp/docs/development/agent-catalog.md) |
+| Platform adapters | [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) |
 | File map | [docs/architecture/file-map.md](docs/architecture/file-map.md) |
 | FAQ | [docs/usage/faq.en.md](docs/usage/faq.en.md) |
-| Init skill | [skills/init/SKILL.md](skills/init/SKILL.md) |
-| Task skill | [skills/task/SKILL.md](skills/task/SKILL.md) |
-| graphify add-on | [addons/graphify/docs/graphify-usage.md](addons/graphify/docs/graphify-usage.md) |
+| Init skill | [plugins/atp/skills/init/SKILL.md](plugins/atp/skills/init/SKILL.md) |
+| Task skill | [plugins/atp/skills/task/SKILL.md](plugins/atp/skills/task/SKILL.md) |
+| graphify add-on | [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md) |
 
 The English README is an entry point. Linked canonical documents may currently be Korean-first.
 

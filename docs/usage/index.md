@@ -55,4 +55,4 @@ last_reviewed: 2026-06-01
 
 1. [setup-checklist.md](./setup-checklist.md) — 설치 직후 설정 (3단계)
 2. 문제 발생 시 [faq.md](./faq.md)
-3. 에이전트 구성 확인 — [`../development/agent-catalog.md`](../development/agent-catalog.md)
+3. 에이전트 구성 확인 — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md)

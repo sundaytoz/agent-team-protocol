@@ -27,16 +27,16 @@ This is the English entry point for the agent-team-protocol docs. English docs a
 
 ## Boundary
 
-`docs/` in this repository is the read-only reference bundle shipped with the plugin. The editable documents that `/atp:init` generates inside a consuming project (for example `docs/development/verification-strategies.md` and `docs/development/document-category-classification.md`) are scaffolded from [templates/](../templates/), not from this directory.
+`docs/` in this repository is human-facing documentation and is not shipped in the plugin bundle. The runtime reference docs that agents read via `${CLAUDE_PLUGIN_ROOT}/docs/...` live in [plugins/atp/docs/](../plugins/atp/docs/index.md). The editable documents that `/atp:init` generates inside a consuming project are scaffolded from [plugins/atp/templates/](../plugins/atp/templates/).
 
 ## Add-on
 
-The graphify feature is an opt-in add-on. Installation, operation, and graph refresh rules are documented in [addons/graphify/docs/graphify-usage.md](../addons/graphify/docs/graphify-usage.md) (Korean-first/canonical).
+The graphify feature is an opt-in add-on. Installation, operation, and graph refresh rules are documented in [plugins/atp-graphify/docs/graphify-usage.md](../plugins/atp-graphify/docs/graphify-usage.md) (Korean-first/canonical).
 
 ## Quick Links
 
 - Install and setup: [docs/usage/setup-checklist.en.md](./usage/setup-checklist.en.md)
 - Troubleshooting: [docs/usage/faq.en.md](./usage/faq.en.md)
-- Protocol reference (Korean-first/canonical): [docs/development/agent-team-protocol.md](./development/agent-team-protocol.md)
-- Agent catalog (Korean-first/canonical): [docs/development/agent-catalog.md](./development/agent-catalog.md)
+- Protocol reference (Korean-first/canonical): [plugins/atp/docs/development/agent-team-protocol.md](../plugins/atp/docs/development/agent-team-protocol.md)
+- Agent catalog (Korean-first/canonical): [plugins/atp/docs/development/agent-catalog.md](../plugins/atp/docs/development/agent-catalog.md)
 - File map (Korean-first/canonical): [docs/architecture/file-map.md](./architecture/file-map.md)

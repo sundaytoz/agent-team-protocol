@@ -220,5 +220,5 @@ graph_refresh:
 
 ## 관련 문서
 
-- [agent-team-protocol.md](./agent-team-protocol.md) — §9 확장 트리거 레지스트리 (graph scope ≥ 5 시 lookup 병렬 worker 승격)
-- [documentation-guidelines.md](./documentation-guidelines.md) — graphify 산출물 관리 규칙
+- `agent-team-protocol.md` (base atp 번들 — `${CLAUDE_PLUGIN_ROOT}/docs/development/`) — §9 확장 트리거 레지스트리 (graph scope ≥ 5 시 lookup 병렬 worker 승격)
+- `documentation-guidelines.md` (base atp 번들 — `${CLAUDE_PLUGIN_ROOT}/docs/development/`) — graphify 산출물 관리 규칙

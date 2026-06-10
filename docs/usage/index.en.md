@@ -55,4 +55,4 @@ See [setup-checklist.en.md](./setup-checklist.en.md) for details.
 
 1. [setup-checklist.en.md](./setup-checklist.en.md) — setup right after install (3 steps)
 2. [faq.en.md](./faq.en.md) — when something goes wrong
-3. Agent composition — [`../development/agent-catalog.md`](../development/agent-catalog.md) (Korean-first/canonical)
+3. Agent composition — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md) (Korean-first/canonical)
