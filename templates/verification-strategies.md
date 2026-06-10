@@ -96,7 +96,7 @@ strategies:
     scope: all
     timeout_s: 900
     failure_severity: blocker
-    note: "L1 + L2 + 로그 스캔 통합. /task 세션 종료 전 의무."
+    note: "L1 + L2 + 로그 스캔 통합. ATP task 세션 종료 전 의무."
 ```
 
 ## 필드 정의

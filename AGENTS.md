@@ -47,16 +47,16 @@ codex plugin add atp@agent-team-protocol
 
 # graphify add-on 필요시
 codex plugin add atp-graphify@agent-team-protocol
-# 초기화는 세션에서 /init (skill id atp:init) 호출
+# 초기화는 세션에서 $init (skill id atp:init) 호출
 ```
 
 로컬 enable 후:
 
-- 작업 진입: `/task [요청]` (skill id `atp:task`, verified-empirical 2026-06-10)
+- 작업 진입: `$task [요청]` (`$` = Codex skill 멘션 접두, skill id `atp:task`, verified-empirical 2026-06-10)
 - 권위 레퍼런스: `docs/development/agent-team-protocol.md`
 - 에이전트 정의: `agents/*.md` (base), `addons/graphify/agents/*.md` (add-on)
 
-작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `/task` (skill id `atp:task`) 명시 호출 시에만 진입한다.
+작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `$task` (skill id `atp:task`) 명시 호출 시에만 진입한다.
 
 ---
 

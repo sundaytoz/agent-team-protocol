@@ -78,7 +78,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
 - `docs/` 골격 (index.md, 카테고리 index 14개, verification-strategies, document-category-classification, graph 골격)
 - 플랫폼 지침파일에 `docs-first` + 호출 안내 블록 append (`<!-- atp:begin -->` 마커, 멱등):
   - `CLAUDE.md` 존재 시: `/atp:task` 안내 블록 삽입
-  - `AGENTS.md` 존재 시: `/task` 안내 블록 삽입 (skill id `atp:task`, verified-empirical)
+  - `AGENTS.md` 존재 시: `$task` 안내 블록 삽입 (skill id `atp:task`, verified-empirical)
   - `GEMINI.md` 존재 시: `/atp:task` 안내 블록 삽입 (TODO:실측 caveat 포함)
   - 지침파일 없으면 `CLAUDE.md` 기본 생성. `--all` 또는 `--platforms=` 로 3개 생성 가능.
 - `.gitignore` 에 `.atp/work-session/` 라인 보장
@@ -90,7 +90,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
 플랫폼별 입력:
 
 - Claude Code: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
-- Codex: `/task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (skill id `atp:task` — verified-empirical 2026-06-10)
+- Codex: `$task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (`$` = skill 멘션 접두, skill id `atp:task` — verified-empirical 2026-06-10)
 - Gemini: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (TODO:실측 — 배포형 확정 전)
 
 orchestrator 가 프로토콜을 읽고 `.atp/work-session/<sid>/` 를 생성하면 성공.

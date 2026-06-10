@@ -54,7 +54,7 @@ ATP 는 Claude Code 를 기준으로 설계됐다. v1.4.0 개발 세션(20260609
 2. **Gemini subagent recursion 제약**: Gemini 는 subagent 가 다른 subagent 를 호출하는 것이 플랫폼 수준에서 금지된다(`cited` — github.com/google-gemini/gemini-cli docs/core/subagents.md). 이는 ATP 의 orchestrator→advisor→worker **2단 위임 체인의 L2→L3 간선**과 충돌한다.
 
 미확정 항목(install 스모크 전):
-- [TODO:실측] Codex 플러그인 번들 skill 호출 namespace (`$task` vs `$atp-task`).
+- ~~[TODO:실측] Codex 플러그인 번들 skill 호출 namespace~~ → **해소 (2026-06-10)**: skill id `atp:task`(`plugin:skill` 콜론, 런타임 레지스트리), 호출 `$task`(사용자 대화형 실측 + 공식 docs `$` 접두). `$atp:task` 콜론 형태 수용 여부만 잔여 TODO:실측.
 - [TODO:실측] Codex `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성.
 - [TODO:실측] Gemini `${extensionPath}`/`${workspacePath}` 의 skill/agent 본문 가용성.
 - [needs_user_verification] 세 플랫폼 실제 install 후 `task`/`init` 스모크.
@@ -133,7 +133,7 @@ ATP 는 Claude Code 를 기준으로 설계됐다. v1.4.0 개발 세션(20260609
 
 - **F-3PLAT-4 Gemini 배포 산출물**: `gemini-extension.json`, `commands/*.toml`, Gemini 전용 에이전트 파일 생성 — 배포형(command vs skill)이 `TODO:실측` 에 의존. 설계는 "custom command(.toml) 우선 + skill 폴백"으로 결정했으나 실제 파일 생성은 이월.
 - **install 스모크**: 세 플랫폼 실제 설치 후 `task`/`init` 호출·env 치환·subagent spawn 실동작 확인은 `needs_user_verification` — 자동화 불가.
-- **Codex skill namespace 확정**: 플러그인 번들 skill 의 정확한 호출 표기(`$task` vs `$atp-task`) 확정은 install 스모크 전까지 `TODO:실측`.
+- **Codex skill namespace 확정**: ~~install 스모크 전까지 `TODO:실측`~~ → **해소 (2026-06-10)**: 호출 `$task`, skill id `atp:task`. 경위: 한때 codex exec 런타임 self-report 로 `/task` 단정(오류) → 사용자 대화형 실측 + 공식 docs 로 `$task` 확정. 교훈은 platform-adapters.md §1.1 미해결 마커 목록 참조.
 
 ---
 
