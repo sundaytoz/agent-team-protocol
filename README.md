@@ -1,6 +1,18 @@
+<p align="center">
+  <a href="README.md">한국어</a> ·
+  <a href="README.en.md">English</a>
+</p>
+
 # Agent Team Protocol
 
-AI coding 세션을 **Orchestrator + Advisor + Worker 3-tier 에이전트 팀** 으로 운영하기 위한 플러그인. `task` 스킬을 명시 호출할 때만 팀 모드에 진입하고, 작은 작업은 메인 에이전트가 직접 처리한다.
+AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해주는 프로토콜/플러그인.
+
+<p align="center">
+  <a href="docs/usage/setup-checklist.md">설치</a> ·
+  <a href="docs/index.md">문서</a> ·
+  <a href="docs/development/agent-team-protocol.md">프로토콜</a> ·
+  <a href="docs/usage/faq.md">FAQ</a>
+</p>
 
 ## 지원 플랫폼
 

@@ -7,6 +7,11 @@ stability: living
 last_reviewed: 2026-06-10
 ---
 
+<p align="center">
+  <a href="index.md">한국어</a> ·
+  <a href="index.en.md">English</a>
+</p>
+
 # 문서 인덱스
 
 이 파일은 agent-team-protocol 레포의 docs-first 진입점이다. 작업을 시작할 때는 여기서 관련 카테고리를 고른 뒤, 해당 카테고리의 `index.md` 를 거쳐 구체 문서를 확인한다.

@@ -7,6 +7,11 @@ stability: living
 last_reviewed: 2026-06-01
 ---
 
+<p align="center">
+  <a href="index.md">한국어</a> ·
+  <a href="index.en.md">English</a>
+</p>
+
 # Usage — 사용 가이드
 
 이 카테고리는 `atp` / `atp-graphify` 플러그인을 **설치하고 운영하는 사용자 관점**의 문서를 모은다. 내부 구조 설명은 `architecture/`, 개발 규칙은 `development/` 로 분리.
