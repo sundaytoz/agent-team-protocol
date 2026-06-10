@@ -89,6 +89,6 @@ Advisor 가 내부적으로 Worker 를 최대 6개까지 동시 spawn 한다. Ag
 
 - [`agent-team-protocol.md`](./agent-team-protocol.md) — §1 역할 정의, §2 호출 모델, §6 파괴적 조작 게이트, §11 Agent 파일 규약 (peer_agents 포함)
 - [`verification-strategies.md`](./verification-strategies.md) — verification-advisor 가 참조하는 전략 레지스트리
-- [`graphify-usage.md`](./graphify-usage.md) — graphify 트리오의 외부 스킬 연동 설치·운용 (add-on 설치 가이드 포함)
+- [`../../addons/graphify/docs/graphify-usage.md`](../../addons/graphify/docs/graphify-usage.md) — graphify 트리오의 외부 스킬 연동 설치·운용 (add-on 설치 가이드 포함)
 - [`search-tool-matrix.md`](./search-tool-matrix.md) — 각 에이전트가 사용하는 탐색 도구의 목적별 선택 기준
 - [`../architecture/file-map.md`](../architecture/file-map.md) — 플러그인 레이아웃 (base atp + add-on atp-graphify 트리)

@@ -9,6 +9,8 @@
 - [agent-team-protocol.md](./agent-team-protocol.md) — Orchestrator + Advisor + Worker 3-tier 에이전트 팀 운영 규약 (호출 모델, 충돌 조정, 모델 선택, 보고서 스키마, 확장 트리거)
 - [agent-catalog.md](./agent-catalog.md) — 에이전트 정의 요약 카탈로그 (base `atp` 10개 + 옵트인 `atp-graphify` 3개. 권위 원본은 `agents/*.md` 및 `addons/graphify/agents/*.md`)
 - [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 가이드라인
+- [platform-adapters.md](./platform-adapters.md) — Claude Code / Codex / Gemini 3개 플랫폼을 지원할 때 ATP 공통 개념과 플랫폼별 명령 문법·tier 를 분리하는 규칙
+- [release-checklist.md](./release-checklist.md) — 릴리즈 전 문서 링크·TODO 마커·manifest·agent catalog 동기화 점검 목록
 - [search-tool-matrix.md](./search-tool-matrix.md) — 탐색/검색 도구 선택 매트릭스 (LSP, graphify, Grep, Glob, Read, WebFetch 목적별 기준)
 
 편집형(프로젝트 생성) 문서:

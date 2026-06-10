@@ -33,7 +33,7 @@ peer_agents:
 
 ## 파일 소유권 맵 (충돌 방지 핵심)
 
-worker spawn 전에 다음 테이블을 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/implementation/ownership.md` 에 기록:
+worker spawn 전에 다음 테이블을 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/implementation/ownership.md` 에 기록:
 
 ```yaml
 ---
@@ -66,7 +66,7 @@ generated_at: <iso>
 
 ## 출력
 
-`${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/implementation/report.md`:
+`${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/implementation/report.md`:
 
 ```yaml
 ---
@@ -104,7 +104,7 @@ actual_workers: <n>            # 실제 spawn 수 (세션 보고서 §8 Invocati
 - `actual_workers < planned_workers` 인 경우(worker 계획 후 advisor 직접 실행) — `## 설계와의 차이` 섹션에 다음을 기록:
   - 전환 사유: "파일 수 N < 8 + 예상 줄수 M < 500 → advisor 직접 실행 선택" 등 계량 근거
   - 선택한 파일 목록
-- 세션 보고서(`${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/report.md`) 의 해당 Invocations 항목에도 `planned_workers` / `actual_workers` 를 채운다. 프로토콜 §8 참조.
+- 세션 보고서(`${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/report.md`) 의 해당 Invocations 항목에도 `planned_workers` / `actual_workers` 를 채운다. 프로토콜 §8 참조.
 
 ## 금기
 
@@ -130,7 +130,7 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 
 반환 직전 다음 4개 항목을 점검한다 (프로토콜 §11.2):
 
-1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재하는가
+1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/` 에 존재하는가
 2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
 3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
 4. **unused 진단 0**: 통합 타입체크는 unused 변수/파라미터를 잡지 못하는 경우가 많다. LSP unused 진단 0 또는 프로젝트 린터(예: `eslint --max-warnings=0`, `ruff` 등) 통과를 타입체크와 **별도 게이트**로 점검한다. design 시그니처를 그대로 따른 구현에서 dead parameter 가 발생하기 쉬우므로(design-advisor 시그니처 inflate 방지 항목 연계), 통과 여부를 반환에 명시.

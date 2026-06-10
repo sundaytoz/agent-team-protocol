@@ -1,0 +1,38 @@
+---
+kind: docs-index
+title: Agent Team Protocol 문서 인덱스
+description: 레포 문서의 docs-first 진입점.
+owner: template-maintainer
+stability: living
+last_reviewed: 2026-06-10
+---
+
+# 문서 인덱스
+
+이 파일은 agent-team-protocol 레포의 docs-first 진입점이다. 작업을 시작할 때는 여기서 관련 카테고리를 고른 뒤, 해당 카테고리의 `index.md` 를 거쳐 구체 문서를 확인한다.
+
+## 카테고리
+
+| 카테고리 | 오디언스 | 인덱스 |
+|---|---|---|
+| Usage | 플러그인을 설치하고 소비 프로젝트에 적용하는 사용자 | [docs/usage/index.md](./usage/index.md) |
+| Development | ATP 프로토콜, 에이전트, 스킬을 유지보수하는 기여자 | [docs/development/index.md](./development/index.md) |
+| Architecture | 레포 구조와 런타임 산출물 경계를 확인하는 기여자 | [docs/architecture/index.md](./architecture/index.md) |
+| ADR | 되돌리기 어려운 기술·운영 결정을 추적하는 유지보수자 | [docs/adr/index.md](./adr/index.md) |
+
+## 경계
+
+이 레포의 `docs/` 는 플러그인에 포함되는 읽기전용 번들 레퍼런스다. `/atp:init` 이 소비 프로젝트에 생성하는 편집형 문서의 원본은 `templates/` 에 둔다. 예를 들어 소비 프로젝트의 `docs/development/verification-strategies.md` 와 `docs/development/document-category-classification.md` 는 여기 `docs/development/` 에 직접 두지 않고 [templates/](../templates/) 에서 스캐폴딩한다.
+
+## Add-on
+
+graphify 기능은 옵트인 add-on 이다. 설치·운영·그래프 갱신 규칙은 [addons/graphify/docs/graphify-usage.md](../addons/graphify/docs/graphify-usage.md) 를 본다.
+
+## 빠른 진입
+
+- 설치와 초기화: [docs/usage/setup-checklist.md](./usage/setup-checklist.md)
+- 문제 해결: [docs/usage/faq.md](./usage/faq.md)
+- 팀 운영 프로토콜: [docs/development/agent-team-protocol.md](./development/agent-team-protocol.md)
+- 에이전트 카탈로그: [docs/development/agent-catalog.md](./development/agent-catalog.md)
+- 파일 맵: [docs/architecture/file-map.md](./architecture/file-map.md)
+- 결정 이력: [docs/adr/index.md](./adr/index.md)

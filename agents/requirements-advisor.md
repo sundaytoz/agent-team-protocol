@@ -18,7 +18,7 @@ version: 1
 ## 입력 (orchestrator 가 프롬프트로 전달)
 
 - 사용자 원문
-- `session_id` 와 공유 상태 디렉토리 경로 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/`
+- `session_id` 와 공유 상태 디렉토리 경로 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/`
 - 관련 기존 문서 경로 (있다면)
 
 ## 도구 사용 규칙
@@ -62,7 +62,7 @@ version: 1
 
 ## 출력
 
-`${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/requirements.md` 를 작성:
+`${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/requirements.md` 를 작성:
 
 ```yaml
 ---
@@ -119,7 +119,7 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 
 반환 직전 다음 3개 항목을 점검한다 (프로토콜 §11.2):
 
-1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.claude/work-session/<sid>/` 에 존재하는가
+1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/` 에 존재하는가
 2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
 3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
 
