@@ -402,6 +402,12 @@ design-advisor 가 설계 문서의 "검증 포인트" 섹션을 작성할 때, 
 
 (b) 로 판정되면 "무엇을 더 설명할까?" 로 되묻지 않는다. 설계 부담은 orchestrator 가 진다. (b) 신호 어휘가 섞였는지 먼저 판단하고 분기하는 것이 기본값이다. 옵션 배제에 대한 반문("왜 X 를 안 썼어?")도 (b) 로 취급해 동등 비교로 옵션을 1회 재설계한다.
 
+### 4.6 검증 명령·체크리스트는 실행으로만 통과 판정
+
+문서에 포함된 검증 명령(체크리스트의 grep/rg, 스모크 스크립트 등)을 작성·수정·리뷰하는 모든 단계(design / implementation / verification / 외부 reviewer 디스패치)는 그 명령을 **현재 레포 상태에서 실제 실행**하고 기대값(출력 유무·exit code)과 대조한 결과를 산출물에 포함해야 통과 판정할 수 있다. 텍스트 리뷰만으로는 자기매치(패턴이 자신의 명령 줄을 매치), untracked 산출물 오염, glob/escape 차이, exit code 의미 같은 결함 클래스가 보이지 않는다. 자기매치 방지에는 `graphi[f]y` 식 character-class self-exclusion 을 표준 트릭으로 쓴다. (§4.3 이 design 시점 AC 의 전수성 예방이라면, 본 절은 검증 수단 자체의 실행 가능성 예방이다.)
+
+**배경**: 2026-06-10 세션(20260610-103316)에서 release-checklist step-1 의 rg 명령이 자기매치 + untracked 오염으로 커밋 시점부터 기대값 충족이 불가능했으나, opus reviewer 의 문서 리뷰도 미탐지했고 orchestrator 의 실제 실행 검증에서야 발견됐다.
+
 ## 5. 모델 선택 정책
 
 에이전트 frontmatter 의 `model:` 필드는 **비워둔다.** Orchestrator 가 호출 시점에 Agent 툴의 `model` 파라미터로 override 한다.
