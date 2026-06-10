@@ -338,13 +338,14 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - ~~Codex 번들 skill namespace~~(해소: `$atp:task` — 2026-06-10), Gemini 배포형·`${workspacePath}` 본문 가용성.
 - 3사 install→update 후 신버전 본문 경로참조 실제 전환 스모크.
 
-### F-3PLAT-5 — Codex 정본 subdir 재배치 (interim symlink 해소)
+### F-3PLAT-5 — Codex 정본 subdir 재배치 (interim symlink 해소) ✅ 해소 (2026-06-10, ADR-0007)
 - 현 interim: `.agents/plugins/marketplace.json`(정본 위치) + `plugins/atp -> ..` 상향 symlink(base source, 비정본·root 우회). atp-graphify 는 `./plugins/atp-graphify` 실디렉토리 직접 source.
 - **비정본 사유(cited)**: 공식 제약 "source.path 는 marketplace root 내부 유지". symlink 타깃이 repo root(marketplace root 밖) → 우회. install 스모크는 통과하나 정본 아님.
 - **정본 목표**: base 자산(agents/·skills/·docs/·templates/·`.codex-plugin/plugin.json`)을 `plugins/atp/` **실디렉토리**로 격리, marketplace source.path 가 root 내부 실서브트리를 가리키게. symlink 제거.
 - **블로커**: Claude 라이브 레이아웃(`.claude-plugin/`+root `agents/`/`skills/`)이 root 자산 의존 → 재배치 시 Claude 경로 동시 정합 필요(대규모). 라이브 세션 안전 게이트 필요.
 - **Windows 게이트**: git symlink 는 `core.symlinks=false`(일부 Windows)에서 깨짐. Codex on Windows 지원 전 F-3PLAT-5 선행.
 - 우선순위 P2(scope 큼). 선행: 라이브 플러그인 레이아웃 분리 전략 설계.
+- **해소 (2026-06-10)**: base 자산을 `plugins/atp/`, add-on 을 `plugins/atp-graphify/` 실디렉토리로 격리 완료. symlink·`plugins/README.md` 제거, 전 marketplace source 가 root 내부 실서브트리 지목. 인간 전용 문서(README 류·.en.md·ADR·TEMPLATE_DEV 등)는 루트 잔류로 번들 제외(~51% 페이로드 축소). atp/atp-graphify 모두 2.0.0. 결정 기록: [docs/adr/ADR-0007-plugin-root-subdirectory.md](docs/adr/ADR-0007-plugin-root-subdirectory.md). 잔여: 3-플랫폼 install 스모크(사용자 실측 — AC-9~12).
 
 ### F-3PLAT-6 — `.codex-plugin/plugin.json` skills 선언 충분성 실측 ✅ 대부분 해소 (2026-06-10, codex exec 0.138.0)
 - **해소**: `skills:"./skills/"` 선언 후 재설치(`codex plugin add`) → `codex exec -s read-only` 런타임 레지스트리에 `atp:task`/`atp:init` **노출 확인**(충분조건 충족). 번들 skill namespace = `plugin:skill` 콜론(`atp:task`). 호출 = **`$atp:task`** (사용자 대화형 전사 2026-06-10 — 명시 호출 인식·SKILL 본문/plugin.json Read·설치 버전 1.4.0 정확 보고. 공식 docs `$` skill 멘션 접두 cited). `codex plugin {add,list,remove,marketplace}` CLI 정본·cache 1.4.0·marketplace `.agents/plugins/` 도 확인.
