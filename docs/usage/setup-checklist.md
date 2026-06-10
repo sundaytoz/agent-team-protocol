@@ -86,7 +86,7 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 플랫폼별 입력:
 
 - **Claude Code**: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
-- **Codex** (TODO:실측 — namespace 확정 전): `$task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
+- **Codex** (verified-empirical 2026-06-10, codex-cli 0.138.0): `$atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
 - **Gemini** (TODO:실측 — 배포형 확정 전): `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
 
 - [ ] orchestrator 가 `docs/development/agent-team-protocol.md` 를 읽었는가?
@@ -103,4 +103,4 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 - [`../development/agent-team-protocol.md`](../development/agent-team-protocol.md) — 3-tier 운영 프로토콜 전문
 - [`../development/verification-strategies.md`](../development/verification-strategies.md) — 검증 전략 레지스트리 (2-A 에서 편집)
 - [`../development/document-category-classification.md`](../development/document-category-classification.md) — 카테고리 분류 기준 (2-B 에서 편집)
-- [`../development/graphify-usage.md`](../development/graphify-usage.md) — atp-graphify add-on 설치·통합 (옵트인)
+- [`../../addons/graphify/docs/graphify-usage.md`](../../addons/graphify/docs/graphify-usage.md) — atp-graphify add-on 설치·통합 (옵트인)

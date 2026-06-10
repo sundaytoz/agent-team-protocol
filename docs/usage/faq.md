@@ -134,9 +134,10 @@ A. 로컬 플러그인 enable 이 필요하다.
 /plugin install atp@agent-team-protocol
 ```
 
-**Codex (TODO:실측 — namespace 확정 전):**
+**Codex (verified-empirical 2026-06-10, codex-cli 0.138.0):**
 ```
-# Codex 플러그인 설치 명령 및 정확한 호출 표기는 install 스모크로 확정 예정.
+codex plugin marketplace add .
+codex plugin add atp@agent-team-protocol
 ```
 
 **Gemini (TODO:실측 — extension 배포형·namespace 확정 전):**
@@ -150,7 +151,7 @@ graphify add-on 도 사용하려면 (Claude Code):
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-이후 새 세션에서 `/atp:task` (Claude Code) / `$task` (Codex, TODO:실측) / `/atp:task` (Gemini, TODO:실측) 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
+이후 새 세션에서 `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp:task` (Gemini, TODO:실측) 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
 
 ---
 
