@@ -93,7 +93,7 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 
 ---
 
-## 5. self-dogfooding (이 레포 자체에서 /atp:task 사용)
+## 5. self-dogfooding (이 레포 자체에서 `task` 스킬 사용)
 
 이 레포 자체에서 작업할 때는 먼저 로컬 플러그인을 enable 해야 한다. 플랫폼별 self-dogfooding 명령은 [AGENTS.md](AGENTS.md) 와 [CLAUDE.md](CLAUDE.md) 의 "에이전트 팀 운영" 절을 따른다.
 

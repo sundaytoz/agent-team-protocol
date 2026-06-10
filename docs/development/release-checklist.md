@@ -18,10 +18,10 @@ last_reviewed: 2026-06-10
 검증 명령:
 
 ```bash
-rg -n "development/graphify|\\./graphify-usage\\.md" docs templates README.md
+rg -n "development/graphi[f]y|\\./graphify-usage\\.md" $(git ls-files docs templates README.md)
 ```
 
-기대값: 출력 없음. graphify add-on 문서는 `addons/graphify/docs/graphify-usage.md` 를 가리켜야 한다.
+기대값: 출력 없음. graphify add-on 문서는 `addons/graphify/docs/graphify-usage.md` 를 가리켜야 한다. `git ls-files` 로 tracked 파일만 검사한다 — self-dogfooding 으로 생성되는 untracked 산출물(`docs/graph/` 등)은 릴리즈 대상이 아니다. 패턴의 `[f]` 는 이 체크리스트 자신의 명령 줄이 매치되는 것을 막는 self-exclusion 이다.
 
 ## 2. `TODO:실측` 잔존
 
@@ -45,7 +45,7 @@ README 의 빠른 설치·호출 예시와 `docs/usage/` 의 체크리스트·FA
 rg -n "\\$task|\\$atp:task|/atp:task|codex plugin (marketplace add|add)" README.md docs/usage docs/development/platform-adapters.md
 ```
 
-기대값: Codex 기본 호출은 `$atp:task` 이고, `$task` 는 단축형으로만 설명된다.
+기대값: Codex 기본 호출(주 표기)은 `$atp:task`. `$task` 는 실측 검증된(verified-empirical 2026-06-10) 단축형 별칭으로 병기만 허용하고, 주 표기로 단정하지 않는다 — [platform-adapters.md](./platform-adapters.md) 검증 체크리스트와 동일 기준.
 
 ## 4. Marketplace manifest 동기화
 
@@ -58,6 +58,8 @@ rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|agent-team-protocol' .cl
 ```
 
 기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다.
+
+버전 invariant: base atp 매니페스트 4개(`.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`addons/graphify/.claude-plugin/plugin.json`, `addons/graphify/.codex-plugin/plugin.json`)도 서로 같아야 한다. base 와 add-on 은 독립 버저닝(불일치 정상). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
 
 ## 5. Agent catalog ↔ agents/ 목록 일치
 

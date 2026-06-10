@@ -344,7 +344,7 @@ ATP 프로토콜 자체의 산출물 경로:
 ## 검증 체크리스트
 
 - [ ] `/task` 가 공식 사용자 입력명처럼 보이는 문서가 남아 있지 않은가?
-- [ ] Claude Code 안내에는 `/atp:task` (콜론), Codex 안내에는 `$atp:task` 가 쓰였는가? (`/task` 단독·`$task` 단축형 단정·`@`-멘션 가설 표기 잔존 0)
+- [ ] Claude Code 안내에는 `/atp:task` (콜론), Codex 안내에는 `$atp:task` 가 쓰였는가? (`/task` 단독·`$task` 주 표기 단정·`@`-멘션 가설 표기 잔존 0 — 실측 검증된 `$task` 단축형 **별칭 병기**는 허용)
 - [ ] Codex marketplace 정본이 `.agents/plugins/marketplace.json` 으로 기술되고, `.codex-plugin/marketplace.json` 이 Codex 정본처럼 표기되지 않았는가?
 - [ ] `@` 를 명령 호출 문법으로 쓴 표기(`/atp@task`)가 남아 있지 않은가?
 - [ ] 공통 문서에서 특정 플랫폼 명령 문법 하나만 권위 표기로 쓰지 않았는가?
