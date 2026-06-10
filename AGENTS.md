@@ -62,6 +62,6 @@ codex plugin add atp-graphify@agent-team-protocol
 
 ## 코딩 규칙
 
-- agent/skill body 의 레퍼런스 Read 경로는 `${CLAUDE_PLUGIN_ROOT}/docs/...`, 편집형 Read 는 `${CLAUDE_PROJECT_DIR}/docs/...`, 산출물 Write 는 `${CLAUDE_PROJECT_DIR}/.claude/work-session/...` 규칙을 따른다.
+- agent/skill body 의 레퍼런스 Read 경로는 `${CLAUDE_PLUGIN_ROOT}/docs/...`, 편집형 Read 는 `${CLAUDE_PROJECT_DIR}/docs/...`, 산출물 Write 는 `${CLAUDE_PROJECT_DIR}/.atp/work-session/...` 규칙을 따른다.
 - docs/ 하위 번들 레퍼런스는 편집형 파일(verification-strategies 등)과 섞지 않는다. 편집형 원본은 `templates/` 에 둔다.
 - TEMPLATE_DEV.md 는 이 레포 자체의 개선 백로그·이력 전용 메타 파일로, 커밋 대상이다.

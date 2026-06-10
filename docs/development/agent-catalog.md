@@ -17,8 +17,10 @@ last_reviewed: 2026-06-01
 
 에이전트는 두 플러그인으로 분리된다.
 
-- **base `atp`** — 10개. `/plugin install atp@agent-team-protocol` 로 설치.
-- **옵트인 add-on `atp-graphify`** — 3개. `/plugin install atp-graphify@agent-team-protocol` 로 추가 설치. **add-on 미설치 시 해당 에이전트는 비활성이며, base 는 graphify 단계를 `skip: no-graphify` 로 기록하고 정상 진행한다.**
+- **base `atp`** — 10개.
+- **옵트인 add-on `atp-graphify`** — 3개. **add-on 미설치 시 해당 에이전트는 비활성이며, base 는 graphify 단계를 `skip: no-graphify` 로 기록하고 정상 진행한다.**
+
+설치 절차와 플랫폼별 호출 문법은 [`../usage/setup-checklist.md`](../usage/setup-checklist.md) 를 따른다.
 
 ---
 
@@ -55,7 +57,7 @@ Advisor 가 내부적으로 Worker 를 최대 6개까지 동시 spawn 한다. Ag
 
 ## 옵트인 add-on atp-graphify — Tier 2
 
-**add-on 설치 시에만 활성.** `/plugin install atp-graphify@agent-team-protocol` 로 설치. `atp` base 의존.
+**add-on 설치 시에만 활성.** `atp` base 의존.
 
 | 에이전트 | 도구 | 핵심 제약 |
 |---|---|---|
@@ -63,7 +65,7 @@ Advisor 가 내부적으로 Worker 를 최대 6개까지 동시 spawn 한다. Ag
 | `graphify-update-advisor` | Read, Grep, Glob, Write, Edit, Bash | `/graphify` 직접 호출 금지 (orchestrator 경유). peer: graph-refresh-checker / graphify-lookup-advisor |
 | `graph-refresh-checker` | Bash, Read, Glob, Grep | staleness 판정만. 재생성 금지. peer: graphify-lookup-advisor / graphify-update-advisor |
 
-> **참고**: graphify **스킬 자체**(`/graphify`)는 사용자 환경 `~/.claude/skills/graphify/` 소유다 — add-on 은 graphify **에이전트·문서**만 번들한다.
+> **참고**: graphify **스킬 자체**(`/graphify`)는 사용자 환경에 별도 설치된다 — add-on 은 graphify **에이전트·문서**만 번들한다. 상세 경로와 설치 절차는 [`../../addons/graphify/docs/graphify-usage.md`](../../addons/graphify/docs/graphify-usage.md) 를 따른다.
 
 ---
 
@@ -88,7 +90,7 @@ Advisor 가 내부적으로 Worker 를 최대 6개까지 동시 spawn 한다. Ag
 ## 관련 문서
 
 - [`agent-team-protocol.md`](./agent-team-protocol.md) — §1 역할 정의, §2 호출 모델, §6 파괴적 조작 게이트, §11 Agent 파일 규약 (peer_agents 포함)
-- [`verification-strategies.md`](./verification-strategies.md) — verification-advisor 가 참조하는 전략 레지스트리
+- `verification-strategies.md` — verification-advisor 가 참조하는 전략 레지스트리 (소비 프로젝트 `docs/development/`, `/atp:init` 생성)
 - [`../../addons/graphify/docs/graphify-usage.md`](../../addons/graphify/docs/graphify-usage.md) — graphify 트리오의 외부 스킬 연동 설치·운용 (add-on 설치 가이드 포함)
 - [`search-tool-matrix.md`](./search-tool-matrix.md) — 각 에이전트가 사용하는 탐색 도구의 목적별 선택 기준
 - [`../architecture/file-map.md`](../architecture/file-map.md) — 플러그인 레이아웃 (base atp + add-on atp-graphify 트리)
