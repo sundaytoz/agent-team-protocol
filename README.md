@@ -2,6 +2,23 @@
 
 Claude Code / Codex / Gemini CLI 세션을 **Orchestrator + Advisor + Worker 3-tier 에이전트 팀** 으로 운영하기 위한 플러그인. `/atp:task` 로 명시 호출할 때만 팀 모드에 진입하고, 작은 작업은 메인 에이전트가 직접 처리한다.
 
+## 지원 플랫폼
+
+| 플랫폼 | 상태 | 호출 | 지침파일 | 검증 수준 |
+|---|---|---|---|---|
+| Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
+| Codex CLI | ✅ 지원 | `$atp:task` | `AGENTS.md` | 설치·skill 노출·호출·본문 로드 실측 (2026-06-10, codex-cli 0.138.0). subagent spawn 은 공식 문서 근거(cited) — 팀 모드 E2E 스모크 권장 |
+| Gemini CLI | 🚧 계획 | `/atp:task` (예정, TODO:실측) | `GEMINI.md` | 문서 근거 설계 완료(Tier A-flat) — 배포 산출물 미생성 |
+
+Codex 테스트 완료 항목 (2026-06-10, codex-cli 0.138.0):
+
+- [x] 마켓플레이스 등록 (`codex plugin marketplace add <repo>`) — `.agents/plugins/marketplace.json` 인식
+- [x] 플러그인 설치 (`codex plugin add atp@agent-team-protocol`) — 버전드 cache (`~/.codex/plugins/cache/<marketplace>/<plugin>/<version>/`) 에 설치·enable
+- [x] 번들 skill 노출 — `atp:task`/`atp:init` (`plugin:skill` 콜론 namespace)
+- [x] 명시 호출 — `$atp:task` 멘션 인식 (Codex 가 "explicitly invoked" 로 응답, 단축형 `$task` 수용 여부는 미확인)
+- [x] skill 본문(SKILL.md)·plugin.json 메타데이터 Read 동작 — 설치 버전 정확 보고
+- [ ] 3-tier 팀 모드 E2E (subagent spawn 실동작) — 미실시
+
 ---
 
 ## 1. 왜 이 플러그인인가
@@ -78,7 +95,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
 - `docs/` 골격 (index.md, 카테고리 index 14개, verification-strategies, document-category-classification, graph 골격)
 - 플랫폼 지침파일에 `docs-first` + 호출 안내 블록 append (`<!-- atp:begin -->` 마커, 멱등):
   - `CLAUDE.md` 존재 시: `/atp:task` 안내 블록 삽입
-  - `AGENTS.md` 존재 시: `$task` 안내 블록 삽입 (skill id `atp:task`, verified-empirical)
+  - `AGENTS.md` 존재 시: `$atp:task` 안내 블록 삽입 (verified-empirical)
   - `GEMINI.md` 존재 시: `/atp:task` 안내 블록 삽입 (TODO:실측 caveat 포함)
   - 지침파일 없으면 `CLAUDE.md` 기본 생성. `--all` 또는 `--platforms=` 로 3개 생성 가능.
 - `.gitignore` 에 `.atp/work-session/` 라인 보장
@@ -90,7 +107,7 @@ graphify 지식 그래프 기능이 필요한 경우에만 추가 설치한다.
 플랫폼별 입력:
 
 - Claude Code: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
-- Codex: `$task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (`$` = skill 멘션 접두, skill id `atp:task` — verified-empirical 2026-06-10)
+- Codex: `$atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (`$` = skill 멘션 접두 — verified-empirical 2026-06-10)
 - Gemini: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘` (TODO:실측 — 배포형 확정 전)
 
 orchestrator 가 프로토콜을 읽고 `.atp/work-session/<sid>/` 를 생성하면 성공.

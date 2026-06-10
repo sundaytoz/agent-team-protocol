@@ -290,6 +290,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-09 | 20260609-125316 | F-3PLAT-1/2: 코어 protocol §2.8 capability tier 동기화(역할tier↔capability tier 직교) + §2.7 research-반전 plan게이트 트리거 | 커밋 5b5a909. 9/9 AC PASS. 3-1 release-ready |
 | 2026-06-09 | 20260609-173743 | Codex 구조 정정(interim): `.agents/plugins/marketplace.json` 정본 커밋 + `plugins/atp` symlink(비정본 명시) + `.codex-plugin/plugin.json` skills 선언 + platform-adapters 호출문법 `@`-반전(정확토큰 TODO:실측 보존) + README/CLAUDE/AGENTS/file-map `.codex-plugin` 설명 정정 + init AGENTS 블록 `@` 교정 | F-3PLAT-5/6 후속 등재. 정본 subdir 재배치는 백로그 |
 | 2026-06-10 | 20260610-093314 | Codex 호출 토큰 정정: `/task`(런타임 self-report 오판) → **`$task`**(사용자 대화형 실측 + 공식 docs `$` skill 멘션 접두). 7파일 전수 정정 + init upsert 동적 스모크(3회 멱등, `$task` 보존) PASS | 교훈: 런타임 self-report 는 UI 토큰 근거 불가 — platform-adapters §1.1 마커 목록에 명문화 |
+| 2026-06-10 | 20260610-093314 | Codex 대화형 전사 확보: `$atp:task` 명시 호출 인식 + SKILL 본문 로드 + 버전 정확 보고 → 호출 표기 `$atp:task` 로 최종 통일(단축형 `$task` 는 TODO 격하). README 지원 플랫폼 표 + Codex 테스트 완료 체크리스트 신설(내부 경로 sanitize) | F-3PLAT-6 추가 해소. 잔여: `$task` 단축형·E2E spawn |
 
 ### 향후 확장 규약
 
@@ -334,7 +335,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 ### needs_user_verification (install 스모크 — 마커 승격 게이트)
 - Codex per-plugin 업데이트 명령·auto-update·version 트리거 존재 여부.
 - Codex/Gemini 훅의 소비 프로젝트 파일 수정 권한.
-- ~~Codex 번들 skill namespace~~(해소: `$task`, skill id `atp:task` — 2026-06-10), Gemini 배포형·`${workspacePath}` 본문 가용성.
+- ~~Codex 번들 skill namespace~~(해소: `$atp:task` — 2026-06-10), Gemini 배포형·`${workspacePath}` 본문 가용성.
 - 3사 install→update 후 신버전 본문 경로참조 실제 전환 스모크.
 
 ### F-3PLAT-5 — Codex 정본 subdir 재배치 (interim symlink 해소)
@@ -346,7 +347,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - 우선순위 P2(scope 큼). 선행: 라이브 플러그인 레이아웃 분리 전략 설계.
 
 ### F-3PLAT-6 — `.codex-plugin/plugin.json` skills 선언 충분성 실측 ✅ 대부분 해소 (2026-06-10, codex exec 0.138.0)
-- **해소**: `skills:"./skills/"` 선언 후 재설치(`codex plugin add`) → `codex exec -s read-only` 런타임 레지스트리에 `atp:task`/`atp:init` **노출 확인**(충분조건 충족). 번들 skill namespace = `plugin:skill` 콜론(`atp:task`). 호출 토큰 = **`$task`** (사용자 대화형 실측 2026-06-10 + 공식 docs `$` skill 멘션 접두). `codex plugin {add,list,remove,marketplace}` CLI 정본·cache 1.4.0·marketplace `.agents/plugins/` 도 확인.
-- **정정 이력**: 호출 토큰을 codex exec 런타임 self-report 근거로 `/task` 단정했던 것은 오류 — self-report 는 컨텍스트 주입값(skill id)에만 유효, UI 입력 토큰 근거 불가. 사용자 실측으로 `$task` 확정 후 전 문서 정정.
-- **잔여(소)**: `$atp:task` 콜론 형태 수용 여부. env var `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성.
+- **해소**: `skills:"./skills/"` 선언 후 재설치(`codex plugin add`) → `codex exec -s read-only` 런타임 레지스트리에 `atp:task`/`atp:init` **노출 확인**(충분조건 충족). 번들 skill namespace = `plugin:skill` 콜론(`atp:task`). 호출 = **`$atp:task`** (사용자 대화형 전사 2026-06-10 — 명시 호출 인식·SKILL 본문/plugin.json Read·설치 버전 1.4.0 정확 보고. 공식 docs `$` skill 멘션 접두 cited). `codex plugin {add,list,remove,marketplace}` CLI 정본·cache 1.4.0·marketplace `.agents/plugins/` 도 확인.
+- **정정 이력**: 호출 토큰을 codex exec 런타임 self-report 근거로 `/task` 단정했던 것은 오류 — self-report 는 컨텍스트 주입값(skill id)에만 유효, UI 입력 토큰 근거 불가. 사용자 대화형 전사로 `$atp:task` 확정 후 전 문서 정정.
+- **잔여(소)**: 단축형 `$task` 수용 여부. env var `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성. 3-tier 팀 모드 E2E(subagent spawn 실동작).
 - 마커: platform-adapters 의 Codex 호출문법·namespace 셀 verified-empirical 유지(근거 교체: 런타임 self-report → 사용자 실측+cited).
