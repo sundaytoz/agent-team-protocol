@@ -1,5 +1,7 @@
 # Graphify 설치 및 적용
 
+> **2.0.0 재설치 안내**: atp-graphify 2.0.0 부터 add-on 소스가 1.x 의 `addons/` 하위에서 `plugins/atp-graphify` 로 이동해 설치 캐시 루트가 바뀐다. 1.x 설치 사용자는 marketplace update 후 `atp-graphify` 를 재설치해야 한다.
+
 `/graphify` 는 임의의 디렉토리(코드·문서·PDF·이미지 혼재 가능) 를 지식 그래프로 변환하는 Claude Code 스킬이다. 본 템플릿의 에이전트 팀은 graphify 산출물을 1차 탐색 경로로 사용하므로, 프로젝트 구조가 커지면 설치·정례 갱신을 권장한다.
 
 ## 1. 사전 조건
@@ -220,5 +222,5 @@ graph_refresh:
 
 ## 관련 문서
 
-- [agent-team-protocol.md](./agent-team-protocol.md) — §9 확장 트리거 레지스트리 (graph scope ≥ 5 시 lookup 병렬 worker 승격)
-- [documentation-guidelines.md](./documentation-guidelines.md) — graphify 산출물 관리 규칙
+- `agent-team-protocol.md` (base atp 번들 — `${CLAUDE_PLUGIN_ROOT}/docs/development/`) — §9 확장 트리거 레지스트리 (graph scope ≥ 5 시 lookup 병렬 worker 승격)
+- `documentation-guidelines.md` (base atp 번들 — `${CLAUDE_PLUGIN_ROOT}/docs/development/`) — graphify 산출물 관리 규칙

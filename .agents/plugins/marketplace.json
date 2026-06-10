@@ -20,7 +20,7 @@
       "name": "atp-graphify",
       "source": {
         "source": "local",
-        "path": "./addons/graphify"
+        "path": "./plugins/atp-graphify"
       },
       "policy": {
         "installation": "AVAILABLE",

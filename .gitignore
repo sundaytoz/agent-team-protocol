@@ -1,5 +1,6 @@
 # Claude Code agent team session artifacts
 .claude/work-session/
+.atp/work-session/
 
 # OS
 .DS_Store
@@ -7,3 +8,6 @@
 # Editor
 .vscode/
 .idea/
+
+# serena MCP local artifacts
+.serena/

@@ -18,10 +18,10 @@ last_reviewed: 2026-06-10
 검증 명령:
 
 ```bash
-rg -n "development/graphi[f]y|\\./graphify-usage\\.md" $(git ls-files docs templates README.md)
+rg -n "development/graphi[f]y|\\./graphify-usage\\.md" $(git ls-files docs plugins README.md README.en.md)
 ```
 
-기대값: 출력 없음. graphify add-on 문서는 `addons/graphify/docs/graphify-usage.md` 를 가리켜야 한다. `git ls-files` 로 tracked 파일만 검사한다 — self-dogfooding 으로 생성되는 untracked 산출물(`docs/graph/` 등)은 릴리즈 대상이 아니다. 패턴의 `[f]` 는 이 체크리스트 자신의 명령 줄이 매치되는 것을 막는 self-exclusion 이다.
+기대값: 출력 없음. graphify add-on 문서 링크는 `plugins/atp-graphify/docs/graphify-usage.md` 를 가리켜야 하고, base 번들(`plugins/atp/docs/`) 내 문서는 번들 외 파일을 링크하지 않는다(텍스트 언급만 허용). `git ls-files` 로 tracked 파일만 검사한다 — self-dogfooding 으로 생성되는 untracked 산출물은 릴리즈 대상이 아니다. 패턴의 `[f]` 는 이 체크리스트 자신의 명령 줄이 매치되는 것을 막는 self-exclusion 이다.
 
 ## 2. `TODO:실측` 잔존
 
@@ -30,10 +30,10 @@ rg -n "development/graphi[f]y|\\./graphify-usage\\.md" $(git ls-files docs templ
 검증 명령:
 
 ```bash
-rg -n "TODO:실측|미실시|verified-empirical" README.md docs/usage docs/development docs/adr
+rg -n "TODO:실측|미실시|verified-empirical" README.md docs/usage docs/development docs/adr plugins/atp/docs/development
 ```
 
-기대값: 남은 `TODO:실측` 이 `docs/development/platform-adapters.md` 의 SSoT 상태와 일치한다.
+기대값: 남은 `TODO:실측` 이 `plugins/atp/docs/development/platform-adapters.md` 의 SSoT 상태와 일치한다.
 
 ## 3. README ↔ usage 명령어 일치
 
@@ -42,10 +42,10 @@ README 의 빠른 설치·호출 예시와 `docs/usage/` 의 체크리스트·FA
 검증 명령:
 
 ```bash
-rg -n "\\$task|\\$atp:task|/atp:task|codex plugin (marketplace add|add)" README.md docs/usage docs/development/platform-adapters.md
+rg -n "\\$task|\\$atp:task|/atp:task|codex plugin (marketplace add|add)" README.md docs/usage plugins/atp/docs/development/platform-adapters.md
 ```
 
-기대값: Codex 기본 호출(주 표기)은 `$atp:task`. `$task` 는 실측 검증된(verified-empirical 2026-06-10) 단축형 별칭으로 병기만 허용하고, 주 표기로 단정하지 않는다 — [platform-adapters.md](./platform-adapters.md) 검증 체크리스트와 동일 기준.
+기대값: Codex 기본 호출(주 표기)은 `$atp:task`. `$task` 는 실측 검증된(verified-empirical 2026-06-10) 단축형 별칭으로 병기만 허용하고, 주 표기로 단정하지 않는다 — [platform-adapters.md](../../plugins/atp/docs/development/platform-adapters.md) 검증 체크리스트와 동일 기준.
 
 ## 4. Marketplace manifest 동기화
 
@@ -54,21 +54,21 @@ Claude, Codex, marketplace 정본의 plugin 이름·버전·source 경로가 같
 검증 명령:
 
 ```bash
-rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|agent-team-protocol' .claude-plugin .codex-plugin .agents/plugins
+rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|agent-team-protocol' .claude-plugin .codex-plugin .agents/plugins plugins/atp/.claude-plugin plugins/atp/.codex-plugin plugins/atp-graphify/.claude-plugin plugins/atp-graphify/.codex-plugin
 ```
 
-기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다.
+기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다. 모든 marketplace 의 atp source 는 `./plugins/atp`, atp-graphify source 는 `./plugins/atp-graphify`.
 
-버전 invariant: base atp 매니페스트 4개(`.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`addons/graphify/.claude-plugin/plugin.json`, `addons/graphify/.codex-plugin/plugin.json`)도 서로 같아야 한다. base 와 add-on 은 독립 버저닝(불일치 정상). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
+버전 invariant: base atp 매니페스트 4개(`plugins/atp/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/atp/.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`plugins/atp-graphify/.claude-plugin/plugin.json`, `plugins/atp-graphify/.codex-plugin/plugin.json`)도 서로 같아야 한다. base 와 add-on 은 독립 버저닝(불일치 정상). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
 
 ## 5. Agent catalog ↔ agents/ 목록 일치
 
-`docs/development/agent-catalog.md` 는 base `agents/` 10개와 add-on `addons/graphify/agents/` 3개를 모두 포함해야 한다.
+`plugins/atp/docs/development/agent-catalog.md` 는 base `plugins/atp/agents/` 10개와 add-on `plugins/atp-graphify/agents/` 3개를 모두 포함해야 한다.
 
 검증 명령:
 
 ```bash
-find agents addons/graphify/agents -maxdepth 1 -name '*.md' -exec basename {} .md \\; | sort && rg -o '`[a-z0-9-]+`' docs/development/agent-catalog.md | tr -d '`' | sort -u
+find plugins/atp/agents plugins/atp-graphify/agents -maxdepth 1 -name '*.md' -exec basename {} .md \\; | sort && rg -o '`[a-z0-9-]+`' plugins/atp/docs/development/agent-catalog.md | tr -d '`' | sort -u
 ```
 
 기대값: 파일 목록의 에이전트 이름이 카탈로그 표에 모두 등장한다.
@@ -80,7 +80,7 @@ find agents addons/graphify/agents -maxdepth 1 -name '*.md' -exec basename {} .m
 검증 명령:
 
 ```bash
-find docs -mindepth 2 -maxdepth 2 -name '*.md' ! -name index.md -print | sort && find docs -maxdepth 2 -name index.md -print | sort
+find docs plugins/atp/docs -mindepth 2 -maxdepth 2 -name '*.md' ! -name index.md -print | sort && find docs plugins/atp/docs -maxdepth 2 -name index.md -print | sort
 ```
 
-기대값: 새 문서가 속한 카테고리 index 에서 링크된다. `docs/development/` 문서는 [docs/development/index.md](./index.md) 목록도 함께 갱신한다.
+기대값: 새 문서가 속한 카테고리 index 에서 링크된다. 런타임 문서(`plugins/atp/docs/development/`)는 번들 경량본 [plugins/atp/docs/development/index.md](../../plugins/atp/docs/development/index.md) 와 루트 풀본 [docs/development/index.md](./index.md) 양쪽을 갱신한다. 번들 경량 허브 2건(`plugins/atp/docs/index.md`, `plugins/atp/docs/development/index.md`)은 번들 외 문서를 링크하지 않는다(텍스트 언급만 허용 — 루트 허브 ↔ 번들 허브 정합).

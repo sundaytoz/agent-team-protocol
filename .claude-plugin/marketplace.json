@@ -2,17 +2,17 @@
   "name": "agent-team-protocol",
   "owner": { "name": "sundaytoz" },
   "description": "Agent Team Protocol marketplace (self-hosted): base orchestration plugin + optional graphify add-on",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "plugins": [
     {
       "name": "atp",
-      "source": "./",
+      "source": "./plugins/atp",
       "description": "Orchestrator + Advisor + Worker 3-tier agent team orchestration",
       "license": "MIT"
     },
     {
       "name": "atp-graphify",
-      "source": "./addons/graphify",
+      "source": "./plugins/atp-graphify",
       "description": "Optional graphify add-on (knowledge-graph advisors). Requires atp.",
       "license": "MIT"
     }
