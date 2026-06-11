@@ -8,7 +8,8 @@ deciders:
   - template-maintainer
   - stzjungsoo
 supersedes: []
-related_commits: []
+related_commits:
+  - 45af003
 ---
 
 # ADR-0009: 번들 런타임 플랫폼 중립화 (capability 자가판정) + 3사 capability 데이터 동결 보존
