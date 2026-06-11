@@ -105,9 +105,9 @@ A. See §4 (conflict mediation) of [`../../plugins/atp/docs/development/agent-te
 
 A. Check the file ownership map of `implementation-advisor`. Verify no file is assigned to two workers. If a worker returned "limit reached", the advisor reassigns.
 
-### Q. The model is always opus and it costs too much.
+### Q. The model is always the large tier and it costs too much.
 
-A. Check `invocations[].model_choice` in `report.md`. Verify that `phase` / `escalation_reason` / `dispatch_size` match the §5 policy of [`../../plugins/atp/docs/development/agent-team-protocol.md`](../../plugins/atp/docs/development/agent-team-protocol.md). If `model: opus` keeps appearing with `escalation_reason: null`, explicitly remind the orchestrator prompt: "default sonnet, escalate to opus only on §5.2 triggers".
+A. Check `invocations[].model_choice` in `report.md`. Verify that `phase` / `escalation_reason` / `dispatch_size` / `capped` match the §5 policy of [`../../plugins/atp/docs/development/agent-team-protocol.md`](../../plugins/atp/docs/development/agent-team-protocol.md). If `tier: large` keeps appearing with `escalation_reason: null`, explicitly remind the orchestrator prompt: "default medium, escalate to large only on §5.2 triggers". Tiers are platform-neutral (small/medium/large) — the actual model slug is recorded in `resolved_model` (per-platform mapping: platform-adapters §1.6).
 
 ### Q. My session was interrupted. How do I resume?
 
