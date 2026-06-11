@@ -60,7 +60,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   │       ├── index.md              ← 번들 전용 경량본 (런타임 6건만)
 │   │   │       ├── agent-team-protocol.md ← 3-tier 운영 권위 레퍼런스 (§1~§14)
 │   │   │       ├── agent-catalog.md      ← 에이전트 카탈로그 (base 10 + add-on 3)
-│   │   │       ├── platform-adapters.md  ← 플랫폼 capability tier·호출 문법 정본
+│   │   │       ├── platform-adapters.md  ← 호스트 capability tier 정의·자가판정 정본
 │   │   │       ├── documentation-guidelines.md
 │   │   │       └── search-tool-matrix.md
 │   │   ├── templates/                    ← init 스캐폴딩 원본 (init 이 소비 프로젝트로 복사)

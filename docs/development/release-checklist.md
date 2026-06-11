@@ -33,7 +33,7 @@ rg -n "development/graphi[f]y|\\./graphify-usage\\.md" $(git ls-files docs plugi
 rg -n "TODO:실측|미실시|verified-empirical" README.md docs/usage docs/development docs/adr plugins/atp/docs/development
 ```
 
-기대값: 남은 `TODO:실측` 이 `plugins/atp/docs/development/platform-adapters.md` 의 SSoT 상태와 일치한다.
+기대값: 플랫폼 실측 상태의 동결 SSoT 는 [ADR-0009](../adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록이다(갱신 의무 없음 — 새 실측은 신규 ADR). `TODO:실측` 은 (a) 사람용 문서(README·docs/usage)의 플랫폼 병기 항목, (b) ADR 이력 문서, (c) 번들 내 마커 체계 *설명* 줄(예: platform-adapters §5 self-checklist 의 분류 안내), (d) 이 체크리스트 자신의 명령·기대값 줄(self-match)에만 존재한다 — 번들 런타임의 플랫폼별 실측 표·어댑터에는 잔존 0.
 
 ## 3. README ↔ usage 명령어 일치
 
@@ -42,10 +42,10 @@ README 의 빠른 설치·호출 예시와 `docs/usage/` 의 체크리스트·FA
 검증 명령:
 
 ```bash
-rg -n "\\$task|\\$atp:task|/atp:task|codex plugin (marketplace add|add)" README.md docs/usage plugins/atp/docs/development/platform-adapters.md
+rg -n "\\$task|\\$atp:task|/atp:task|codex plugin (marketplace add|add)" README.md docs/usage
 ```
 
-기대값: Codex 기본 호출(주 표기)은 `$atp:task`. `$task` 는 실측 검증된(verified-empirical 2026-06-10) 단축형 별칭으로 병기만 허용하고, 주 표기로 단정하지 않는다 — [platform-adapters.md](../../plugins/atp/docs/development/platform-adapters.md) 검증 체크리스트와 동일 기준.
+기대값: Codex 기본 호출(주 표기)은 `$atp:task`. `$task` 는 실측 검증된(verified-empirical 2026-06-10) 단축형 별칭으로 병기만 허용하고, 주 표기로 단정하지 않는다 — [ADR-0009](../adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록 F(구 검증 체크리스트)와 동일 기준. 번들 런타임 문서는 플랫폼별 호출 토큰을 열거하지 않으므로 검사 대상에서 제외한다.
 
 ## 4. Marketplace manifest 동기화
 

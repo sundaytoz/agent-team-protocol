@@ -22,7 +22,7 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 | Codex CLI | Supported | `$atp:task` or `$task` | `AGENTS.md` | Install, skill exposure, invocation, and body loading verified on 2026-06-10 with codex-cli 0.138.0; subagent spawn is based on cited official docs, so team-mode E2E smoke testing is recommended |
 | Gemini CLI | Planned | `/atp:task` planned | `GEMINI.md` | Design documented as Tier A-flat; release artifact not generated yet |
 
-The canonical platform matrix, invocation syntax, and capability tiers live in [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md).
+The canonical capability-tier definitions and host self-assessment rules live in [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md). The per-platform invocation syntax and verification markers in the table above are frozen as history in the appendices of [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) — the bundled runtime no longer enumerates platforms and works by capability self-assessment, so ATP can also run on host CLIs not listed here.
 
 ---
 
