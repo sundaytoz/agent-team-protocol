@@ -10,7 +10,7 @@ deciders:
 supersedes:
   - ADR-0006 (L34 의 "gitignore 대상이라 세션 종료 후 소실된다" 단정을 무효화 — ADR-0006 본문은 불변)
 related_commits:
-  - TBD (force-push 후 갱신)
+  - 0aa5625 (work-session 추적 분할 정책 — 본 ADR 결정 구현)
 ---
 
 # ADR-0010: work-session 추적 분할 정책 — 플러그인 기본=추적, 레포별 opt-out 허용, 이 소스 레포는 opt-out
