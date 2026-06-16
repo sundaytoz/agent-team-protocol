@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for reporting. Please fill in the details below."
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: "What happened?"
+      description: "Describe what went wrong."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Steps to reproduce"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected behavior"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: "Platform / version (e.g. Claude Code, Codex 0.138.0)"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Which part?"
+      options:
+        - "atp base"
+        - "atp-graphify"
+        - "docs"
+        - "templates"
+        - "other"
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Relevant logs or session id"
+    validations:
+      required: false

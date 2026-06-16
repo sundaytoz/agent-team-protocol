@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "Security vulnerability"
+    url: "https://github.com/sundaytoz/agent-team-protocol/security/advisories/new"
+    about: "Report security issues privately via GitHub Security Advisory."
+  - name: "Questions & support"
+    url: "https://github.com/sundaytoz/agent-team-protocol/blob/main/.github/SUPPORT.md"
+    about: "Read the support guide before opening an issue."
+  - name: "Documentation"
+    url: "https://github.com/sundaytoz/agent-team-protocol/blob/main/docs/index.md"
+    about: "Start here (docs-first)."

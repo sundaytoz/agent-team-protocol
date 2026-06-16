@@ -1,0 +1,12 @@
+# CODEOWNERS
+#
+# Purpose: automatically request code owners as reviewers on pull requests
+# that touch matching paths. GitHub uses this file to assign reviewers.
+#
+# Format: a path pattern, followed by whitespace, followed by one or more
+# @handles (e.g. "path/pattern @owner"). Later matching rules take precedence.
+#
+# This is a single-maintainer repository, so a single global rule below
+# assigns every change to the sole maintainer.
+
+* @stzjungsoo
