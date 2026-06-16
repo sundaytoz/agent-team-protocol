@@ -4,12 +4,30 @@ title: Release Checklist
 description: ATP 릴리즈 전 문서·매니페스트 동기화 점검 목록.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-10
+last_reviewed: 2026-06-16
 ---
 
 # Release Checklist
 
 릴리즈 직전에는 아래 항목을 확인한다. 이 체크리스트는 2026-06-10 문서 감사에서 실제로 발견된 결함 유형을 기준으로 한다.
+
+## 0. 릴리즈 트리거 (진입 조건)
+
+§1~§6 은 **bump 이 일어난다는 전제** 의 사후 invariant 점검이다. bump 자체가 트리거되지 않으면 점검도 누락된다. 본 절은 릴리즈를 **언제** 시작해야 하는지의 진입 조건이다.
+
+- **트리거 — feat 머지 = release 완결 의무**: user-facing feat(소비자 동작·인터페이스에 영향을 주는 변경)가 `main` 에 머지되면, 같은 작업 단위 안에서 manifest version bump + `/plugin update` 도달까지를 release 완결 조건으로 본다. `/plugin update` 는 manifest version 차이로만 갱신을 감지하므로, feat 가 main 에 들어가도 bump 이 main 에 도달하지 않으면 소비자에게 무증상으로 미도달한다.
+- **이월 금지 — 메모는 트리거가 아니다**: bump 을 후속 release 로 미룰 때 평문 메모(TEMPLATE_DEV "잔여" 등)로 남기면 잊힌다(2026-06-09 → 2026-06-16 약 1주 방치 실증). 이월 시 추적 가능한 Open Item 으로 격리하고 `release-pending` 태그를 붙여 다음 세션 진입 시 우선 확인한다.
+- **bump 대상 브랜치 = 소비자 추적 ref**: bump/release 커밋은 소비자가 추적하는 ref(보통 `main`) 기반 release 브랜치에서 수행한다. 커밋 직전 현재 HEAD 와 `origin/main` 의 관계(ahead/behind/diverged)·내용 동일성을 진단한다. 이미 머지 완료된 stale 로컬 feat 브랜치에 bump 하면 PR 머지 후에도 update 미도달이 반복된다.
+
+검증 명령:
+
+```bash
+git fetch origin main -q
+last_bump=$(git log -1 --format=%h -S'"version": "2.' -- plugins/atp/.claude-plugin/plugin.json origin/main)
+git log --oneline ${last_bump}..origin/main --grep='^feat' --grep='!:'
+```
+
+기대값: 출력이 **비어있으면** 마지막 version bump 이후 user-facing feat 머지가 없으므로 release 불요. 출력이 **비어있지 않으면** 미릴리즈 feat 가 존재하므로 §4 버전 invariant 점검 **전에** version bump 이 선행되어야 하고, 그 bump 커밋이 `origin/main` 에 도달하는 경로(PR base=main)인지 확인한다.
 
 ## 1. 상대 링크 유효성
 
