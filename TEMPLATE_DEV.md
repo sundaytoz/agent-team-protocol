@@ -44,10 +44,10 @@ Top 5 이슈 (혼합 심각도):
 
 ### 원본 자료 접근 전략
 
-평가 세션 산출물은 `.claude/work-session/20260506-170447/` 에 있으나 이 디렉토리는 `.gitignore` 대상 (세션 임시 산출물 규약). 즉 **영구 링크 불가**. 따라서:
+평가 세션 산출물은 `.atp/work-session/20260506-170447/` 에 있으나(1차 마이그레이션으로 `.claude/` 에서 이관), 이 레포는 work-session 을 **opt-out(gitignore)** 하므로(public + 발화 인용 노출 회피 — ADR-0010) 공개 커밋엔 없다. 즉 **영구 링크 불가**. 따라서:
 
 - **요지·결론**은 본 문서 §2 와 §3 에 **임베드**한다 (위 표 + 아래 백로그).
-- **원문** 이 필요할 경우 세션을 보존한 기여자에게 요청하거나, 재조사 세션을 돌려 재생성한다. 재조사는 `/task 템플릿 이식성 재평가` 로 가능.
+- **원문**은 세션을 보존한 로컬(이 레포의 gitignore 된 `.atp/work-session/`)에서 열람하거나, `/atp:task 템플릿 이식성 재평가` 로 재생성한다.
 - 향후 공식 평가 세션 결과는 본 문서에 요약 임베드 + **ADR 수준의 중요 결정**은 `docs/adr/` (도입 후) 에 영구 보존.
 
 ---
@@ -292,6 +292,8 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-10 | 20260610-173353 | 모델 정책 플랫폼 중립화: §5 tier(small/medium/large)+effort 직교 노브+cap 규칙(§5.6)+report 스키마 v2, platform-adapters §1.6 모델 tier 매핑 신설, 축1 Codex spawn verified-empirical 격상, spawn=invocation 기록 의무 명문화, SKILL/FAQ/README 동기화 | ADR-0008. a976e98 feedback inbox 는 원격 브랜치 삭제로 제거(내용은 본 세션이 정식 처리) |
 | 2026-06-10 | 20260610-093314 | Codex 호출 토큰 정정: `/task`(런타임 self-report 오판) → **`$task`**(사용자 대화형 실측 + 공식 docs `$` skill 멘션 접두). 7파일 전수 정정 + init upsert 동적 스모크(3회 멱등, `$task` 보존) PASS | 교훈: 런타임 self-report 는 UI 토큰 근거 불가 — platform-adapters §1.1 마커 목록에 명문화 |
 | 2026-06-10 | 20260610-093314 | Codex 대화형 전사 확보: `$atp:task` 명시 호출 인식 + SKILL 본문 로드 + 버전 정확 보고 → 호출 표기 `$atp:task` 로 최종 통일(단축형 `$task` 는 TODO 격하). README 지원 플랫폼 표 + Codex 테스트 완료 체크리스트 신설(내부 경로 sanitize) | F-3PLAT-6 추가 해소. 잔여: `$task` 단축형·E2E spawn |
+| 2026-06-11 | 20260611-093639 | 번들 런타임 플랫폼 중립화: platform-adapters 를 "capability 자가판정" 문서로 재작성(3사 matrix·판정표·어댑터 제거), 실측 데이터는 ADR-0009 부록 A~F 동결 이관(마커 13/16/33/25/6 전수 보존), init render_block 토큰 주입형 단일 템플릿 전환, task/init 지침파일 3종 열거 중립화, 프로토콜 §1.6→§6 포인터 갱신 | ADR-0009 (ADR-0006 부분 supersede). 15/15 AC + init 동적 스모크 PASS. 사람용 문서 3사 병기는 유지 |
+| 2026-06-16 | 20260616-094150 | work-session 추적 정책: **플러그인 기본=추적 + 레포별 opt-out**. init/task scaffolding 추적 기본(소비 레포 전파), 프로토콜 §7 추적정책+opt-out 명문, §4.7 AC 정식화 self-audit 게이트 신설. **이 소스 레포는 public + user_signals 발화인용 노출로 opt-out(gitignore 유지, 미추적)**. docs 동기화 | ADR-0010 (ADR-0006 L34 supersede). 1차안(소스도 추적)을 사용자 정정으로 split — PR #7 재작성/force-push |
 
 ### 향후 확장 규약
 

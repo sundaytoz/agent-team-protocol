@@ -107,7 +107,7 @@ A. Check the file ownership map of `implementation-advisor`. Verify no file is a
 
 ### Q. The model is always the large tier and it costs too much.
 
-A. Check `invocations[].model_choice` in `report.md`. Verify that `phase` / `escalation_reason` / `dispatch_size` / `capped` match the §5 policy of [`../../plugins/atp/docs/development/agent-team-protocol.md`](../../plugins/atp/docs/development/agent-team-protocol.md). If `tier: large` keeps appearing with `escalation_reason: null`, explicitly remind the orchestrator prompt: "default medium, escalate to large only on §5.2 triggers". Tiers are platform-neutral (small/medium/large) — the actual model slug is recorded in `resolved_model` (per-platform mapping: platform-adapters §1.6).
+A. Check `invocations[].model_choice` in `report.md`. Verify that `phase` / `escalation_reason` / `dispatch_size` / `capped` match the §5 policy of [`../../plugins/atp/docs/development/agent-team-protocol.md`](../../plugins/atp/docs/development/agent-team-protocol.md). If `tier: large` keeps appearing with `escalation_reason: null`, explicitly remind the orchestrator prompt: "default medium, escalate to large only on §5.2 triggers". Tiers are platform-neutral (small/medium/large) — the actual model slug is recorded in `resolved_model` (tier-to-slug mapping principle: platform-adapters §6).
 
 ### Q. My session was interrupted. How do I resume?
 

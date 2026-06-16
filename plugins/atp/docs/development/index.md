@@ -14,7 +14,7 @@ last_reviewed: 2026-06-10
 ## 목록
 
 - [agent-team-protocol.md](./agent-team-protocol.md) — 3-tier 에이전트 팀 운영 프로토콜 (권위 레퍼런스)
-- [platform-adapters.md](./platform-adapters.md) — 플랫폼 capability tier · 호출 문법 (Layer 1~2 권위)
+- [platform-adapters.md](./platform-adapters.md) — 호스트 capability tier 정의 · 자가판정 절차 (권위)
 - [agent-catalog.md](./agent-catalog.md) — base 에이전트 카탈로그
 - [search-tool-matrix.md](./search-tool-matrix.md) — 탐색 도구 선택 매트릭스
 - [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙

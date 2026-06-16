@@ -26,11 +26,11 @@ trigger: /task
 
 `§0 init 가드` 완료 직후, `§1 프로토콜 로드` 진입 전에 아래를 1회 수행한다.
 
-지침파일(CLAUDE.md / AGENTS.md / GEMINI.md 중 존재하는 것)을 확인해 `<!-- atp:migrate:begin -->` 마커가 있으면:
+프로젝트 루트의 지침파일(자기 호스트의 규약 파일을 1순위로, 호환 후보 집합은 init SKILL §2 `detect_guidance_files` 와 동일 — 존재하는 것)을 확인해 `<!-- atp:migrate:begin -->` 마커가 있으면:
 
 1. **디렉토리 이관 (비파괴)**: `.claude/work-session` 이 존재하고 `.atp/work-session` 이 없으면 `mkdir -p .atp && git mv .claude/work-session .atp/work-session`(git 미추적 환경이면 `mv .claude/work-session .atp/work-session`). 둘 다 존재하면(부분 이관) `.claude/work-session/` 내 각 sid 를 `.atp/work-session/` 로 mv 병합(동명 sid 는 덮어쓰지 않음). 구 디렉토리 미존재면 no-op. **삭제 아님 — 이동.**
-2. **`.gitignore` 보장**: `.atp/work-session/` 라인이 없으면 1줄 append.
-3. **블록 자기삭제**: 위 1~2 가 모두 성공(또는 no-op)한 경우에만, 존재하는 지침파일(CLAUDE.md / AGENTS.md / GEMINI.md) 각각에서 `<!-- atp:migrate:begin -->` ~ `<!-- atp:migrate:end -->` 구간을 in-place 삭제한다. 1~2 중 mv 실패 시 블록을 남기고 1줄 경고만 출력.
+2. **`.gitignore` 추적 보장**: `.atp/work-session/` 라인이 **있으면 1줄 제거**(없으면 no-op) — work-session 은 git 추적이 기본(ADR-0010). 구경로 `.claude/work-session/` 라인은 유지.
+3. **블록 자기삭제**: 위 1~2 가 모두 성공(또는 no-op)한 경우에만, 존재하는 각 지침파일에서 `<!-- atp:migrate:begin -->` ~ `<!-- atp:migrate:end -->` 구간을 in-place 삭제한다. 1~2 중 mv 실패 시 블록을 남기고 1줄 경고만 출력.
 4. **고지**: "ATP 경로 마이그레이션 1회 완료 — `.claude/work-session/` → `.atp/work-session/` 이관 + atp:migrate 블록 제거됨" 을 1줄 출력.
 
 마커가 없으면 이 절 전체를 즉시 skip 하고 §1 로 진행한다.
@@ -139,7 +139,7 @@ requirements-advisor
 
 ### 6. 각 호출에 모델 override
 
-프로토콜 §5 루브릭으로 판단 천장(tier: `small` / `medium` / `large`)을 평가한 뒤 호스트 CLI 의 per-call override 문법으로 지정한다(플랫폼별 문법·슬러그 매핑: platform-adapters §1.6 — 예: Claude Code 는 Agent 툴 `model` 파라미터, Codex/Gemini 는 agent 파일/frontmatter `model`, 생략 시 parent inherit).
+프로토콜 §5 루브릭으로 판단 천장(tier: `small` / `medium` / `large`)을 평가한 뒤 호스트 CLI 의 per-call override 문법으로 지정한다(tier→슬러그 매핑 원칙: platform-adapters §6 — 호스트가 자기 라인업·자기 override 문법으로 해석한다. 생략 시 parent 상속).
 
 - **effort** (§5.5): 직교 노브 — 미지원 플랫폼은 no-op.
 - **cap** (§5.6): orchestrator 자기 tier 를 초과하는 지정 금지 — 초과 산출 시 자동 clamp + `capped`/`capped_from` 기록. 자기 tier 판정 불가 시 override 미지정(parent 상속).

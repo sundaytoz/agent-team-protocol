@@ -22,7 +22,7 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | Codex CLI | ✅ 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | 설치·skill 노출·호출·본문 로드 실측 (2026-06-10, codex-cli 0.138.0). subagent spawn 은 공식 문서 근거(cited) — 팀 모드 E2E 스모크 권장 |
 | Gemini CLI | 🚧 계획 | `/atp:task` (예정, TODO:실측) | `GEMINI.md` | 문서 근거 설계 완료(Tier A-flat) — 배포 산출물 미생성 |
 
-지원 플랫폼별 호출 문법, capability tier, 미실측 마커의 정본은 [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) 다.
+capability tier 정의·호스트 자가판정 규칙의 정본은 [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) 다. 위 표의 플랫폼별 호출 문법·실측 마커의 동결 이력 정본은 [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록이다 — 번들 런타임은 플랫폼을 열거하지 않고 capability 자가판정으로 동작하므로, 표에 없는 호스트 CLI 에서도 사용할 수 있다.
 
 ---
 
@@ -39,7 +39,7 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | 문제 | 해법 |
 |---|---|
 | 컨텍스트 오염 | advisor 단위로 격리 — 특히 `verification-advisor` 는 **구현 코드·설계 문서 접근 금지** |
-| 모델 비용 | orchestrator 가 호출 시점에 판단 천장 평가(tier `small`/`medium`/`large`) 후 호스트 CLI 의 per-call override 로 지정 — 플랫폼별 슬러그 매핑은 platform-adapters §1.6 |
+| 모델 비용 | orchestrator 가 호출 시점에 판단 천장 평가(tier `small`/`medium`/`large`) 후 호스트 CLI 의 per-call override 로 지정 — tier→슬러그 매핑 원칙은 platform-adapters §6 (호스트가 자기 라인업으로 해석) |
 | 파일 경합 | `implementation-advisor` 가 **파일 소유권 맵** 으로 1파일 1worker 보장 + 의존 있는 건 순차 |
 
 ---

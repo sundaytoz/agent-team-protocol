@@ -60,7 +60,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   │       ├── index.md              ← 번들 전용 경량본 (런타임 6건만)
 │   │   │       ├── agent-team-protocol.md ← 3-tier 운영 권위 레퍼런스 (§1~§14)
 │   │   │       ├── agent-catalog.md      ← 에이전트 카탈로그 (base 10 + add-on 3)
-│   │   │       ├── platform-adapters.md  ← 플랫폼 capability tier·호출 문법 정본
+│   │   │       ├── platform-adapters.md  ← 호스트 capability tier 정의·자가판정 정본
 │   │   │       ├── documentation-guidelines.md
 │   │   │       └── search-tool-matrix.md
 │   │   ├── templates/                    ← init 스캐폴딩 원본 (init 이 소비 프로젝트로 복사)
@@ -104,7 +104,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │
 ├── CLAUDE.md                             ← 기존 파일 하단에 <!-- atp:begin --> 블록 멱등 append
 │                                             (docs-first 정책 + /atp:task 진입 안내 포함)
-├── .gitignore                            ← .atp/work-session/ 라인 추가 (없는 경우)
+├── .gitignore                            ← .atp/work-session/ 라인 제거 (있는 경우) — 추적 기본
 │
 └── docs/
     ├── index.md                          ← docs-first 허브
@@ -136,10 +136,14 @@ init 후 설정 절차는 [../usage/setup-checklist.md](../usage/setup-checklist
 
 ## 3. 런타임 디렉토리
 
-`/atp:task` 실행 시 세션마다 생성된다. `.gitignore` 로 커밋 제외.
+`/atp:task` 실행 시 세션마다 생성된다. 권위 정의: [프로토콜 §7](../../plugins/atp/docs/development/agent-team-protocol.md#7-공유-상태-레이아웃).
+
+**추적 정책 (ADR-0010)**: 플러그인 기본은 추적이다 — 소비 레포의 `/atp:init` 은 `.gitignore` 에서 `.atp/work-session/` 라인을 제거하여 추적을 활성화한다. 추적을 원치 않는 레포는 `.gitignore` 에 `.atp/work-session/` 1줄을 추가해 opt-out 할 수 있다. **이 소스 레포(`agent-team-protocol`)는 opt-out 을 행사한다** — public 레포이며 work-session report 에 유지자 발화(`user_signals`)와 retrospective 내부 비판이 기록되어 공개 노출이 부적절하기 때문이다. 따라서 이 레포에서는 `.atp/work-session/` 이 `.gitignore` 대상이며 커밋되지 않는다.
 
 ```
 .atp/work-session/<sid>/            ← 세션 공유 상태. sid = YYYYMMDD-HHMMSS
+                                        플러그인 기본=추적 / 레포별 opt-out 가능(.gitignore 1줄)
+                                        이 소스 레포는 opt-out(미추적)
     ├── report.md                   ← 모든 의사결정·invocation·회고 누적
     ├── requirements.md
     ├── research/

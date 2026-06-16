@@ -10,7 +10,7 @@
 - [agent-team-protocol.md](../../plugins/atp/docs/development/agent-team-protocol.md) — Orchestrator + Advisor + Worker 3-tier 에이전트 팀 운영 규약 (호출 모델, 충돌 조정, 모델 선택, 보고서 스키마, 확장 트리거)
 - [agent-catalog.md](../../plugins/atp/docs/development/agent-catalog.md) — 에이전트 정의 요약 카탈로그 (base `atp` 10개 + 옵트인 `atp-graphify` 3개. 권위 원본은 `plugins/atp/agents/*.md` 및 `plugins/atp-graphify/agents/*.md`)
 - [documentation-guidelines.md](../../plugins/atp/docs/development/documentation-guidelines.md) — 문서 작성 가이드라인
-- [platform-adapters.md](../../plugins/atp/docs/development/platform-adapters.md) — Claude Code / Codex / Gemini 3개 플랫폼을 지원할 때 ATP 공통 개념과 플랫폼별 명령 문법·tier 를 분리하는 규칙
+- [platform-adapters.md](../../plugins/atp/docs/development/platform-adapters.md) — 호스트 capability tier 정의와 자가판정 절차. 호스트 고유 문법·슬러그는 에이전트가 자율 적용 (과거 3사 실측 데이터는 [ADR-0009](../adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록에 동결)
 - [search-tool-matrix.md](../../plugins/atp/docs/development/search-tool-matrix.md) — 탐색/검색 도구 선택 매트릭스 (LSP, graphify, Grep, Glob, Read, WebFetch 목적별 기준)
 
 기여자용 문서 (이 디렉토리 — 번들 제외):
