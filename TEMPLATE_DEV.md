@@ -286,7 +286,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-05-06 | 20260506-172731 | TEMPLATE_DEV.md 신규, README §4.1 복사 제외 확장 | 세션 0 — 백로그 체계화 |
 | 2026-06-01 | 20260601-115424 | plugin-only 전환 (cp-R 폐기, 2-플러그인 atp+atp-graphify) | README/CLAUDE.md/TEMPLATE_DEV.md 재작성, G-P0-3·G-P1-B/G/H 완료 마킹 |
 | 2026-06-09 | 20260609-125316 | 3-플랫폼 지원(Claude/Codex/Gemini): platform-adapters 3층, capability matrix, Tier A/A-flat/B, init 3-지침파일, AGENTS.md 교정, init `$task` upsert 버그 fix | 커밋 4e9d9ea·3472883. 후속 §7 등재 |
-| 2026-06-09 | 20260609-125316 | F-3PLAT-3: single-read `.atp/work-session` 전환(본문 14건 치환) + 자기삭제 마이그레이션 블록(init 삽입·task §0.5 실행) + platform-adapters 권위 반전 | 커밋 3eb0bf2. 12/12 AC + 동적 스모크 PASS. 잔여: version bump(release) |
+| 2026-06-09 | 20260609-125316 | F-3PLAT-3: single-read `.atp/work-session` 전환(본문 14건 치환) + 자기삭제 마이그레이션 블록(init 삽입·task §0.5 실행) + platform-adapters 권위 반전 | 커밋 3eb0bf2. 12/12 AC + 동적 스모크 PASS. ~~잔여: version bump(release)~~ → 20260616-104333 에서 2.1.0 release 로 해소 |
 | 2026-06-09 | 20260609-125316 | F-3PLAT-1/2: 코어 protocol §2.8 capability tier 동기화(역할tier↔capability tier 직교) + §2.7 research-반전 plan게이트 트리거 | 커밋 5b5a909. 9/9 AC PASS. 3-1 release-ready |
 | 2026-06-09 | 20260609-173743 | Codex 구조 정정(interim): `.agents/plugins/marketplace.json` 정본 커밋 + `plugins/atp` symlink(비정본 명시) + `.codex-plugin/plugin.json` skills 선언 + platform-adapters 호출문법 `@`-반전(정확토큰 TODO:실측 보존) + README/CLAUDE/AGENTS/file-map `.codex-plugin` 설명 정정 + init AGENTS 블록 `@` 교정 | F-3PLAT-5/6 후속 등재. 정본 subdir 재배치는 백로그 |
 | 2026-06-10 | 20260610-173353 | 모델 정책 플랫폼 중립화: §5 tier(small/medium/large)+effort 직교 노브+cap 규칙(§5.6)+report 스키마 v2, platform-adapters §1.6 모델 tier 매핑 신설, 축1 Codex spawn verified-empirical 격상, spawn=invocation 기록 의무 명문화, SKILL/FAQ/README 동기화 | ADR-0008. a976e98 feedback inbox 는 원격 브랜치 삭제로 제거(내용은 본 세션이 정식 처리) |
@@ -294,6 +294,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-10 | 20260610-093314 | Codex 대화형 전사 확보: `$atp:task` 명시 호출 인식 + SKILL 본문 로드 + 버전 정확 보고 → 호출 표기 `$atp:task` 로 최종 통일(단축형 `$task` 는 TODO 격하). README 지원 플랫폼 표 + Codex 테스트 완료 체크리스트 신설(내부 경로 sanitize) | F-3PLAT-6 추가 해소. 잔여: `$task` 단축형·E2E spawn |
 | 2026-06-11 | 20260611-093639 | 번들 런타임 플랫폼 중립화: platform-adapters 를 "capability 자가판정" 문서로 재작성(3사 matrix·판정표·어댑터 제거), 실측 데이터는 ADR-0009 부록 A~F 동결 이관(마커 13/16/33/25/6 전수 보존), init render_block 토큰 주입형 단일 템플릿 전환, task/init 지침파일 3종 열거 중립화, 프로토콜 §1.6→§6 포인터 갱신 | ADR-0009 (ADR-0006 부분 supersede). 15/15 AC + init 동적 스모크 PASS. 사람용 문서 3사 병기는 유지 |
 | 2026-06-16 | 20260616-094150 | work-session 추적 정책: **플러그인 기본=추적 + 레포별 opt-out**. init/task scaffolding 추적 기본(소비 레포 전파), 프로토콜 §7 추적정책+opt-out 명문, §4.7 AC 정식화 self-audit 게이트 신설. **이 소스 레포는 public + user_signals 발화인용 노출로 opt-out(gitignore 유지, 미추적)**. docs 동기화 | ADR-0010 (ADR-0006 L34 supersede). 1차안(소스도 추적)을 사용자 정정으로 split — PR #7 재작성/force-push |
+| 2026-06-16 | 20260616-104333 | **release: 2.0.0 → 2.1.0** (minor). bb75f21 이후 머지된 feat 3건(work-session 추적·bundle-runtime 중립화·platform-neutral 모델 정책)이 manifest 버전 미bump 로 `/plugin update` 미도달이던 것 해소. manifest 6곳(marketplace claude/codex + atp·atp-graphify plugin.json claude/codex) + 현재버전 서술 문서(CLAUDE/AGENTS/file-map) 동기화. F-3PLAT-3 잔여 version bump 항목 클로즈 | breaking 0건 → minor. `.agents/plugins/marketplace.json` 은 version 필드 없어 제외. 역사 기록(ADR-0007 등) 보존 |
 
 ### 향후 확장 규약
 
@@ -319,7 +320,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - 근거 memory: `research-seed-reversal-plan-gate-delegation`. 우선순위 P2.
 
 ### F-3PLAT-3 — `.claude/work-session` → `.atp/work-session` 경로 이전 전파 ✅ 완료 (커밋 3eb0bf2)
-> **채택**: single-read + orchestrator 실행형 자기삭제 마이그레이션 블록(사용자 결정으로 dual-read 대신 single-read). 설계 `design-f3plat3.md`, 검증 12/12 AC + 로컬 동적 스모크 PASS. **잔여**: 플러그인 version bump(소비 프로젝트 갱신 도달 조건) 는 release 작업에서.
+> **채택**: single-read + orchestrator 실행형 자기삭제 마이그레이션 블록(사용자 결정으로 dual-read 대신 single-read). 설계 `design-f3plat3.md`, 검증 12/12 AC + 로컬 동적 스모크 PASS. ~~**잔여**: 플러그인 version bump(소비 프로젝트 갱신 도달 조건) 는 release 작업에서.~~ → **해소**: 20260616-104333 세션에서 2.0.0 → 2.1.0 release bump.
 
 <details><summary>원래 조사 결론(이력)</summary>
 - 조사: `.claude/work-session/20260609-125316/research/plugin-update-propagation.md`.

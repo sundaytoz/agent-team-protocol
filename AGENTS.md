@@ -14,7 +14,7 @@ agent-team-protocol/
 ├── .codex-plugin/marketplace.json    (Claude 미러 — Codex 는 읽지 않음)
 ├── .agents/plugins/marketplace.json  (Codex marketplace 정본 — 객체형 source)
 ├── plugins/atp/             (base 플러그인 루트 — 설치 시 이 서브트리만 번들로 복사)
-│   ├── .claude-plugin/ .codex-plugin/  (plugin.json — version 2.0.0)
+│   ├── .claude-plugin/ .codex-plugin/  (plugin.json — version 2.1.0)
 │   ├── agents/              (base 에이전트 10개)
 │   ├── skills/task/, skills/init/  (base 스킬)
 │   ├── docs/development/    (런타임 레퍼런스 — 에이전트가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)

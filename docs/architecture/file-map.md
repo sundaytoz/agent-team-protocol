@@ -9,7 +9,7 @@ last_reviewed: 2026-06-10
 
 # 구성 파일 맵
 
-레포 루트는 **마켓플레이스 `agent-team-protocol`** 이고, base 플러그인 `atp` 의 루트는 **`plugins/atp/`**, add-on `atp-graphify` 의 루트는 **`plugins/atp-graphify/`** 서브디렉토리다 (2.0.0 — 설치 시 해당 서브트리만 번들로 복사된다). 이 문서는 세 가지 트리를 설명한다.
+레포 루트는 **마켓플레이스 `agent-team-protocol`** 이고, base 플러그인 `atp` 의 루트는 **`plugins/atp/`**, add-on `atp-graphify` 의 루트는 **`plugins/atp-graphify/`** 서브디렉토리다 (2.1.0 — 설치 시 해당 서브트리만 번들로 복사된다). 이 문서는 세 가지 트리를 설명한다.
 
 1. [레포(플러그인 소스) 트리](#1-레포플러그인-소스-트리)
 2. [init 산출물 트리](#2-init-산출물-트리--소비-프로젝트)
@@ -37,7 +37,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 ├── plugins/
 │   ├── atp/                              ← base 플러그인 루트 (설치 시 이 서브트리만 캐시로 복사)
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, version 2.0.0)
+│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, version 2.1.0)
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json               ← base 플러그인 정의 (skills: "./skills/")
 │   │   ├── agents/                       ← base 에이전트 10개 (graphify 3종 제외)
@@ -72,7 +72,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   └── (gemini-extension manifest)   ← 위치 확정(ADR-0007), 산출물은 F-3PLAT-4 에서 생성 예정
 │   │
 │   └── atp-graphify/                     ← add-on 플러그인 루트 (add-on 설치 시 이 서브트리만 복사)
-│       ├── .claude-plugin/plugin.json    ← add-on 정의 (name: atp-graphify, version 2.0.0, dependencies: ["atp"])
+│       ├── .claude-plugin/plugin.json    ← add-on 정의 (name: atp-graphify, version 2.1.0, dependencies: ["atp"])
 │       ├── .codex-plugin/plugin.json     ← 동일 add-on 정의
 │       ├── agents/                       ← graphify 에이전트 3개
 │       │   ├── graph-refresh-checker.md
