@@ -159,7 +159,7 @@ ATP 산출물 경로가 `.claude/work-session/` 에서 `.atp/work-session/` 로 
      (git 미추적 환경이면 `mv .claude/work-session .atp/work-session`). **삭제 아님 — 이동.**
    - 둘 다 존재(부분 이관)하면: 구 디렉토리 내 세션들을 `.atp/work-session/` 로 mv 병합(동명 sid 덮어쓰지 않음).
    - 구 디렉토리 없으면: no-op.
-2. `.gitignore` 보장: `.atp/work-session/` 라인이 없으면 1줄 append (있으면 skip).
+2. `.gitignore` 추적 보장: `.atp/work-session/` 라인이 **있으면 1줄 제거**(없으면 skip) — work-session 은 git 추적이 기본(ADR-0010). 구경로 `.claude/work-session/` 라인은 유지.
 3. 위 1~2 완료 후, **이 `atp:migrate:begin`~`atp:migrate:end` 블록 전체를 이 지침파일에서 삭제**한다
    (다음 세션 컨텍스트 비용 0). 삭제는 이 파일 1개에 대한 비파괴 in-place 편집이며 §6 게이트 대상 아님.
 
@@ -188,16 +188,18 @@ upsert_migrate_block() {
 
 호출: §2 의 안내블록 upsert 루프와 동일 대상 집합에서, **`[ -d "$PR/.claude/work-session" ]` 가드** 통과 시 `upsert_migrate_block "$target"` 1줄 추가. 가드 실패(신규 프로젝트)면 migrate 블록 삽입 전체 skip.
 
-### 3. .gitignore 라인 보장
+### 3. .gitignore 추적 보장
 
-`${CLAUDE_PROJECT_DIR}/.gitignore` 에 `.atp/work-session/` 라인이 정확히 1줄 있도록 보장한다(grep 후 없을 때만 append — 중복 방지).
+`.atp/work-session/` 은 durable session history 로 **git 추적이 기본**이다 — `.gitignore` 에 추가하지 않는다. 과거 init/migrate 가 추가했을 수 있는 leftover 라인을 제거한다(ADR-0010).
 
 ```bash
 GI="$PR/.gitignore"
-# 신경로 보장 (없을 때만 append)
-grep -qxF '.atp/work-session/' "$GI" 2>/dev/null || echo '.atp/work-session/' >> "$GI"
+# 신경로(.atp/work-session/) ignore 라인이 있으면 제거 — 추적 기본 (비파괴: 라인 1개만 삭제)
+[ -f "$GI" ] && grep -qxF '.atp/work-session/' "$GI" 2>/dev/null \
+  && grep -vxF '.atp/work-session/' "$GI" > "$GI.tmp" && mv "$GI.tmp" "$GI" \
+  && echo "untrack-removed: .atp/work-session/ in $GI"
 # 구경로 라인(.claude/work-session/)은 leftover ignore 목적으로 유지 — 제거하지 않음.
-# (마이그레이션 미수행 프로젝트의 .claude/work-session/ 가 추적되지 않도록)
+# (구경로 산출물은 deprecated 이므로 추적하지 않는다)
 ```
 
 ### 4. 사용자 안내 출력

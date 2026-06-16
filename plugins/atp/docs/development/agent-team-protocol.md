@@ -391,6 +391,17 @@ design-advisor 가 설계 문서의 "검증 포인트" 섹션을 작성할 때, 
 
 **배경**: 2026-06-10 세션(20260610-103316)에서 release-checklist step-1 의 rg 명령이 자기매치 + untracked 오염으로 커밋 시점부터 기대값 충족이 불가능했으나, opus reviewer 의 문서 리뷰도 미탐지했고 orchestrator 의 실제 실행 검증에서야 발견됐다.
 
+### 4.7 AC 정식화 self-audit 게이트
+
+design-advisor 는 AC(검증 포인트)를 작성한 **직후**, 각 AC 를 아래 2축으로 1패스 self-audit 한다. §4.3 이 집합 전수성을, §4.6 이 검증 명령의 실행 가능성을 예방한다면, 본 절은 **AC 기대값의 정식화 자체**(시점·표현)가 견고한지 예방한다.
+
+1. **시점 안정성**: 이 AC 의 기대값이 verification **실행 시점에도 동일한가?** 그 사이 누가 검증 대상을 변경하는가 — 특히 **현재 세션 자신**(자기 work-session 트리처럼 검증 주체가 산출물을 계속 추가하는 대상)인가? 변할 수 있으면 작성 시점 고정 스칼라(예: "파일 수 == 36") 대신 **시점 무관 불변식**(예: `tracked == on-disk`, 두 관측 집합의 동등성, 멱등 조건)으로 쓴다. 카운트가 불가피하면 "N+ 허용" 또는 "기대값은 검증 직전 재측정" 을 명시한다.
+2. **표현 견고성**: 이 AC 가 **단일 리터럴 문자열 grep** 에 의존하는가? 그렇다면 산출물이 **동의·의미 표현**으로 의도를 충족할 때 리터럴 매치 0 → 의미상 PASS 인 산출물을 FAIL 로 떨군다. 의미 불변식 + 수동 판정, 또는 **양방향 계약**(산출물에 의도된 앵커 토큰을 강제 삽입하기로 design 에서 약속하고 AC 가 그 앵커를 검사 → 검증 어휘 == 산출 어휘)으로 설계한다.
+
+자기 work-session 트리를 검증 대상으로 삼는 ATP 구조 특성상 (1) 시점 드리프트는 구조적 함정에 가깝다. verification-advisor 가 "AC 명령 기준 FAIL / 의미 기준 PASS" 로 양가 판정을 내리면, 이는 산출물 결함이 아니라 **AC 정식화 결함** 신호이므로 design 으로 피드백한다(국소 패치로 끝내지 않고 AC 표현을 고친다).
+
+**배경**: 2026-06-16 세션(20260616-094150)에서 AC-3(자기 세션 트리를 작성 시점 카운트 36으로 박음 → 검증 시점 39+) 과 AC-8a(리터럴 `work-session` grep 이 "durable history" 의미 포인터를 놓침) 가 둘 다 verification 1차에서야 드러났다. 둘 다 design 단계 AC 정식화 결함이었고, 작성 직후 본 2축 self-audit 가 있었다면 예방됐다.
+
 ## 5. 모델 선택 정책
 
 에이전트 frontmatter 의 `model:` 필드는 **비워둔다.** Orchestrator 가 호출 시점에 호스트 CLI 의 per-call override 문법으로 지정한다(매핑 원칙: `platform-adapters.md` §6 — 호스트가 자기 라인업·자기 override 문법으로 해석).
@@ -555,6 +566,12 @@ model_choice:
 ```
 
 `sid` = ISO 타임스탬프 `YYYYMMDD-HHMMSS` (프로젝트 타임존 기준). 세션 시작 시 orchestrator 가 디렉토리 생성.
+
+### 추적 정책
+
+`.atp/work-session/` 은 ephemeral scratch 가 아니라 **durable session history** 로 다룬다 — 본 프로토콜의 규정들이 과거 세션 ID(예: `20260507-101342`, `20260610-103316`)를 "배경" evidence record 로 인용하기 때문이다. 따라서 **플러그인 기본값은 git 추적**이며(트리 전체: report.md + research/ + implementation/ + artifacts/ 등), 소비 레포 scaffolding(init) 도 추적을 기본으로 깐다. 구경로 `.claude/work-session/` 는 deprecated 이므로 추적하지 않는다(leftover ignore 유지).
+
+**opt-out**: work-session 은 내부 telemetry 이자 `user_signals` 에 사용자 발화 인용·retrospective 내부 비판을 포함하므로, public 레포나 노출이 부적절한 환경은 `.gitignore` 에 `.atp/work-session/` 1줄을 추가해 추적을 끈다. 이 소스 레포 `agent-team-protocol` 자체가 public + 유지자 발화 인용 때문에 opt-out 한다(ADR-0010). 즉 추적은 기본이되 레포 단위로 선택 가능하다.
 
 ### 재개 규약
 

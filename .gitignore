@@ -1,5 +1,7 @@
 # Claude Code agent team session artifacts
 .claude/work-session/
+# .atp/work-session/: 플러그인 기본은 추적이나, 이 레포는 PUBLIC + 세션 user_signals 에
+# 유지자 발화 인용이 포함돼 opt-out(미추적)한다 — ADR-0010.
 .atp/work-session/
 
 # OS

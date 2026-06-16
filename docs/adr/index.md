@@ -17,3 +17,4 @@
 | [ADR-0007](./ADR-0007-plugin-root-subdirectory.md) | v2.0.0 — 플러그인 루트 서브디렉토리 전환 (plugins/atp/, plugins/atp-graphify/) + Gemini manifest 위치 확정 | accepted | 2026-06-10 |
 | [ADR-0008](./ADR-0008-platform-neutral-model-policy.md) | 모델 선택 정책 플랫폼 중립화 (tier S/M/L + effort 직교 노브) + orchestrator cap 규칙 + report 스키마 v2 | accepted | 2026-06-10 |
 | [ADR-0009](./ADR-0009-bundle-runtime-platform-neutralization.md) | 번들 런타임 플랫폼 중립화 (capability 자가판정) + 3사 capability 데이터 동결 보존 (ADR-0006 부분 supersede) | accepted | 2026-06-11 |
+| [ADR-0010](./ADR-0010-work-session-git-tracking.md) | work-session 추적 분할 정책 — 플러그인 기본=추적, 레포별 opt-out 허용, 이 소스 레포는 public+발화인용+내부비판 노출로 opt-out (ADR-0006 L34 부분 supersede) | accepted | 2026-06-16 |

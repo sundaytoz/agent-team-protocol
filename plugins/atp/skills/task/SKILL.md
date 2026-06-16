@@ -29,7 +29,7 @@ trigger: /task
 프로젝트 루트의 지침파일(자기 호스트의 규약 파일을 1순위로, 호환 후보 집합은 init SKILL §2 `detect_guidance_files` 와 동일 — 존재하는 것)을 확인해 `<!-- atp:migrate:begin -->` 마커가 있으면:
 
 1. **디렉토리 이관 (비파괴)**: `.claude/work-session` 이 존재하고 `.atp/work-session` 이 없으면 `mkdir -p .atp && git mv .claude/work-session .atp/work-session`(git 미추적 환경이면 `mv .claude/work-session .atp/work-session`). 둘 다 존재하면(부분 이관) `.claude/work-session/` 내 각 sid 를 `.atp/work-session/` 로 mv 병합(동명 sid 는 덮어쓰지 않음). 구 디렉토리 미존재면 no-op. **삭제 아님 — 이동.**
-2. **`.gitignore` 보장**: `.atp/work-session/` 라인이 없으면 1줄 append.
+2. **`.gitignore` 추적 보장**: `.atp/work-session/` 라인이 **있으면 1줄 제거**(없으면 no-op) — work-session 은 git 추적이 기본(ADR-0010). 구경로 `.claude/work-session/` 라인은 유지.
 3. **블록 자기삭제**: 위 1~2 가 모두 성공(또는 no-op)한 경우에만, 존재하는 각 지침파일에서 `<!-- atp:migrate:begin -->` ~ `<!-- atp:migrate:end -->` 구간을 in-place 삭제한다. 1~2 중 mv 실패 시 블록을 남기고 1줄 경고만 출력.
 4. **고지**: "ATP 경로 마이그레이션 1회 완료 — `.claude/work-session/` → `.atp/work-session/` 이관 + atp:migrate 블록 제거됨" 을 1줄 출력.
 

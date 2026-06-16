@@ -38,13 +38,17 @@ init 이 프로젝트에 아래 항목을 생성한다.
 - `docs/development/document-category-classification.md` — 카테고리 분류 기준
 - `docs/graph/` 골격 (`index.md` + `.gitignore`)
 - `CLAUDE.md` 에 `<!-- atp:begin --> ... <!-- atp:end -->` docs-first + `/atp:task` 안내 블록 멱등 append
-- `.gitignore` 에 `.atp/work-session/` 라인 추가
+- `.gitignore` 에서 `.atp/work-session/` 라인 제거 (추적 기본 — 라인을 추가하지 않음)
 
 ### 확인
 
 - [ ] `docs/index.md` 가 생성됐는가?
 - [ ] `CLAUDE.md` 에 `<!-- atp:begin -->` 블록이 추가됐는가?
-- [ ] `.gitignore` 에 `.atp/work-session/` 라인이 있는가?
+- [ ] `.gitignore` 에 `.atp/work-session/` 라인이 **없는가**? (추적 기본 — 라인이 없어야 정상)
+
+> **기존(1차 마이그레이션 완료) 소비 레포**: `.gitignore` 에 `.atp/work-session/` 라인이 남아 있다면 해당 1줄을 직접 제거하면 추적이 활성화된다 (구경로 `.claude/work-session/` 라인은 유지).
+
+> **opt-out**: 추적을 원치 않는 레포는 `.gitignore` 에 `.atp/work-session/` 1줄을 추가해 opt-out 할 수 있다. public 레포이거나 work-session 산출물에 내부 발화·비판이 기록되어 공개 노출이 부적절한 경우에 적합하다.
 
 > init 은 멱등하다. 이미 존재하는 파일은 덮어쓰지 않으므로 재실행해도 안전하다.
 

@@ -43,13 +43,17 @@ init generates the following in your project:
 - `docs/development/document-category-classification.md` — category classification criteria
 - `docs/graph/` skeleton (`index.md` + `.gitignore`)
 - An idempotent append of the `<!-- atp:begin --> ... <!-- atp:end -->` docs-first + `/atp:task` guidance block to `CLAUDE.md`
-- A `.atp/work-session/` line added to `.gitignore`
+- Removal of the `.atp/work-session/` line from `.gitignore` if present (tracking is the default — the line is not added)
 
 ### Verify
 
 - [ ] Was `docs/index.md` created?
 - [ ] Was the `<!-- atp:begin -->` block added to `CLAUDE.md`?
-- [ ] Does `.gitignore` contain the `.atp/work-session/` line?
+- [ ] Does `.gitignore` **not** contain the `.atp/work-session/` line? (tracking is the default — the line should be absent)
+
+> **Existing repos (already completed first migration)**: If `.gitignore` still contains a `.atp/work-session/` line, remove that single line manually to activate tracking (keep the `.claude/work-session/` line if present).
+
+> **Opt-out**: Repos that do not want tracking can opt out by adding `.atp/work-session/` as a single line to `.gitignore`. This is appropriate for public repos or cases where work-session output contains internal dialogue or critique that should not be publicly exposed.
 
 > init is idempotent. Existing files are never overwritten, so re-running it is safe.
 
