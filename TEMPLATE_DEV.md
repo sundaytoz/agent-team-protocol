@@ -295,6 +295,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-11 | 20260611-093639 | 번들 런타임 플랫폼 중립화: platform-adapters 를 "capability 자가판정" 문서로 재작성(3사 matrix·판정표·어댑터 제거), 실측 데이터는 ADR-0009 부록 A~F 동결 이관(마커 13/16/33/25/6 전수 보존), init render_block 토큰 주입형 단일 템플릿 전환, task/init 지침파일 3종 열거 중립화, 프로토콜 §1.6→§6 포인터 갱신 | ADR-0009 (ADR-0006 부분 supersede). 15/15 AC + init 동적 스모크 PASS. 사람용 문서 3사 병기는 유지 |
 | 2026-06-16 | 20260616-094150 | work-session 추적 정책: **플러그인 기본=추적 + 레포별 opt-out**. init/task scaffolding 추적 기본(소비 레포 전파), 프로토콜 §7 추적정책+opt-out 명문, §4.7 AC 정식화 self-audit 게이트 신설. **이 소스 레포는 public + user_signals 발화인용 노출로 opt-out(gitignore 유지, 미추적)**. docs 동기화 | ADR-0010 (ADR-0006 L34 supersede). 1차안(소스도 추적)을 사용자 정정으로 split — PR #7 재작성/force-push |
 | 2026-06-16 | 20260616-104333 | **release: 2.0.0 → 2.1.0** (minor). bb75f21 이후 머지된 feat 3건(work-session 추적·bundle-runtime 중립화·platform-neutral 모델 정책)이 manifest 버전 미bump 로 `/plugin update` 미도달이던 것 해소. manifest 6곳(marketplace claude/codex + atp·atp-graphify plugin.json claude/codex) + 현재버전 서술 문서(CLAUDE/AGENTS/file-map) 동기화. F-3PLAT-3 잔여 version bump 항목 클로즈 | breaking 0건 → minor. `.agents/plugins/marketplace.json` 은 version 필드 없어 제외. 역사 기록(ADR-0007 등) 보존 |
+| 2026-06-17 | 20260617-165603 | **release: 2.1.0 → 2.2.0** (minor). research 단계 축-완결성 예방 **§4.8 신설**(완결성-예방 클러스터 §4.3/§4.6/§4.7 합류, 삼각 상호참조 §4.8↔§4.3↔§2.6) + research-advisor (A)축-완결성 자가검증5 (B)동명이인 disambiguation (C)JS-SPA→source_confidence 흡수, §2.6 (B)전수재검 위생규칙. base manifest 4개 bump. ADR-0011. 검증 10/10 PASS. origin/main 기반 release 브랜치(§0 stale 회피, PR#11) | Kord audit 구조적 protocol_feedback. add-on atp-graphify 미변경. 잔여: §8 G-RELCHK-1(이월) |
 
 ### 향후 확장 규약
 
@@ -357,3 +358,24 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - **추가 해소 (2026-06-10)**: 단축형 `$task` 도 동일 skill 로 해석 — 사용자 전사 확인. 호출 토큰 완전 확정 (`$atp:task` 전체형 + `$task` 단축형).
 - **잔여(소)**: env var `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성. 3-tier 팀 모드 E2E(subagent spawn 실동작).
 - 마커: platform-adapters 의 Codex 호출문법·namespace 셀 verified-empirical 유지(근거 교체: 런타임 self-report → 사용자 실측+cited).
+
+---
+
+## 8. 후속 백로그 (세션 20260617-165603 발생)
+
+§4.8 축-완결성 세션에서 retrospective 가 표면화한 구조적 protocol_feedback. 사용자 결정(D-B)으로 본 세션 스코프(§4.8) 밖 이월. report(gitignored) rot 방지 위해 추적 가능 백로그로 등재.
+
+### G-RELCHK-1 — release-checklist §0 "세션 진입 시 브랜치 사전 진단" 보강 (P1, 이월)
+
+**문제 (구조적)**: 현 release-checklist §0 은 "릴리즈 직전" 트리거 + "bump 대상 브랜치 = 소비자 추적 ref(커밋 직전 진단)" 만 규정하고, bump 이 예상되는 작업의 **세션 진입 시 사전 브랜치-적합성 진단** 규약이 없다. 세션 20260617-165603 에서 작업 브랜치(`feat/community-health-files`)가 origin/main 대비 stale(behind 1·이미 PR#10 머지)이고 origin/main 에 미릴리즈 feat 가 누적된 상태가 §0 게이트(세션 후반)에서야 드러나, 브랜치 조정 제안이 늦어졌다(모든 변경 가역이라 손실 0, release 브랜치로 회수). 동일 staleness 진단 누락이 직전 세션(20260616-104333)에 이어 형태를 달리해 재발 → (b)+(c) 결합, 주(主)는 (c).
+
+**제안**: `docs/development/release-checklist.md` §0 에 "0.x 세션 진입 시 사전 진단(bump 예상 작업 한정)" 절 추가 또는 §0 첫 불릿 보강 — 작업 *착수 전* `git fetch` 후 HEAD↔origin/main 토폴로지(ahead/behind/diverged) + origin/main 미릴리즈 feat 누적을 1회 진단. stale/누적이면 "현 브랜치는 bump 도달 경로 아님 — origin/main 기반 release 브랜치 권장" 을 착수 전 사용자에게 정보 제공(제약 무시 아님 → 재결정). 동시에 `agent-team-protocol.md` 세션 셋업 절에서 bump-likely 작업 진입 시 이 진단을 트리거하는 1줄 연결.
+
+**근거 교훈(report memory_candidate body_draft)**: `branch-fitness-pre-diagnosis-at-session-entry-when-bump-likely` — 기존 `bump-target-branch-consumer-tracked-ref`(커밋 직전)·`feat-merge-triggers-version-bump-release`(트리거 조건)의 **시점 선행 보강**(비중복). 상세 본문은 세션 20260617-165603 report.md `retrospective.memory_candidates` 참조(gitignored 로컬).
+
+- 태그: [propagated] · 우선순위 P1 · 예상: 독립 세션 1
+- docs_sync_target: `docs/development/release-checklist.md` (+ 선택 `agent-team-protocol.md` 세션 진입 절)
+
+### (메타·낮은 우선) 프로토콜-개선 세션 흐름 템플릿화
+
+"소비 프로젝트 audit→확정 prompt(진단·A/B/C·제약·증거)→신규 규약 자기적용 검증→삼각 상호참조 정합" 흐름이 효과적이었으나 1~2회 관측. **3회 이상 같은 흐름 반복 시** 프로토콜-개선 세션 템플릿(또는 §9 사후승격 인접 문서) 명문화 검토. 지금 규약화는 과잉 — 조건부 후보로만 기록.
