@@ -53,7 +53,7 @@ supersedes: []
 ### 일반화 규칙
 
 - MEMORY `feedback_*` slug 참조는 개인 메모리이므로 atp 본체에서 제외.
-- 도구명은 일반화 (`package.json` → 의존성 매니페스트, `pnpm typecheck`/`eslint` → 통합 타입체크/프로젝트 린터, Discord embed → 사용자 노출 표현).
+- 도구명은 일반화 (`package.json` → 의존성 매니페스트, `pnpm typecheck`/`eslint` → 통합 타입체크/프로젝트 린터, 플랫폼 고유 사용자 노출 표현(예: 채팅 임베드) → 사용자 노출 표현).
 
 ## 검토한 대안
 

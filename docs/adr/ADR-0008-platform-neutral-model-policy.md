@@ -22,7 +22,7 @@ related_commits:
 
 ## 맥락
 
-프로토콜 §5 모델 선택 정책이 Claude 전용 모델명(haiku/sonnet/opus)을 하드코딩하고 있었다. Codex 세션 전사(anipang3, 2026-06-10, codex-cli 0.138.0)에서 사용자가 사용 모델을 묻자 Codex 가 ATP 문서의 타 벤더 모델명을 그대로 노출했다 — platform-adapters 의 3층 플랫폼 추상화(ADR-0006)가 모델 정책 레이어에는 적용되지 않았던 구조적 공백이다. 같은 전사에서 (a) Codex 가 subagent 2개를 실제 spawn 했음에도 report.md Invocations 에 orchestrator 만 기록된 §8 의무 위반, (b) Codex spawn capability 의 실증 증거가 함께 확인됐다.
+프로토콜 §5 모델 선택 정책이 Claude 전용 모델명(haiku/sonnet/opus)을 하드코딩하고 있었다. Codex 세션 전사(2026-06-10, codex-cli 0.138.0)에서 사용자가 사용 모델을 묻자 Codex 가 ATP 문서의 타 벤더 모델명을 그대로 노출했다 — platform-adapters 의 3층 플랫폼 추상화(ADR-0006)가 모델 정책 레이어에는 적용되지 않았던 구조적 공백이다. 같은 전사에서 (a) Codex 가 subagent 2개를 실제 spawn 했음에도 report.md Invocations 에 orchestrator 만 기록된 §8 의무 위반, (b) Codex spawn capability 의 실증 증거가 함께 확인됐다.
 
 또한 사용자 요구로, orchestrator 가 자신에게 할당된 모델보다 높은 등급을 subagent 에 지정하는 것을 금지하는 상한(cap) 규칙이 추가됐다 — 세션 모델 선택은 사용자가 표명한 비용/능력 상한이라는 해석이다.
 
