@@ -102,3 +102,37 @@ find docs plugins/atp/docs -mindepth 2 -maxdepth 2 -name '*.md' ! -name index.md
 ```
 
 기대값: 새 문서가 속한 카테고리 index 에서 링크된다. 런타임 문서(`plugins/atp/docs/development/`)는 번들 경량본 [plugins/atp/docs/development/index.md](../../plugins/atp/docs/development/index.md) 와 루트 풀본 [docs/development/index.md](./index.md) 양쪽을 갱신한다. 번들 경량 허브 2건(`plugins/atp/docs/index.md`, `plugins/atp/docs/development/index.md`)은 번들 외 문서를 링크하지 않는다(텍스트 언급만 허용 — 루트 허브 ↔ 번들 허브 정합).
+
+## 7. 역이식(backport) 산출물 출처 식별자 잔류 0
+
+이 절은 **ATP 소스 레포 자체의 backport** — self-dogfooding 으로 얻은 소비 프로젝트(세션·도메인 사례·코드 심볼) 경험을 ADR·런타임 정본(`agent-team-protocol.md`)·`TEMPLATE_DEV.md`·`agents/*.md` 등 범용 자산에 역이식하는 변경 — 에만 발동한다. 소비 프로젝트가 자기 식별자를 쓰는 것은 정상이며 이 게이트 대상이 아니다.
+
+ADR-0004·ADR-0005 가 "소비 프로젝트 식별자를 본문·메타·파일명 어디에도 남기지 않고 commit 전 residual 0 을 확인한다"는 **일반화 게이트를 선언**한 SSoT 정의처다. 본 절은 그 선언의 **집행 경로**다 — 선언만으로는 dead gate 가 되어 선언한 문서군 자신이 위반한 실증(2026-06-17, 코드 심볼·소비 프로젝트 slug·도메인 동반어 6건 누출)이 있다.
+
+**발동 조건**: 이번 변경이 backport(출처 인용 동반)인가? YES 일 때만 §7 을 수행한다. 순수 내부 규약·플랫폼 스펙 변경에는 걸지 않는다.
+
+**절차 (commit 전)**:
+
+1. **후보 토큰 수집** — 이번 작업이 인용한 출처 식별자를 목록화한다(고정 리스트가 아니라 *이번 작업이 실제로 끌어온* 토큰): 소비 프로젝트 slug(레포명·앱/게임 IP·봇명) + 도메인 동반어(플랫폼 고유 기능·엔티티명) + 코드 심볼(env 키·필드명·외부 API명). 출처는 이번 세션의 research 산출(누출 감사 카탈로그가 있으면 그것) / 인용 원본 세션 report / 작업자 인지다. 토큰이 0개면(=출처 인용이 전혀 없으면) 이 변경은 backport 가 아니므로 §7 미발동.
+
+2. **self-grep 실행** — 수집한 토큰을 OR-패턴으로 묶어 **diff 추가 라인 + 신규 파일명**에 대해 실행한다. 패턴에는 character-class self-exclusion(예: `an[i]pang`)을 적용해 이 체크리스트·게이트 명령 줄 자신이 매치되는 것을 막는다.
+
+   ```bash
+   # 단계 1 에서 수집한 토큰을 OR-패턴으로 묶되, 각 토큰에 character-class self-exclusion 을 적용해
+   # 이 명령 줄 자신이 매치되지 않게 한다. 아래 example_* 는 형태 예시다(실제로는 수집한 토큰명 사용):
+   git grep -niE 'examp[l]e_slug|examp[l]e_bot|examp[l]e_sym' -- ':!docs/development/release-checklist.md'
+   ```
+
+   기대값: **출력 없음 + exit 1**(매치 0). git grep 은 매치 0 일 때 exit 1 을 반환하므로 `; echo "exit=$?"` 로 확인한다. 1 hit 이상(exit 0)이면 잔류이므로 처리 후 재실행한다.
+
+3. **잔류 처리** — 단순 토큰은 도메인 중립 placeholder 로 치환(예: 코드 심볼 → `field_key` 류 일반 명칭). 프로젝트명·도메인·기능이 한 줄에 응집된 강결합 서술은 단순 치환으로 식별성이 잔존하므로 본문 재작성으로 일반 규약만 추출하되(ADR-0004 패턴), hedge·갭 구조 등 교훈 골격은 보존한다(ADR-0011 §검증 모범). 본 레포 자체 dogfood 세션ID(타임스탬프)는 ATP evidence record 관행이라 유지한다(ADR-0010, 외부 누출 아님).
+
+검증 명령(이 게이트 자체의 실행 가능성 — §4.6):
+
+```bash
+# 위 git grep 이 self-exclusion 으로 자기 명령 줄을 매치하지 않는지 1회 실행 확인.
+# 누출이 이미 제거된 청정 레포에서는 어떤 backport 토큰 패턴이든 0 hit(exit 1)이어야 한다.
+git grep -niE 'examp[l]e_slug|examp[l]e_bot|examp[l]e_sym' -- ':!docs/development/release-checklist.md'; echo "exit=$?"
+```
+
+기대값: 출력 없음 + `exit=1`. (토큰 리스트는 작업마다 다르므로 고정이 아니다 — 위는 2026-06-17 backport 의 예시 토큰이며, 그 시점 레포에서 0 hit 으로 실증됐다.)

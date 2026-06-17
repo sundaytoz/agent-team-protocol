@@ -43,7 +43,7 @@ v1.3.0 으로 다음을 추가한다. 모두 신규 섹션 또는 순번 append 
 5. **research-advisor 출처 신뢰도 게이팅** (v1→v2) — 사실 항목별 신뢰도 마커(`확인됨`/`추정`/`미확인`), frontmatter `source_confidence: high|mixed|low`, 1차 출처 차단 fallback 시 `concerns: []` 반환 금지, 추정·미확인의 "확정/실제" 격상 금지. 자가검증 4번 신설.
 6. **retrospective-advisor 시그널 세탁 경계** (v1→v2) — 회고에서 사실 오류 지적의 positive 오분류를 negative(structural 후보)로 재분류.
 
-일반화 게이트는 추가 라인 + 신규 파일명에 적용하며 식별자 residual 0 을 commit 전 확인한다.
+일반화 게이트는 추가 라인 + 신규 파일명에 적용하며 식별자 residual 0 을 commit 전 확인한다. 이 확인의 실행 경로는 [release-checklist §7](../development/release-checklist.md) + [ADR-0012](./ADR-0012-backport-self-leak-grep-gate.md) 가 집행한다.
 
 ### 범위 밖 (이번에 하지 않음)
 

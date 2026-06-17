@@ -101,5 +101,6 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/` 에 존재하는가 (+ 새 문서를 만들었다면 해당 카테고리 index.md 링크 추가 완료)
 2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
 3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
+4. **(backport 한정)** 이번 문서가 소비 프로젝트 dogfooding 사례(세션·도메인·코드 심볼)를 ADR·런타임 정본·메타에 역이식·인용한다면, 그 출처 식별자(slug·도메인 동반어·코드 심볼)가 추가 라인·신규 파일명에 잔류하지 않는지 self-grep 으로 확인했는가. 절차·명령은 `${CLAUDE_PROJECT_DIR}/docs/development/release-checklist.md` §7 을 따른다(이번 작업이 인용한 토큰을 수집해 self-exclusion grep, 0 hit 기대). backport 가 아니면 N/A.
 
 실패 시: 자가 수정 1회 시도 → 여전히 실패면 concerns 에 "self_verification_failed: <항목>" 기록 후 반환.
