@@ -296,6 +296,7 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-16 | 20260616-094150 | work-session 추적 정책: **플러그인 기본=추적 + 레포별 opt-out**. init/task scaffolding 추적 기본(소비 레포 전파), 프로토콜 §7 추적정책+opt-out 명문, §4.7 AC 정식화 self-audit 게이트 신설. **이 소스 레포는 public + user_signals 발화인용 노출로 opt-out(gitignore 유지, 미추적)**. docs 동기화 | ADR-0010 (ADR-0006 L34 supersede). 1차안(소스도 추적)을 사용자 정정으로 split — PR #7 재작성/force-push |
 | 2026-06-16 | 20260616-104333 | **release: 2.0.0 → 2.1.0** (minor). bb75f21 이후 머지된 feat 3건(work-session 추적·bundle-runtime 중립화·platform-neutral 모델 정책)이 manifest 버전 미bump 로 `/plugin update` 미도달이던 것 해소. manifest 6곳(marketplace claude/codex + atp·atp-graphify plugin.json claude/codex) + 현재버전 서술 문서(CLAUDE/AGENTS/file-map) 동기화. F-3PLAT-3 잔여 version bump 항목 클로즈 | breaking 0건 → minor. `.agents/plugins/marketplace.json` 은 version 필드 없어 제외. 역사 기록(ADR-0007 등) 보존 |
 | 2026-06-17 | 20260617-165603 | **release: 2.1.0 → 2.2.0** (minor). research 단계 축-완결성 예방 **§4.8 신설**(완결성-예방 클러스터 §4.3/§4.6/§4.7 합류, 삼각 상호참조 §4.8↔§4.3↔§2.6) + research-advisor (A)축-완결성 자가검증5 (B)동명이인 disambiguation (C)JS-SPA→source_confidence 흡수, §2.6 (B)전수재검 위생규칙. base manifest 4개 bump. ADR-0011. 검증 10/10 PASS. origin/main 기반 release 브랜치(§0 stale 회피, PR#11) | 타 소비프로젝트 audit 구조적 protocol_feedback. add-on atp-graphify 미변경. 잔여: §8 G-RELCHK-1(이월) |
+| 2026-06-18 | 20260618-103431 | **진입 강제로드 토큰 감축** (progressive disclosure) + **release: 2.2.0 → 2.2.1** (patch). protocol.md 선두에 코어 구획(52줄, C1~C7 + `atp:core:item` 앵커 7) + §헤더 기준 on-demand 라우팅 인덱스 삽입, SKILL §1 "전문 읽기"→"코어 Read + 라우팅 인덱스가 가리키는 §섹션만 grep 위치확정 후 on-demand". 본문 §1~§14 무수정(§N 불변, 물리분할 0). release-checklist §8 "끊긴 §N 인용 0" 점검 신설(Q4=A). base manifest 4 bump(marketplace claude/codex + atp plugin.json claude/codex; atp-graphify 2.1.0 무관) | ADR-0013. ~94% 감축(853줄→코어 52), 끊긴 §N 인용 0, 게이트 코어상주(R1 차단), SKILL §N 무단절. verification 6/6 PASS. 동일 PR 에 bump 포함 → 병합+`/plugin update` 시 신규 SKILL 동작 도달 |
 
 ### 향후 확장 규약
 
@@ -379,3 +380,21 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 ### (메타·낮은 우선) 프로토콜-개선 세션 흐름 템플릿화
 
 "소비 프로젝트 audit→확정 prompt(진단·A/B/C·제약·증거)→신규 규약 자기적용 검증→삼각 상호참조 정합" 흐름이 효과적이었으나 1~2회 관측. **3회 이상 같은 흐름 반복 시** 프로토콜-개선 세션 템플릿(또는 §9 사후승격 인접 문서) 명문화 검토. 지금 규약화는 과잉 — 조건부 후보로만 기록.
+
+---
+
+## 9. 후속 백로그 (세션 20260618-103431 발생 — ADR-0013 진입로드 감축)
+
+코어 구획+on-demand 로딩 세션에서 retrospective 가 표면화한 protocol_feedback 2건. 사용자 확정 스코프(Q5=A, "로딩 전용·규약 내용 변경 금지") 밖이라 본 세션 미반영, report(gitignored) rot 방지 위해 등재. 두 교훈은 MEMORY 기록됨(`atp/verification-baseline-compare-keep-tree-consistent`, `atp/citation-anchor-public-api-loading-over-split`).
+
+### G-ACTREE-1 — AC baseline 대조 시 git tree 일관성 1줄 명문화 (P1)
+
+**문제**: orchestrator 가 검증 AC 에 "개선 전후 대조" 를 추가할 때 cross-tree 혼용(working-소스 ↔ `git show HEAD:`-헤더)이 거짓양성을 주입한다. ADR-0013 세션 AC-3 에서 발생(verification-advisor 가 same-tree 정규화로 자가교정, 의미기준 PASS). design 원본 AC 는 정상이었고 결함은 orchestrator 프롬프트 확장부 한정.
+**제안**: `agent-team-protocol.md` 검증 규약(§4.6/§4.7 인접)에 "baseline 대조 AC 는 양변을 동일 tree(HEAD↔HEAD 또는 working↔working)에 두고, 각 tree 내부 불변식(끊긴 인용 0 등)이 전후 동일한지 비교" 1줄 추가.
+- 태그: [self] · P1 · docs_sync_target: `agent-team-protocol.md` (§4.x 검증 규약)
+
+### G-CITEAPI-1 — "인용 광범위 = 공개 API" 설계 휴리스틱 등재 (P2)
+
+**문제/기회**: `§N`·앵커 인용이 코드베이스 전반에 산재하면 사실상 공개 API. 무게/구조 개선 시 물리 재배치 전에 인용망을 실측하고 로딩전략 변경(코어상주+on-demand)을 분할보다 우선해야 끊긴 인용·이력문서 사후수정을 0 으로 만든다. ADR-0013 에서 실증(Q2=B).
+**제안**: `documentation-guidelines.md` 또는 design 휴리스틱 절에 1줄 등재.
+- 태그: [self] · P2 · docs_sync_target: `documentation-guidelines.md`

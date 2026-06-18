@@ -20,3 +20,4 @@
 | [ADR-0010](./ADR-0010-work-session-git-tracking.md) | work-session 추적 분할 정책 — 플러그인 기본=추적, 레포별 opt-out 허용, 이 소스 레포는 public+발화인용+내부비판 노출로 opt-out (ADR-0006 L34 부분 supersede) | accepted | 2026-06-16 |
 | [ADR-0011](./ADR-0011-research-axis-completeness-prevention.md) | v2.2.0 — research 단계 축-완결성 예방 게이트 §4.8 신설 (독립 분류체계 ≥2 교차참조 + 폐쇄-신뢰도 마커 + 전수열거 주장 금지 + §9 사후승격) + research-advisor 자가검증 강화(동명이인 disambiguation·JS-SPA 출처 흡수) | accepted | 2026-06-17 |
 | [ADR-0012](./ADR-0012-backport-self-leak-grep-gate.md) | backport 출처 식별자 self-grep 게이트 — 일반화 게이트 선언(ADR-0004/0005)을 release-checklist §7 + documentation/design-advisor 자가검증으로 실행 경로화 | accepted | 2026-06-17 |
+| [ADR-0013](./ADR-0013-protocol-core-section-on-demand-routing.md) | protocol.md 진입 강제로드 토큰 감축 — 파일내 코어 구획(C1~C7) + on-demand 라우팅 (물리분할 회피, §N 불변·끊긴 인용 0, ~94% 감축) | accepted | 2026-06-18 |
