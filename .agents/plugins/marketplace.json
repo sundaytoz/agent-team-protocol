@@ -1,0 +1,32 @@
+{
+  "name": "agent-team-protocol",
+  "interface": {
+    "displayName": "Agent Team Protocol"
+  },
+  "plugins": [
+    {
+      "name": "atp",
+      "source": {
+        "source": "local",
+        "path": "./plugins/atp"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "atp-graphify",
+      "source": {
+        "source": "local",
+        "path": "./plugins/atp-graphify"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

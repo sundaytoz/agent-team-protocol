@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest an idea
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: "Propose an enhancement."
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem / motivation"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposed solution"
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives considered"
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Which part?"
+      options:
+        - "atp base"
+        - "atp-graphify"
+        - "docs"
+        - "templates"
+        - "other"

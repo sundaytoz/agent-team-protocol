@@ -13,7 +13,7 @@ last_reviewed: 2026-05-07
 
 ## 목록
 
-- [file-map.md](./file-map.md) — 템플릿 루트의 구성 파일 트리 + 파일별 역할 + 런타임 생성 디렉토리 (원 위치: 과거 README §3)
+- [file-map.md](./file-map.md) — 템플릿 루트의 구성 파일 트리 + 파일별 역할 + 런타임 생성 디렉토리(`.atp/work-session/` 은 git 추적되는 durable history) (원 위치: 과거 README §3)
 
 ## 관련 카테고리
 

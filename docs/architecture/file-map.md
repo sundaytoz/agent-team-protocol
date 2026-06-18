@@ -1,83 +1,149 @@
 ---
 kind: architecture
 title: 구성 파일 맵
-description: 템플릿의 디렉토리·파일별 역할과 cp-R 복사 여부를 한 장으로 정리.
+description: 플러그인 레이아웃(레포 루트), init 이 소비 프로젝트에 생성하는 산출물, 런타임 디렉토리를 한 장으로 정리.
 owner: template-maintainer
 stability: stable
-last_reviewed: 2026-05-07
+last_reviewed: 2026-06-10
 ---
 
 # 구성 파일 맵
 
-본 템플릿 리포의 파일 구조. 이식자(cp-R 복사 사용자) 는 복사 후 자기 프로젝트 상황에 맞게 루트를 갱신한다. 복사 제외 목록은 `../../README.md` §3(설치) 을 단일 권위로 참조한다.
+레포 루트는 **마켓플레이스 `agent-team-protocol`** 이고, base 플러그인 `atp` 의 루트는 **`plugins/atp/`**, add-on `atp-graphify` 의 루트는 **`plugins/atp-graphify/`** 서브디렉토리다 (2.1.0 — 설치 시 해당 서브트리만 번들로 복사된다). 이 문서는 세 가지 트리를 설명한다.
 
-## 트리
+1. [레포(플러그인 소스) 트리](#1-레포플러그인-소스-트리)
+2. [init 산출물 트리](#2-init-산출물-트리--소비-프로젝트)
+3. [런타임 디렉토리](#3-런타임-디렉토리)
+
+경로 경계 규칙은 [§4 경계 요약](#4-plugin-root-vs-project-dir-경계-요약) 참조.
+
+---
+
+## 1. 레포(플러그인 소스) 트리
 
 ```
-agent-team-protocol/
-├── README.md                                 ← 이식자 진입점 (cp-R 복사 제외)
-├── CLAUDE.md                                 ← 프로젝트 루트 진입점 템플릿
-├── TEMPLATE_DEV.md                           ← 템플릿 자체 백로그 (cp-R 복사 제외)
-├── SECURITY.md                               ← 템플릿 리포 보안 채널 (cp-R 복사 제외)
-├── AUTHORS                                   ← 원작자 표기 (cp-R 복사 제외)
-├── LICENSE                                   ← MIT (cp-R 복사 제외)
+agent-team-protocol/                      (레포 루트 = 마켓플레이스 agent-team-protocol)
 │
-├── .claude/
-│   ├── skills/task/
-│   │   └── SKILL.md                          ← /task 명령 진입점
-│   └── agents/                               ← 에이전트 정의 13개
-│       ├── requirements-advisor.md           │ Tier 2
-│       ├── research-advisor.md               │ Tier 3 — parallel-explorer worker 호출
-│       ├── parallel-explorer.md              │ Worker (research 소속)
-│       ├── design-advisor.md                 │ Tier 2
-│       ├── implementation-advisor.md         │ Tier 3 — code-writer / migration-writer 호출
-│       ├── code-writer.md                    │ Worker (impl 소속)
-│       ├── migration-writer.md               │ Worker (impl 소속)
-│       ├── verification-advisor.md           │ Tier 2 — 의도적으로 컨텍스트 제한
-│       ├── documentation-advisor.md          │ Tier 2
-│       ├── retrospective-advisor.md          │ Tier 2 — 세션 종료 직전
-│       ├── graphify-lookup-advisor.md        │ Tier 2 — graph 있을 때만
-│       ├── graphify-update-advisor.md        │ Tier 2
-│       └── graph-refresh-checker.md          │ staleness 판정 전용
+├── .claude-plugin/
+│   └── marketplace.json                  ← Claude Code 마켓플레이스 정본 (plugins: [atp→./plugins/atp, atp-graphify→./plugins/atp-graphify])
 │
-└── docs/
-    ├── index.md                              ← docs-first 허브 (모든 작업 시작 전 필독)
-    ├── adr/                                  ← 되돌리기 어려운 결정 (번호제, 불변)
-    ├── analysis/
+├── .codex-plugin/
+│   └── marketplace.json                  ← Claude 미러 (Codex 는 읽지 않음)
+│
+├── .agents/
+│   └── plugins/
+│       └── marketplace.json              ← Codex marketplace 정본 (객체형 source: atp→./plugins/atp, atp-graphify→./plugins/atp-graphify)
+│
+├── plugins/
+│   ├── atp/                              ← base 플러그인 루트 (설치 시 이 서브트리만 캐시로 복사)
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, version 2.1.0)
+│   │   ├── .codex-plugin/
+│   │   │   └── plugin.json               ← base 플러그인 정의 (skills: "./skills/")
+│   │   ├── agents/                       ← base 에이전트 10개 (graphify 3종 제외)
+│   │   │   ├── requirements-advisor.md
+│   │   │   ├── research-advisor.md
+│   │   │   ├── parallel-explorer.md
+│   │   │   ├── design-advisor.md
+│   │   │   ├── implementation-advisor.md
+│   │   │   ├── code-writer.md
+│   │   │   ├── migration-writer.md
+│   │   │   ├── verification-advisor.md
+│   │   │   ├── documentation-advisor.md
+│   │   │   └── retrospective-advisor.md
+│   │   ├── skills/
+│   │   │   ├── task/SKILL.md             ← /atp:task 명령 진입점
+│   │   │   └── init/SKILL.md             ← /atp:init 명령 진입점
+│   │   ├── docs/                         ← 번들 런타임 레퍼런스 (읽기전용, ${CLAUDE_PLUGIN_ROOT} 로 Read)
+│   │   │   ├── index.md                  ← 번들 전용 경량 허브
+│   │   │   └── development/
+│   │   │       ├── index.md              ← 번들 전용 경량본 (런타임 6건만)
+│   │   │       ├── agent-team-protocol.md ← 3-tier 운영 권위 레퍼런스 (§1~§14)
+│   │   │       ├── agent-catalog.md      ← 에이전트 카탈로그 (base 10 + add-on 3)
+│   │   │       ├── platform-adapters.md  ← 호스트 capability tier 정의·자가판정 정본
+│   │   │       ├── documentation-guidelines.md
+│   │   │       └── search-tool-matrix.md
+│   │   ├── templates/                    ← init 스캐폴딩 원본 (init 이 소비 프로젝트로 복사)
+│   │   │   ├── category-index/*.md       ← 카테고리 index 14종
+│   │   │   ├── docs-index.md
+│   │   │   ├── verification-strategies.md    ← placeholder 포함 (cmd 교체 필요)
+│   │   │   ├── document-category-classification.md
+│   │   │   └── graph/ (index.md, .gitignore)
+│   │   └── (gemini-extension manifest)   ← 위치 확정(ADR-0007), 산출물은 F-3PLAT-4 에서 생성 예정
+│   │
+│   └── atp-graphify/                     ← add-on 플러그인 루트 (add-on 설치 시 이 서브트리만 복사)
+│       ├── .claude-plugin/plugin.json    ← add-on 정의 (name: atp-graphify, version 2.1.0, dependencies: ["atp"])
+│       ├── .codex-plugin/plugin.json     ← 동일 add-on 정의
+│       ├── agents/                       ← graphify 에이전트 3개
+│       │   ├── graph-refresh-checker.md
+│       │   ├── graphify-lookup-advisor.md
+│       │   └── graphify-update-advisor.md
+│       └── docs/
+│           └── graphify-usage.md         ← graphify add-on 설치·통합 가이드
+│
+└── docs/                                 ← 사람용 문서 (번들 제외 — GitHub 독자·기여자 대상)
+    ├── index.md (+ index.en.md)          ← docs-first 풀 허브 (한/영)
+    ├── adr/                              ← ADR 5건 + index.md
     ├── architecture/
     │   ├── index.md
-    │   └── file-map.md                       ← 이 문서
-    ├── backlog/
-    ├── changes/
-    ├── contracts/
+    │   └── file-map.md                   ← 이 문서
+    ├── development/
+    │   ├── index.md                      ← 루트 풀본 (런타임 6건은 plugins/atp/docs/ 로 링크)
+    │   └── release-checklist.md          ← 기여자 릴리즈 절차
+    └── usage/                            ← 설치·FAQ 가이드 (한/영 6건)
+```
+
+---
+
+## 2. init 산출물 트리 — 소비 프로젝트
+
+`/atp:init` 실행 시 `${CLAUDE_PROJECT_DIR}` 기준으로 아래 항목을 생성한다. 이미 존재하는 파일은 덮어쓰지 않는다(멱등).
+
+```
+<소비 프로젝트 루트>/
+│
+├── CLAUDE.md                             ← 기존 파일 하단에 <!-- atp:begin --> 블록 멱등 append
+│                                             (docs-first 정책 + /atp:task 진입 안내 포함)
+├── .gitignore                            ← .atp/work-session/ 라인 제거 (있는 경우) — 추적 기본
+│
+└── docs/
+    ├── index.md                          ← docs-first 허브
+    ├── adr/index.md
+    ├── analysis/index.md
+    ├── architecture/index.md
+    ├── backlog/index.md
+    ├── changes/index.md
+    ├── contracts/index.md
     ├── development/
     │   ├── index.md
-    │   ├── agent-team-protocol.md            ← 권위 레퍼런스 (§1~§14)
-    │   ├── agent-catalog.md                  ← 에이전트 정의 요약 카탈로그
-    │   ├── verification-strategies.md        ← L1/L2/L3 전략 레지스트리
-    │   ├── graphify-usage.md                 ← /graphify 설치·통합
-    │   ├── search-tool-matrix.md             ← 탐색 도구(LSP/graphify/Grep 등) 선택 매트릭스
-    │   ├── documentation-guidelines.md
+    │   ├── verification-strategies.md    ← placeholder 포함 — cmd 를 프로젝트 명령으로 교체 필요
     │   └── document-category-classification.md
-    ├── domain/
-    ├── feedback/                             ← 검토·수정 요청 inbox (선택)
+    ├── domain/index.md
+    ├── feedback/index.md
     ├── graph/
-    │   ├── index.md                          ← graphify 메타 (커밋 대상)
-    │   └── .gitignore                        ← 본체(HTML/JSON) 무시
-    ├── issues/
-    ├── maintenance/
-    ├── security/
-    ├── usage/
     │   ├── index.md
-    │   ├── faq.md                            ← 이식자 FAQ + 이식자 실수 카탈로그
-    │   └── setup-checklist.md                ← 이식 후 30분 설정 체크리스트
-    └── work-log/
+    │   └── .gitignore
+    ├── issues/index.md
+    ├── maintenance/index.md
+    ├── security/index.md
+    ├── usage/index.md
+    └── work-log/index.md
 ```
 
-## 런타임에만 생기는 디렉토리 (템플릿에 없음, `/task` 가 생성)
+init 후 설정 절차는 [../usage/setup-checklist.md](../usage/setup-checklist.md) 참조.
+
+---
+
+## 3. 런타임 디렉토리
+
+`/atp:task` 실행 시 세션마다 생성된다. 권위 정의: [프로토콜 §7](../../plugins/atp/docs/development/agent-team-protocol.md#7-공유-상태-레이아웃).
+
+**추적 정책 (ADR-0010)**: 플러그인 기본은 추적이다 — 소비 레포의 `/atp:init` 은 `.gitignore` 에서 `.atp/work-session/` 라인을 제거하여 추적을 활성화한다. 추적을 원치 않는 레포는 `.gitignore` 에 `.atp/work-session/` 1줄을 추가해 opt-out 할 수 있다. **이 소스 레포(`agent-team-protocol`)는 opt-out 을 행사한다** — public 레포이며 work-session report 에 유지자 발화(`user_signals`)와 retrospective 내부 비판이 기록되어 공개 노출이 부적절하기 때문이다. 따라서 이 레포에서는 `.atp/work-session/` 이 `.gitignore` 대상이며 커밋되지 않는다.
 
 ```
-.claude/work-session/<sid>/         ← 세션 공유 상태. sid = YYYYMMDD-HHMMSS
+.atp/work-session/<sid>/            ← 세션 공유 상태. sid = YYYYMMDD-HHMMSS
+                                        플러그인 기본=추적 / 레포별 opt-out 가능(.gitignore 1줄)
+                                        이 소스 레포는 opt-out(미추적)
     ├── report.md                   ← 모든 의사결정·invocation·회고 누적
     ├── requirements.md
     ├── research/
@@ -91,22 +157,25 @@ agent-team-protocol/
     └── artifacts/
 ```
 
-이 디렉토리는 `.gitignore` 대상이다 (README §3 설치 절의 `.gitignore` 갱신 안내 참조).
+---
 
-## 파일별 역할 요약
+## 4. ${CLAUDE_PLUGIN_ROOT} vs ${CLAUDE_PROJECT_DIR} 경계 요약
 
-| 파일 | 역할 | 권위 문서 |
+| 변수 | 가리키는 경로 | 용도 |
 |---|---|---|
-| `README.md` | 이식자 진입점 (5분 랜딩) | 이 리포 루트 |
-| `CLAUDE.md` | 프로젝트 루트 진입점 — Claude Code 가 세션 시작 시 자동 로드 | 루트 |
-| `.claude/skills/task/SKILL.md` | `/task` 명령 진입 스킬. orchestrator 9단계 트리거 | 해당 SKILL.md |
-| `.claude/agents/*.md` | 13개 에이전트 정의 (Tier 2/3/Worker) | 각 파일 + `../development/agent-catalog.md` |
-| `docs/development/agent-team-protocol.md` | 3-tier 운영 권위 레퍼런스 (§1~§14) | 해당 파일 |
-| `docs/development/verification-strategies.md` | L1/L2/L3 검증 전략 레지스트리 | 해당 파일 |
-| `docs/development/graphify-usage.md` | /graphify 설치·통합 규약 | 해당 파일 |
+| `${CLAUDE_PLUGIN_ROOT}` | 플러그인 캐시 내 레포 루트 (읽기전용) | 번들 레퍼런스 문서 Read, agent/skill 본문 경로 참조 |
+| `${CLAUDE_PROJECT_DIR}` | 소비 프로젝트 루트 (읽기/쓰기) | init 생성 파일, 세션 work-session, 프로젝트 소스 코드 |
+
+규칙:
+- **레퍼런스 Read** (`agent-team-protocol.md`, `agent-catalog.md` 등 번들 docs) → `${CLAUDE_PLUGIN_ROOT}/docs/...`
+- **편집형 Read/Write** (프로젝트 `verification-strategies.md`, 카테고리 index 등) → `${CLAUDE_PROJECT_DIR}/docs/...`
+- **산출물 Write** (`work-session/`, `report.md`, 소스 코드 등) → `${CLAUDE_PROJECT_DIR}/...`
+
+---
 
 ## 관련 문서
 
-- [../../README.md](../../README.md) §3 — 설치 절차 및 복사 제외 목록 (cp-R 권위)
-- [../development/agent-catalog.md](../development/agent-catalog.md) — 에이전트 13개 상세
-- [../development/agent-team-protocol.md](../development/agent-team-protocol.md) — 운영 프로토콜 전문
+- [../../plugins/atp/docs/development/agent-catalog.md](../../plugins/atp/docs/development/agent-catalog.md) — base atp 10개 + add-on atp-graphify 3개 에이전트 상세
+- [../../plugins/atp/docs/development/agent-team-protocol.md](../../plugins/atp/docs/development/agent-team-protocol.md) — 운영 프로토콜 전문
+- [../usage/setup-checklist.md](../usage/setup-checklist.md) — init 후 설정 체크리스트
+- [docs/adr/ADR-0002-plugin-only-migration.md](../adr/ADR-0002-plugin-only-migration.md) — cp-R 폐기·plugin-only 전환 결정 기록

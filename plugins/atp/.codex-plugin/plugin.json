@@ -1,0 +1,18 @@
+{
+  "name": "atp",
+  "description": "Agent Team Protocol — Orchestrator + Advisor + Worker 3-tier agent team orchestration for Claude Code and Codex",
+  "version": "2.2.0",
+  "author": {
+    "name": "sundaytoz"
+  },
+  "homepage": "https://github.com/sundaytoz/agent-team-protocol",
+  "repository": "https://github.com/sundaytoz/agent-team-protocol",
+  "license": "MIT",
+  "keywords": [
+    "orchestration",
+    "agents",
+    "workflow",
+    "protocol"
+  ],
+  "skills": "./skills/"
+}

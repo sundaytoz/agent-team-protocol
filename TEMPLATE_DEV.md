@@ -1,21 +1,22 @@
-# TEMPLATE_DEV — 템플릿 리포지토리 기여자·메타 문서
+# TEMPLATE_DEV — 플러그인 리포지토리 기여자·메타 문서
 
-> **복사 제외**. 이 파일은 **템플릿 리포지토리 자체의 개선 이력·백로그** 만 담는다. `cp -R <template>/...` 로 새 프로젝트에 이식할 때 **복사하지 않는다** (README §4.1 참조). 사용자 프로젝트에는 섞이면 안 된다.
+> 이 파일은 **`agent-team-protocol` 플러그인 레포 자체의 개선 이력·백로그** 만 담는다. 플러그인 배포(`atp@agent-team-protocol`)를 통해 소비 프로젝트로 전달되지 않는다 (커밋 대상이나 배포 산출물 아님). 사용자 프로젝트에는 포함되지 않는다.
 
 ---
 
 ## 1. 이 파일의 목적
 
-이 파일은 `sundaytoz/agent-team-protocol` 템플릿 **자체의** 품질 관리용 메타 문서다. 역할 분리:
+이 파일은 `sundaytoz/agent-team-protocol` 플러그인 **자체의** 품질 관리용 메타 문서다. 역할 분리:
 
-| 파일 | 독자 | 성격 | 복사 대상 |
+| 파일 | 독자 | 성격 | 소비 프로젝트 전달 |
 |---|---|---|---|
-| `README.md` | 템플릿 사용자 (이식자) | 설치·사용 가이드 | 아니오 (§4.1) |
-| `CLAUDE.md` | 이식된 프로젝트의 Claude Code | 프로젝트 루트 진입점 | 예 (병합) |
-| `docs/`, `.claude/` | 이식된 프로젝트의 Claude Code | 운영 규약·에이전트 정의 | 예 |
-| **`TEMPLATE_DEV.md`** | **템플릿 기여자** | **개선 백로그·이력** | **아니오** |
+| `README.md` | 플러그인 사용자 | 설치·사용 가이드 | 아니오 |
+| `CLAUDE.md` | 이 레포 기여자 | 레포 개발 가이드 (self-dogfooding) | 아니오 |
+| `docs/` (번들 레퍼런스) | 에이전트 런타임 (Read) | 운영 규약·에이전트 정의 | 플러그인 캐시 번들 (읽기전용) |
+| `templates/` | `/atp:init` 스킬 | 스캐폴딩 원본 | init 이 소비 프로젝트로 복사 |
+| **`TEMPLATE_DEV.md`** | **플러그인 기여자** | **개선 백로그·이력** | **아니오** |
 
-`docs/` 하위에 이 내용을 두면 이식된 신규 프로젝트에 섞여 잡음이 되므로 **루트 단일 파일** 로 유지한다.
+`docs/` 하위에 이 내용을 두면 번들 레퍼런스와 섞여 에이전트가 읽는 레퍼런스 목록에 잡음이 되므로 **루트 단일 파일** 로 유지한다.
 
 ---
 
@@ -43,10 +44,10 @@ Top 5 이슈 (혼합 심각도):
 
 ### 원본 자료 접근 전략
 
-평가 세션 산출물은 `.claude/work-session/20260506-170447/` 에 있으나 이 디렉토리는 `.gitignore` 대상 (세션 임시 산출물 규약). 즉 **영구 링크 불가**. 따라서:
+평가 세션 산출물은 `.atp/work-session/20260506-170447/` 에 있으나(1차 마이그레이션으로 `.claude/` 에서 이관), 이 레포는 work-session 을 **opt-out(gitignore)** 하므로(public + 발화 인용 노출 회피 — ADR-0010) 공개 커밋엔 없다. 즉 **영구 링크 불가**. 따라서:
 
 - **요지·결론**은 본 문서 §2 와 §3 에 **임베드**한다 (위 표 + 아래 백로그).
-- **원문** 이 필요할 경우 세션을 보존한 기여자에게 요청하거나, 재조사 세션을 돌려 재생성한다. 재조사는 `/task 템플릿 이식성 재평가` 로 가능.
+- **원문**은 세션을 보존한 로컬(이 레포의 gitignore 된 `.atp/work-session/`)에서 열람하거나, `/atp:task 템플릿 이식성 재평가` 로 재생성한다.
 - 향후 공식 평가 세션 결과는 본 문서에 요약 임베드 + **ADR 수준의 중요 결정**은 `docs/adr/` (도입 후) 에 영구 보존.
 
 ---
@@ -70,7 +71,7 @@ Top 5 이슈 (혼합 심각도):
 |---|---|---|---|---|---|
 | **G-P0-1** | docs 카테고리 `index.md` 12개 스텁 포함 | [propagated] | Axis 1 #1, Axis 4 #1 | 없음 | 세션 1 |
 | **G-P0-2** | 보고서 스키마 SSoT 통합 (프로토콜 §8 권위화) | [propagated] | Axis 3 #1 | 없음 (독립) | 세션 2 |
-| **G-P0-3** | `CLAUDE.md` 이식 체크리스트 + placeholder 표기법 통일 | [propagated] | Axis 1 #2, Axis 1 #6, Axis 4 #2 | 없음 | 세션 3 |
+| **G-P0-3** | ~~`CLAUDE.md` 이식 체크리스트 + placeholder 표기법 통일~~ ✅ 완료(plugin-only 전환으로 해소 — CLAUDE.md 복사 폐기, /atp:init 이 안내 블록 멱등 생성, 세션 20260601-115424) | [propagated] | Axis 1 #2, Axis 1 #6, Axis 4 #2 | 없음 | ~~세션 3~~ |
 | **G-P0-4** | SKILL §5 "advisor 전체 스킵 vs verification 의무" 문구 정정 | [propagated] | Axis 3 #2 | G-P0-2 이후 권장 | 세션 2 또는 4 |
 
 ### 3.4 P1 묶음
@@ -78,13 +79,13 @@ Top 5 이슈 (혼합 심각도):
 | ID | 제목 | 태그 | 연관 이슈 | 예상 세션 |
 |---|---|---|---|---|
 | **G-P1-A** | 에이전트 권한 규범적 금기 강화 (verification Read / migration Bash / graphify rm -rf) | [propagated] | Axis 2 #1, #4, #5 | 세션 4 |
-| **G-P1-B** | 선택 파일 제거 절차를 FAQ → §5 "프로젝트 적응" 으로 승격 | [propagated] | Axis 1 #4 | 세션 5 |
+| **G-P1-B** | ~~선택 파일 제거 절차를 FAQ → §5 "프로젝트 적응" 으로 승격~~ ✅ 완료(plugin-only 전환으로 해소, 세션 20260601-115424) | [propagated] | Axis 1 #4 | ~~세션 5~~ |
 | **G-P1-C** | `verification-strategies.md` §5 / `search-tool-matrix.md` §5 placeholder 경고 박스 | [propagated] | Axis 1 #5, Axis 4 #3 | 세션 5 |
 | **G-P1-D** | research-advisor ↔ parallel-explorer WebSearch 비대칭 해소 | [propagated] | Axis 2 #2 | 세션 4 |
 | **G-P1-E** | documentation-advisor description — in-progress vs final 호출 시점 변별 | [propagated] | Axis 2 #3 | 세션 4 |
 | **G-P1-F** | graphify-lookup-advisor heuristic 과 graph-refresh-checker 경계 문서화 | [propagated] | Axis 2 #6 | 세션 4 |
-| **G-P1-G** | `<template>` 치환 모호 + 런타임 디렉토리 혼입 경고 (README §4.1) | [self] | Axis 1 #3 | 세션 0 (이번) |
-| **G-P1-H** | FAQ §15 의 "graphify 미도입 시 에이전트 파일 제거" 를 §5.4 로 승격 | [propagated] | Axis 1 #4 일부 | 세션 5 |
+| **G-P1-G** | ~~`<template>` 치환 모호 + 런타임 디렉토리 혼입 경고 (README §4.1)~~ ✅ 완료(plugin-only 전환으로 해소, 세션 20260601-115424) | [self] | Axis 1 #3 | ~~세션 0~~ |
+| **G-P1-H** | ~~FAQ §15 의 "graphify 미도입 시 에이전트 파일 제거" 를 §5.4 로 승격~~ ✅ 완료(plugin-only 전환으로 해소 — graphify 는 옵트인 add-on 으로 분리, 세션 20260601-115424) | [propagated] | Axis 1 #4 일부 | ~~세션 5~~ |
 | **G-P1-I** | 프로토콜 §12 "추가/수정" vs `docs_sync_target` 자동 편집 범위 문서화 | [propagated] | Axis 3 #3 | 세션 5 |
 | **G-P1-J** | "첫 호출 판단 기준" 명시 (요구 명확함 척도·메타 요청·feedback slug 판별) | [propagated] | Axis 3 #4 | 세션 5 |
 | **G-P1-K** | §13 실행 가능 상태 체크를 SKILL §9 종료 조건에 반영 | [propagated] | Axis 3 #5 | 세션 2 |
@@ -144,7 +145,7 @@ G-P0-3 ─┘
 ```markdown
 # <카테고리명> — <용도 한 줄>
 
-> 분류 기준: [../development/document-category-classification.md](../development/document-category-classification.md)
+> 분류 기준: [plugins/atp/templates/document-category-classification.md](plugins/atp/templates/document-category-classification.md)
 
 ## 문서 목록
 
@@ -245,9 +246,9 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 - SKILL §5 와 README §6.3 이 축자 일치.
 - 프로토콜 §13 실행 가능 상태 체크와 상호 참조 링크 추가.
 
-### G-P1-G: README §4.1 `<template>` 치환 모호 해소 + 복사 제외 확장 (이번 세션에 포함)
+### G-P1-G: README §4.1 `<template>` 치환 모호 해소 + 복사 제외 확장
 
-§5 (README §4.1 diff) 참조.
+✅ 완료 (plugin-only 전환으로 해소, 세션 20260601-115424). cp-R 복사 개념 자체가 폐기됨 — README 는 플러그인 설치 흐름으로 전면 재작성되어 이 항목이 대상으로 삼았던 "복사 제외"·"`<template>` 치환" 개념이 모두 소멸했다.
 
 ---
 
@@ -283,9 +284,98 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 |---|---|---|---|
 | 2026-05-06 | 20260506-170447 | 첫 공식 평가 (4축, blocker 3 / warn 21 / nit 11) | summary.md 원본은 gitignore 세션에 보존 |
 | 2026-05-06 | 20260506-172731 | TEMPLATE_DEV.md 신규, README §4.1 복사 제외 확장 | 세션 0 — 백로그 체계화 |
+| 2026-06-01 | 20260601-115424 | plugin-only 전환 (cp-R 폐기, 2-플러그인 atp+atp-graphify) | README/CLAUDE.md/TEMPLATE_DEV.md 재작성, G-P0-3·G-P1-B/G/H 완료 마킹 |
+| 2026-06-09 | 20260609-125316 | 3-플랫폼 지원(Claude/Codex/Gemini): platform-adapters 3층, capability matrix, Tier A/A-flat/B, init 3-지침파일, AGENTS.md 교정, init `$task` upsert 버그 fix | 커밋 4e9d9ea·3472883. 후속 §7 등재 |
+| 2026-06-09 | 20260609-125316 | F-3PLAT-3: single-read `.atp/work-session` 전환(본문 14건 치환) + 자기삭제 마이그레이션 블록(init 삽입·task §0.5 실행) + platform-adapters 권위 반전 | 커밋 3eb0bf2. 12/12 AC + 동적 스모크 PASS. ~~잔여: version bump(release)~~ → 20260616-104333 에서 2.1.0 release 로 해소 |
+| 2026-06-09 | 20260609-125316 | F-3PLAT-1/2: 코어 protocol §2.8 capability tier 동기화(역할tier↔capability tier 직교) + §2.7 research-반전 plan게이트 트리거 | 커밋 5b5a909. 9/9 AC PASS. 3-1 release-ready |
+| 2026-06-09 | 20260609-173743 | Codex 구조 정정(interim): `.agents/plugins/marketplace.json` 정본 커밋 + `plugins/atp` symlink(비정본 명시) + `.codex-plugin/plugin.json` skills 선언 + platform-adapters 호출문법 `@`-반전(정확토큰 TODO:실측 보존) + README/CLAUDE/AGENTS/file-map `.codex-plugin` 설명 정정 + init AGENTS 블록 `@` 교정 | F-3PLAT-5/6 후속 등재. 정본 subdir 재배치는 백로그 |
+| 2026-06-10 | 20260610-173353 | 모델 정책 플랫폼 중립화: §5 tier(small/medium/large)+effort 직교 노브+cap 규칙(§5.6)+report 스키마 v2, platform-adapters §1.6 모델 tier 매핑 신설, 축1 Codex spawn verified-empirical 격상, spawn=invocation 기록 의무 명문화, SKILL/FAQ/README 동기화 | ADR-0008. a976e98 feedback inbox 는 원격 브랜치 삭제로 제거(내용은 본 세션이 정식 처리) |
+| 2026-06-10 | 20260610-093314 | Codex 호출 토큰 정정: `/task`(런타임 self-report 오판) → **`$task`**(사용자 대화형 실측 + 공식 docs `$` skill 멘션 접두). 7파일 전수 정정 + init upsert 동적 스모크(3회 멱등, `$task` 보존) PASS | 교훈: 런타임 self-report 는 UI 토큰 근거 불가 — platform-adapters §1.1 마커 목록에 명문화 |
+| 2026-06-10 | 20260610-093314 | Codex 대화형 전사 확보: `$atp:task` 명시 호출 인식 + SKILL 본문 로드 + 버전 정확 보고 → 호출 표기 `$atp:task` 로 최종 통일(단축형 `$task` 는 TODO 격하). README 지원 플랫폼 표 + Codex 테스트 완료 체크리스트 신설(내부 경로 sanitize) | F-3PLAT-6 추가 해소. 잔여: `$task` 단축형·E2E spawn |
+| 2026-06-11 | 20260611-093639 | 번들 런타임 플랫폼 중립화: platform-adapters 를 "capability 자가판정" 문서로 재작성(3사 matrix·판정표·어댑터 제거), 실측 데이터는 ADR-0009 부록 A~F 동결 이관(마커 13/16/33/25/6 전수 보존), init render_block 토큰 주입형 단일 템플릿 전환, task/init 지침파일 3종 열거 중립화, 프로토콜 §1.6→§6 포인터 갱신 | ADR-0009 (ADR-0006 부분 supersede). 15/15 AC + init 동적 스모크 PASS. 사람용 문서 3사 병기는 유지 |
+| 2026-06-16 | 20260616-094150 | work-session 추적 정책: **플러그인 기본=추적 + 레포별 opt-out**. init/task scaffolding 추적 기본(소비 레포 전파), 프로토콜 §7 추적정책+opt-out 명문, §4.7 AC 정식화 self-audit 게이트 신설. **이 소스 레포는 public + user_signals 발화인용 노출로 opt-out(gitignore 유지, 미추적)**. docs 동기화 | ADR-0010 (ADR-0006 L34 supersede). 1차안(소스도 추적)을 사용자 정정으로 split — PR #7 재작성/force-push |
+| 2026-06-16 | 20260616-104333 | **release: 2.0.0 → 2.1.0** (minor). bb75f21 이후 머지된 feat 3건(work-session 추적·bundle-runtime 중립화·platform-neutral 모델 정책)이 manifest 버전 미bump 로 `/plugin update` 미도달이던 것 해소. manifest 6곳(marketplace claude/codex + atp·atp-graphify plugin.json claude/codex) + 현재버전 서술 문서(CLAUDE/AGENTS/file-map) 동기화. F-3PLAT-3 잔여 version bump 항목 클로즈 | breaking 0건 → minor. `.agents/plugins/marketplace.json` 은 version 필드 없어 제외. 역사 기록(ADR-0007 등) 보존 |
+| 2026-06-17 | 20260617-165603 | **release: 2.1.0 → 2.2.0** (minor). research 단계 축-완결성 예방 **§4.8 신설**(완결성-예방 클러스터 §4.3/§4.6/§4.7 합류, 삼각 상호참조 §4.8↔§4.3↔§2.6) + research-advisor (A)축-완결성 자가검증5 (B)동명이인 disambiguation (C)JS-SPA→source_confidence 흡수, §2.6 (B)전수재검 위생규칙. base manifest 4개 bump. ADR-0011. 검증 10/10 PASS. origin/main 기반 release 브랜치(§0 stale 회피, PR#11) | 타 소비프로젝트 audit 구조적 protocol_feedback. add-on atp-graphify 미변경. 잔여: §8 G-RELCHK-1(이월) |
 
 ### 향후 확장 규약
 
 - 세션 수가 ≥10 누적되거나 본 문서 길이가 ≥600 라인을 넘으면 `.meta/` 디렉토리로 분할 이관 검토. 그 시점 전까지는 단일 파일 유지.
 - 공식 평가 세션은 재생성 가능 (`/task 템플릿 이식성 재평가`) 하므로 `.claude/work-session/` 보존 불필요.
 - 중요한 구조적 결정 (예: 스키마 v2 bump) 은 도입 후 `docs/adr/` 에 영구 기록.
+
+---
+
+## 7. 3-플랫폼 후속 백로그 (세션 20260609-125316 발생)
+
+본 세션은 문서·tier 체계·init 규칙까지 완료. 아래는 scope 확장이라 이월된 후속.
+
+### F-3PLAT-1 — Tier A-flat 를 코어 `agent-team-protocol.md` 에 동기화 (3-1a) ✅ 완료 (커밋 5b5a909)
+> §2.8 신설(capability tier 요약+포인터, 역할tier↔capability tier 직교 박스) + platform-adapters cross-ref. SSoT 는 platform-adapters Layer 1 유지. 9/9 AC PASS.
+- 현재 Tier A-flat 는 `docs/development/platform-adapters.md` Layer 1 에만 존재. 코어 프로토콜 §1~§2 는 spawn 가능 전제의 3-tier 위임만 기술.
+- **이름 충돌 주의**: 코어의 "Tier-2/Tier-3 advisor"(역할 tier) vs 신규 "Tier A/B/A-flat"(플랫폼 capability tier) = 직교 두 축. 동기화 시 명시 구분 필수.
+- 우선순위 P1. 영향: 코어 1문서 + agent-catalog 정합 점검. blast 작음.
+
+### F-3PLAT-2 — plan 게이트 "research 반전" 트리거 명문화 (3-1b) ✅ 완료 (커밋 5b5a909)
+> §2.7 항목5 + 자가점검 bullet + 배경, §1·SKILL §5.0 포인터. 9/9 AC PASS.
+- §5.0 / §2.7 에 "research 가 세션 초반 가정과 상충하면 설계 진입 전 plan 게이트 질문 필수" 한 줄.
+- 근거 memory: `research-seed-reversal-plan-gate-delegation`. 우선순위 P2.
+
+### F-3PLAT-3 — `.claude/work-session` → `.atp/work-session` 경로 이전 전파 ✅ 완료 (커밋 3eb0bf2)
+> **채택**: single-read + orchestrator 실행형 자기삭제 마이그레이션 블록(사용자 결정으로 dual-read 대신 single-read). 설계 `design-f3plat3.md`, 검증 12/12 AC + 로컬 동적 스모크 PASS. ~~**잔여**: 플러그인 version bump(소비 프로젝트 갱신 도달 조건) 는 release 작업에서.~~ → **해소**: 20260616-104333 세션에서 2.0.0 → 2.1.0 release bump.
+
+<details><summary>원래 조사 결론(이력)</summary>
+- 조사: `.claude/work-session/20260609-125316/research/plugin-update-propagation.md`.
+- **결론**: 플러그인 업데이트는 plugin 내부 경로참조만 갱신, **소비 프로젝트의 `.gitignore`·기존 디렉토리는 불가침**(3사 공통). install/update lifecycle 훅 **3사 모두 부재**(cited). → 소비측 변경은 사용자 액션(init 재실행) 경유 불가피.
+- **권장안(조사 우열)**: **(d) dual-read backward-compat + (b) init 재실행 보강** + (a) 플러그인 업데이트(내부 참조 갱신 필수 동반재).
+  - (d): 플러그인이 신(`.atp`)·구(`.claude`) 경로 양쪽 읽기 → 하드 이동의 추적누락·leftover 리스크 제거.
+  - (b): 남는 단 하나 소비측 surface 인 `.gitignore` 신라인 → init §3 에 신라인 grep-append 추가가 전제.
+- blast radius: 경로 참조 13파일(base agent 7 + skill 2 + docs 4)·~20건. dual-read 채택 시 "신경로 쓰기 + 양쪽 읽기" 로 한 커밋 전수.
+- 우선순위 P1. **design phase 필요**(dual-read 구현 형태·init §3 패치 형태).
+</details>
+
+### F-3PLAT-4 — Gemini 실제 배포 산출물 생성
+- `gemini-extension.json` + `commands/*.toml`(또는 skills/) + 에이전트 미러 = **신규 파일, 순수 additive**. 기존 agents/skills 무수정.
+- 선행: F-3PLAT-1(Tier A-flat 코어동기화)·F-3PLAT-3(경로) 정합 후 미러가 정합 소스 복제. 우선순위 P2.
+
+### needs_user_verification (install 스모크 — 마커 승격 게이트)
+- Codex per-plugin 업데이트 명령·auto-update·version 트리거 존재 여부.
+- Codex/Gemini 훅의 소비 프로젝트 파일 수정 권한.
+- ~~Codex 번들 skill namespace~~(해소: `$atp:task` — 2026-06-10), Gemini 배포형·`${workspacePath}` 본문 가용성.
+- 3사 install→update 후 신버전 본문 경로참조 실제 전환 스모크.
+
+### F-3PLAT-5 — Codex 정본 subdir 재배치 (interim symlink 해소) ✅ 해소 (2026-06-10, ADR-0007)
+- 현 interim: `.agents/plugins/marketplace.json`(정본 위치) + `plugins/atp -> ..` 상향 symlink(base source, 비정본·root 우회). atp-graphify 는 `./plugins/atp-graphify` 실디렉토리 직접 source.
+- **비정본 사유(cited)**: 공식 제약 "source.path 는 marketplace root 내부 유지". symlink 타깃이 repo root(marketplace root 밖) → 우회. install 스모크는 통과하나 정본 아님.
+- **정본 목표**: base 자산(agents/·skills/·docs/·templates/·`.codex-plugin/plugin.json`)을 `plugins/atp/` **실디렉토리**로 격리, marketplace source.path 가 root 내부 실서브트리를 가리키게. symlink 제거.
+- **블로커**: Claude 라이브 레이아웃(`.claude-plugin/`+root `agents/`/`skills/`)이 root 자산 의존 → 재배치 시 Claude 경로 동시 정합 필요(대규모). 라이브 세션 안전 게이트 필요.
+- **Windows 게이트**: git symlink 는 `core.symlinks=false`(일부 Windows)에서 깨짐. Codex on Windows 지원 전 F-3PLAT-5 선행.
+- 우선순위 P2(scope 큼). 선행: 라이브 플러그인 레이아웃 분리 전략 설계.
+- **해소 (2026-06-10)**: base 자산을 `plugins/atp/`, add-on 을 `plugins/atp-graphify/` 실디렉토리로 격리 완료. symlink·`plugins/README.md` 제거, 전 marketplace source 가 root 내부 실서브트리 지목. 인간 전용 문서(README 류·.en.md·ADR·TEMPLATE_DEV 등)는 루트 잔류로 번들 제외(~51% 페이로드 축소). atp/atp-graphify 모두 2.0.0. 결정 기록: [docs/adr/ADR-0007-plugin-root-subdirectory.md](docs/adr/ADR-0007-plugin-root-subdirectory.md). 잔여: 3-플랫폼 install 스모크(사용자 실측 — AC-9~12).
+
+### F-3PLAT-6 — `.codex-plugin/plugin.json` skills 선언 충분성 실측 ✅ 대부분 해소 (2026-06-10, codex exec 0.138.0)
+- **해소**: `skills:"./skills/"` 선언 후 재설치(`codex plugin add`) → `codex exec -s read-only` 런타임 레지스트리에 `atp:task`/`atp:init` **노출 확인**(충분조건 충족). 번들 skill namespace = `plugin:skill` 콜론(`atp:task`). 호출 = **`$atp:task`** (사용자 대화형 전사 2026-06-10 — 명시 호출 인식·SKILL 본문/plugin.json Read·설치 버전 1.4.0 정확 보고. 공식 docs `$` skill 멘션 접두 cited). `codex plugin {add,list,remove,marketplace}` CLI 정본·cache 1.4.0·marketplace `.agents/plugins/` 도 확인.
+- **정정 이력**: 호출 토큰을 codex exec 런타임 self-report 근거로 `/task` 단정했던 것은 오류 — self-report 는 컨텍스트 주입값(skill id)에만 유효, UI 입력 토큰 근거 불가. 사용자 대화형 전사로 `$atp:task` 확정 후 전 문서 정정.
+- **추가 해소 (2026-06-10)**: 단축형 `$task` 도 동일 skill 로 해석 — 사용자 전사 확인. 호출 토큰 완전 확정 (`$atp:task` 전체형 + `$task` 단축형).
+- **잔여(소)**: env var `PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` 의 skill·agent 본문(hook 외) 가용성. 3-tier 팀 모드 E2E(subagent spawn 실동작).
+- 마커: platform-adapters 의 Codex 호출문법·namespace 셀 verified-empirical 유지(근거 교체: 런타임 self-report → 사용자 실측+cited).
+
+---
+
+## 8. 후속 백로그 (세션 20260617-165603 발생)
+
+§4.8 축-완결성 세션에서 retrospective 가 표면화한 구조적 protocol_feedback. 사용자 결정(D-B)으로 본 세션 스코프(§4.8) 밖 이월. report(gitignored) rot 방지 위해 추적 가능 백로그로 등재.
+
+### G-RELCHK-1 — release-checklist §0 "세션 진입 시 브랜치 사전 진단" 보강 (P1, 이월)
+
+**문제 (구조적)**: 현 release-checklist §0 은 "릴리즈 직전" 트리거 + "bump 대상 브랜치 = 소비자 추적 ref(커밋 직전 진단)" 만 규정하고, bump 이 예상되는 작업의 **세션 진입 시 사전 브랜치-적합성 진단** 규약이 없다. 세션 20260617-165603 에서 작업 브랜치(`feat/community-health-files`)가 origin/main 대비 stale(behind 1·이미 PR#10 머지)이고 origin/main 에 미릴리즈 feat 가 누적된 상태가 §0 게이트(세션 후반)에서야 드러나, 브랜치 조정 제안이 늦어졌다(모든 변경 가역이라 손실 0, release 브랜치로 회수). 동일 staleness 진단 누락이 직전 세션(20260616-104333)에 이어 형태를 달리해 재발 → (b)+(c) 결합, 주(主)는 (c).
+
+**제안**: `docs/development/release-checklist.md` §0 에 "0.x 세션 진입 시 사전 진단(bump 예상 작업 한정)" 절 추가 또는 §0 첫 불릿 보강 — 작업 *착수 전* `git fetch` 후 HEAD↔origin/main 토폴로지(ahead/behind/diverged) + origin/main 미릴리즈 feat 누적을 1회 진단. stale/누적이면 "현 브랜치는 bump 도달 경로 아님 — origin/main 기반 release 브랜치 권장" 을 착수 전 사용자에게 정보 제공(제약 무시 아님 → 재결정). 동시에 `agent-team-protocol.md` 세션 셋업 절에서 bump-likely 작업 진입 시 이 진단을 트리거하는 1줄 연결.
+
+**근거 교훈(report memory_candidate body_draft)**: `branch-fitness-pre-diagnosis-at-session-entry-when-bump-likely` — 기존 `bump-target-branch-consumer-tracked-ref`(커밋 직전)·`feat-merge-triggers-version-bump-release`(트리거 조건)의 **시점 선행 보강**(비중복). 상세 본문은 세션 20260617-165603 report.md `retrospective.memory_candidates` 참조(gitignored 로컬).
+
+- 태그: [propagated] · 우선순위 P1 · 예상: 독립 세션 1
+- docs_sync_target: `docs/development/release-checklist.md` (+ 선택 `agent-team-protocol.md` 세션 진입 절)
+
+### (메타·낮은 우선) 프로토콜-개선 세션 흐름 템플릿화
+
+"소비 프로젝트 audit→확정 prompt(진단·A/B/C·제약·증거)→신규 규약 자기적용 검증→삼각 상호참조 정합" 흐름이 효과적이었으나 1~2회 관측. **3회 이상 같은 흐름 반복 시** 프로토콜-개선 세션 템플릿(또는 §9 사후승격 인접 문서) 명문화 검토. 지금 규약화는 과잉 — 조건부 후보로만 기록.
