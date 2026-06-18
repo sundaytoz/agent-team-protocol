@@ -136,7 +136,7 @@ spawn 미지원/자가판정 불가/실측 실패 호스트에서 **단일 agent
 
 [Phase 5 — 문서화 (documentation-advisor 역할 self-수행)]
   □ changes/ADR 등 카테고리 분류 기준 준수
-  □ 회고 → MEMORY 반영 (§12)
+  □ 회고 → 교훈 반영 (docs-first; memory 는 사용자 설정 시 보조) (§12)
 ```
 
 ### Tier B 진입 트리거
