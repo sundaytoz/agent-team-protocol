@@ -58,7 +58,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   │   ├── index.md                  ← 번들 전용 경량 허브
 │   │   │   └── development/
 │   │   │       ├── index.md              ← 번들 전용 경량본 (런타임 6건만)
-│   │   │       ├── agent-team-protocol.md ← 3-tier 운영 권위 레퍼런스 (§1~§14)
+│   │   │       ├── agent-team-protocol.md ← 3-tier 운영 권위 레퍼런스 (§1~§14 + 선두 코어 구획 atp:core)
 │   │   │       ├── agent-catalog.md      ← 에이전트 카탈로그 (base 10 + add-on 3)
 │   │   │       ├── platform-adapters.md  ← 호스트 capability tier 정의·자가판정 정본
 │   │   │       ├── documentation-guidelines.md
@@ -176,6 +176,7 @@ init 후 설정 절차는 [../usage/setup-checklist.md](../usage/setup-checklist
 ## 관련 문서
 
 - [../../plugins/atp/docs/development/agent-catalog.md](../../plugins/atp/docs/development/agent-catalog.md) — base atp 10개 + add-on atp-graphify 3개 에이전트 상세
-- [../../plugins/atp/docs/development/agent-team-protocol.md](../../plugins/atp/docs/development/agent-team-protocol.md) — 운영 프로토콜 전문
+- [../../plugins/atp/docs/development/agent-team-protocol.md](../../plugins/atp/docs/development/agent-team-protocol.md) — 운영 프로토콜 전문 (선두 코어 구획 + §1~§14)
+- [docs/adr/ADR-0013-protocol-core-section-on-demand-routing.md](../adr/ADR-0013-protocol-core-section-on-demand-routing.md) — protocol.md 진입 로딩 구조: 코어 구획 상주 + on-demand §섹션 라우팅 결정
 - [../usage/setup-checklist.md](../usage/setup-checklist.md) — init 후 설정 체크리스트
 - [docs/adr/ADR-0002-plugin-only-migration.md](../adr/ADR-0002-plugin-only-migration.md) — cp-R 폐기·plugin-only 전환 결정 기록

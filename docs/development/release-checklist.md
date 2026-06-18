@@ -136,3 +136,18 @@ git grep -niE 'examp[l]e_slug|examp[l]e_bot|examp[l]e_sym' -- ':!docs/developmen
 ```
 
 기대값: 출력 없음 + `exit=1`. (토큰 리스트는 작업마다 다르므로 고정이 아니다 — 위는 2026-06-17 backport 의 예시 토큰이며, 그 시점 레포에서 0 hit 으로 실증됐다.)
+
+## 8. 끊긴 §N 인용 0 (protocol 섹션 인용 무결성)
+
+`agent-team-protocol.md` 는 ADR·`agents/*.md`·docs 가 §N 번호로 인용하는 사실상의 공개 앵커다. 섹션 추가/재배열로 인용된 §N 이 본문 헤더에서 사라지면 모든 인용이 무성증상으로 끊긴다(코어 구획은 `<!-- -->` 마커라 `#` 헤더 카운트에 안 잡혀 §N 번호에 영향 0). 본 절은 그 끊긴 인용을 0으로 강제한다.
+
+검증 명령:
+
+```bash
+PROTO=plugins/atp/docs/development/agent-team-protocol.md
+comm -23 \
+  <(grep -rhoE --exclude='release-checklist.md' '§[1-9][0-9]?' docs plugins | tr -d '§' | sort -un) \
+  <(grep -oE '^#{2,4} [0-9]+' "$PROTO" | grep -oE '[0-9]+' | sort -un)
+```
+
+기대값: **출력 없음**(끊긴 §N 인용 0). 좌변은 `docs`·`plugins` 전체에서 인용된 정수 §N 집합, 우변은 protocol 본문 §헤더 번호 집합이며, 좌변에만 있는 번호(=인용됐으나 본문에 없는 §N)가 끊긴 인용이다. `--exclude='release-checklist.md'` 로 이 체크리스트 자신의 §N 산문(self-match)을 검사 대상에서 빼 자기매치를 차단한다(§4.6 실행 통과 판정 — 2026-06-18 레포에서 출력 0 으로 실증). 신규 섹션은 §14 다음 정수로만 추가하고 기존 번호를 재배열하지 않는다(코어 구획 C7 규칙).

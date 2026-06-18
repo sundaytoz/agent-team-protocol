@@ -2,6 +2,59 @@
 
 ATP 세션은 **단일 오케스트레이터 + 도메인 어드바이저 + 필요 시 워커** 3-tier 구조로 작업한다. 본 문서는 행동 규약·호출 경로·보고서 스키마·확장 트리거의 **권위있는 레퍼런스**다. 에이전트 정의 파일(`agents/*.md`) 은 이 문서를 준수한다.
 
+<!-- atp:core:begin -->
+> **코어 구획** — `/atp:task` 진입 시 SKILL §1 이 이 구획(begin~end)만 상주 Read 한다. 본문 §1~§14 는 코어가 가리킬 때 on-demand Read. 코어는 원문 인용·포인터만 두며 규약 내용을 재서술하지 않는다. 본 구획은 HTML 주석 마커라 `#` 헤더·§N 번호에 영향 0.
+
+<!-- atp:core:item 1 -->
+**C1. 역할 정의 요약 (상세 §1)** — Orchestrator: 사용자와의 유일한 창구, **직접 작업 금지**(조사/설계/구현/검증/문서화 전부 advisor 위임), 첫 코드 변경 전 계획 가시화 의무. Advisor: 도메인 단일 책임자, 산출=파일+요약. Worker: 단일 책임·최소 컨텍스트, **다른 worker 호출 금지**.
+
+<!-- atp:core:item 2 -->
+**C2. 호출 모델 불변 (상세 §2)** — **Tier-3 advisor 만 `Agent` 툴 보유**(`research-advisor`/`implementation-advisor`). Worker 는 `Agent` 없음(**재귀 금지**). Advisor 호출당 worker **최대 6개** 동시 spawn(초과 시 배치 분할). **orchestrator 가 상위 advisor 여러 개 동시 호출 금지**(컨텍스트 오염), 독립 advisor 내부 worker 병렬은 허용.
+
+<!-- atp:core:item 3 -->
+**C3. 파괴적 조작 게이트 (압축형 — 전문·2단계 분리·실전 사례는 §6)** — 아래 6항목은 advisor/worker **직접 수행 금지**. **orchestrator 가 사용자 확인 후에만** 실행한다:
+- `git push --force`, `git reset --hard`, 브랜치/태그 삭제
+- DB drop, TRUNCATE, 마이그레이션 rollback 실행 (작성은 허용, 적용은 금지)
+- 파일 대량 삭제 (≥5 파일 또는 디렉토리 통째)
+- 외부 시스템으로의 쓰기 호출 (메시지 발송, 외부 API 쓰기, 공개 게시 등)
+- `~/.claude/` 전역 설정 수정 (프로젝트 설정은 허용)
+- 서드파티에 데이터 업로드 (gist, pastebin 등)
+
+"로컬 파괴 + 외부 반영" 시퀀스는 **2단계 게이트로 분리**(상세 §6). 항상 적용 — 트리거 없이 매 작업 점검.
+
+<!-- atp:core:item 4 -->
+**C4. 게이트 통과 후 롤백 원칙 (상세 §6)** — 파괴적 조작이 승인·실행됐고 후속 검증이 실패하면 orchestrator 가 **즉시 되돌리기**(git revert·파일 복원·migration down). 자동 복원 불가 영역(외부 서비스 상태·공개 게시)은 `needs_user_verification` 에 수동 복구 단계 명시 후 세션을 닫지 않는다.
+
+<!-- atp:core:item 5 -->
+**C5. 항상 적용 체크리스트 (트리거 무관)** — 아래는 라우팅 인덱스 트리거 없이 매 세션 적용:
+- **세션 종료 조건** (SKILL §9): L1 통합검증 통과(L2 pass|skip) → `verified_by_me`/`needs_user_verification` 기록 → `graph-refresh-checker`(add-on 시) → `git status` 미커밋 잔여 0 또는 `open_items` 명시. L2 실패 상태 종료 금지.
+- **결함 표면화 → 회귀 단계 판정** (§2.6): 결함 발원 단계 진단 후 그 advisor 재호출·전체 재검. 다항목 산출물의 한 항목 결함은 동일 출처 나머지 항목 전수 재검.
+- **plan-gate 트리거** (§2.7): research 가 세션 초반 가정을 뒤집으면 설계 진입 전 `AskUserQuestion` plan 게이트 1회(반전 요약+옵션+Recommended+근거). orchestrator 단독 반영 금지.
+
+<!-- atp:core:item 6 -->
+**C6. 라우팅 인덱스 (on-demand)** — 작업 성격을 분류해 해당 행의 §헤더를 grep 으로 위치 확정 후 Read. offset 은 편의 힌트(본문 편집 시 드리프트 — §헤더가 정본). 매칭 행 없으면 코어만으로 진행(마이크로 편집 핫패스, 전문 로드 0).
+
+| 트리거 (작업 성격 / 이벤트) | 대상 §헤더 | 한줄 설명 | offset 힌트 |
+|---|---|---|---|
+| advisor 호출 분할 / 병렬 / open_questions / system-reminder / 호출실패 회복 | `## 2.` | 호출 모델 전반 + 하위 절(2.1~2.8) | L88 |
+| 사용자 지적 수신 (지적식 발언 3단계 판단) | `### 2.3` | 지적 vs 단순질문 분류 + 후속 | L122 |
+| 결함 표면화 → 회귀 단계 판정 (backward) | `### 2.6` | 발원 단계 진단·전수 재검 | L269 |
+| 분할 트랙 설계 게이트 (forward phase-gate) | `### 2.7` | 결합 판정·plan-gate | L296 |
+| 도메인 매핑 / advisor 호출 시점 / graphify 조건 | `## 3.` | 도메인-에이전트 표 + 3.1~3.2 | L322 |
+| advisor concerns 충돌 중재 | `## 4.` | 충돌 조정 + 4.1~4.8 | L354 |
+| AC 작성 / 집합 전수체크 / self-audit | `### 4.3` | 집합 전수 AC (4.7 self-audit 연계) | L409 |
+| 모델 tier·effort·cap·dispatch 판정 | `## 5.` | 모델 선택 정책 + 5.1~5.8 | L479 |
+| 검증 명령 작성/리뷰 (실행 통과 판정) | `### 4.6` | 명령 실제 실행 게이트 | L445 |
+| 공유 상태 레이아웃 / 추적 정책 | `## 7.` | 디렉토리 구조 + 추적 | L627 |
+| 보고서 스키마 작성/갱신 | `## 8.` | report.md v2 스키마 | L669 |
+| 확장 트리거 / MCP 통합 | `## 9.` | 레지스트리 (10 MCP 인접) | L772 |
+| agent 파일 규약 / peer_agents / 자가검증 | `## 11.` | 규약 + 11.1~11.2 | L791 |
+| 회고→MEMORY / phase 아티팩트 / 탐색도구 | `## 12.` | 회고·아티팩트·도구 (13/14 인접) | L868 |
+
+<!-- atp:core:item 7 -->
+**C7. slug↔§N 매핑 + 신규 섹션 규칙** — 본 B 안에서 §N 번호는 **불변**이므로 기존 ADR/agents/docs 의 §N 인용은 전부 유효(끊긴 인용 0). 위 C6 표의 `## N.` 헤더가 곧 안정 앵커다(번호=slug). **신규 섹션 추가 규칙**: 본문 끝(§14 이후)에 다음 정수 §N 으로만 추가하고 기존 번호를 재배열하지 않는다 — 그래야 인용 안정성이 유지된다. 회귀 게이트("끊긴 §N 인용 0")는 `docs/development/release-checklist.md` 에 상주.
+<!-- atp:core:end -->
+
 ## 1. 역할 정의
 
 ### Orchestrator (메인 에이전트)
