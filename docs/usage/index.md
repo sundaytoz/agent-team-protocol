@@ -20,6 +20,7 @@ last_reviewed: 2026-06-01
 
 - [setup-checklist.md](./setup-checklist.md) — plugin 설치 후 `/atp:init` → placeholder 채우기 → `/atp:task` 스모크 3단계 설정 체크리스트
 - [faq.md](./faq.md) — 설치 실패·명령 미인식·graphify skip·init 재실행 등 문제 해결 FAQ
+- [best-practices.md](./best-practices.md) — 캐시 리드 누적·절차 시간 등 한계점 이해와 권장 작업 방식
 
 ## 설치 순서
 
@@ -55,4 +56,5 @@ last_reviewed: 2026-06-01
 
 1. [setup-checklist.md](./setup-checklist.md) — 설치 직후 설정 (3단계)
 2. 문제 발생 시 [faq.md](./faq.md)
-3. 에이전트 구성 확인 — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md)
+3. 작업 전 [best-practices.md](./best-practices.md) — 한계점·캐시 비용·작업 분할 방식
+4. 에이전트 구성 확인 — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md)
