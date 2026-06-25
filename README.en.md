@@ -23,7 +23,7 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 | Gemini CLI | Planned | `/atp:task` planned | `GEMINI.md` | Design documented as Tier A-flat; release artifact not generated yet |
 | opencode | Supported (adapter) | `opencode run --command atp-task "..."` | Generated emit (no CLAUDE.md-style instruction file) | Formal smoke PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
-opencode is not a marketplace plugin but a separate npm adapter — install with `npx @atp/opencode install`. See [adapters/opencode/README.md](adapters/opencode/README.md) for details and [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md) for the strategy rationale.
+opencode is not a marketplace plugin but a separate npm adapter — see [3. Installation](#3-installation) below for the install command. See [adapters/opencode/README.md](adapters/opencode/README.md) for details and [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md) for the strategy rationale.
 
 The canonical capability-tier definitions and host self-assessment rules live in [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md). The per-platform invocation syntax and verification markers in the table above are frozen as history in the appendices of [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) — the bundled runtime no longer enumerates platforms and works by capability self-assessment, so ATP can also run on host CLIs not listed here.
 
@@ -75,6 +75,14 @@ The full protocol is in [plugins/atp/docs/development/agent-team-protocol.md](pl
 Use [docs/usage/setup-checklist.en.md](docs/usage/setup-checklist.en.md) for the current installation and smoke-test flow. The exact command syntax differs by platform.
 
 For this repository's self-dogfooding flow, see [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md). The graphify knowledge graph integration is an optional add-on; see [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md).
+
+opencode installs as an npm adapter, not via the marketplace (a separate host from Claude Code/Codex):
+
+```bash
+npx @atp-opencode/opencode install
+```
+
+See [adapters/opencode/README.md](adapters/opencode/README.md) for options (`--global` / `--with-graphify` / `--provider`).
 
 ---
 
