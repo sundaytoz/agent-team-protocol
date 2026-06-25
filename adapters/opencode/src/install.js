@@ -23,15 +23,17 @@ import {
   resolveAtpDocsDir,
   resolveAtpTemplatesDir,
   resolveManifestPath,
+  resolveCanonicalPluginsRoot,
 } from './paths.js';
 
 // ---------------------------------------------------------------------------
-// Repo-root resolution for source_version (design F.3).
-// This file lives at <repo>/adapters/opencode/src/install.js, so the repo root
-// is three levels up; the canonical plugin.json carries the source version.
+// Canonical plugins/ root resolution for source_version (design F.3).
+// Vendor bundle (npm-installed) preferred over repo-local path — see
+// paths.js#resolveCanonicalPluginsRoot.
 // ---------------------------------------------------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename); // .../adapters/opencode/src
+const PLUGINS_ROOT = resolveCanonicalPluginsRoot(__dirname);
 
 /**
  * Execute an install plan and record a manifest.
@@ -136,13 +138,7 @@ export function runInstall(opts) {
     try {
       const pj = JSON.parse(
         fs.readFileSync(
-          path.resolve(
-            __dirname,
-            '..',
-            '..',
-            '..',
-            'plugins/atp/.claude-plugin/plugin.json',
-          ),
+          path.join(PLUGINS_ROOT, 'atp', '.claude-plugin', 'plugin.json'),
           'utf8',
         ),
       );

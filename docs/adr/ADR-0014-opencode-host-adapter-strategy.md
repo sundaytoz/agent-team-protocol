@@ -194,6 +194,14 @@ D7 원문 "platform-adapters.md capability matrix 에 opencode 행 추가"는 AD
 
 ---
 
+## 구현 완료 — publish 가능화 후속 (2026-06-25)
+
+D3("4번째 수작업 사본 금지")의 npm publish 경로가 완성됐다. 패키징 결함(ENOENT — tarball 에 `plugins/**` 누락)을 수정해 **`npx @atp-opencode/opencode install` 이 실제 동작**하게 됐다.
+
+핵심 변경: `scripts/bundle-canonical.js`(신규 prepack 훅)가 publish 시점에 canonical 7개 경로를 `vendor/plugins/`로 복사. `vendor/`는 git-ignored 빌드 산출물로 레포 canonical은 무수정 유지. `vendor/` 부재 시 레포 폴백 분기로 self-dogfooding도 유지. AC 7/7 PASS(검증: `.atp/work-session/20260625-100445/verification/results.md`). 상세 이력: [`docs/changes/2026-06-25-opencode-adapter-npm-publish.md`](../../docs/changes/2026-06-25-opencode-adapter-npm-publish.md).
+
+---
+
 ## 관련 문서
 
 - [ADR-0006](./ADR-0006-three-platform-support.md) — 3-플랫폼 지원·capability tier·결정4(install-hook 부재)·결정5(Gemini 산출물 이월). 본 ADR 의 직접 전제.
@@ -201,4 +209,5 @@ D7 원문 "platform-adapters.md capability matrix 에 opencode 행 추가"는 AD
 - [ADR-0009](./ADR-0009-bundle-runtime-platform-neutralization.md) — 번들 런타임 중립화·capability 자가판정.
 - [ADR-0013](./ADR-0013-protocol-core-section-on-demand-routing.md) — §N 앵커 = 공개 계약(호스트 무관 보존).
 - [platform-adapters.md](../../plugins/atp/docs/development/platform-adapters.md) — capability tier·per-platform adapter SSoT. §8 동결이력 포인터로 연결(중립화 유지 — host 행 추가 아님).
+- [changes/2026-06-25-opencode-adapter-npm-publish.md](../../docs/changes/2026-06-25-opencode-adapter-npm-publish.md) — npm publish 가능화 변경 이력(vendor 번들+prepack).
 - opencode 공식문서 (cited): [plugins](https://opencode.ai/docs/plugins/) · [agents](https://opencode.ai/docs/agents/) · [commands](https://opencode.ai/docs/commands/) · [config](https://opencode.ai/docs/config/)

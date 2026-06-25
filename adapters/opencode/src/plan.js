@@ -20,26 +20,31 @@ import {
   resolveCommandsDir,
   resolveAtpDocsDir,
   resolveAtpTemplatesDir,
+  resolveCanonicalPluginsRoot,
 } from './paths.js';
 
 // ---------------------------------------------------------------------------
-// Repo-root resolution (design "레포 루트 해소")
-// This file lives at <repo>/adapters/opencode/src/plan.js, so the repo root is
-// three levels up. Canonical sources live under <repo>/plugins/**.
+// Canonical plugins/ root resolution.
+// Prefers the vendor bundle (npm-installed) over the repo-local path so that
+// `npx @atp-opencode/opencode install` works after publish AND repo-local self-dogfooding
+// keeps working. See paths.js#resolveCanonicalPluginsRoot.
 // ---------------------------------------------------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename); // .../adapters/opencode/src
-const REPO_ROOT = path.resolve(__dirname, '..', '..', '..'); // repo root
 
-const CANONICAL_AGENTS_BASE = path.join(REPO_ROOT, 'plugins/atp/agents');
-const CANONICAL_AGENTS_GRAPHIFY = path.join(REPO_ROOT, 'plugins/atp-graphify/agents');
-const CANONICAL_SKILLS_DIR = path.join(REPO_ROOT, 'plugins/atp/skills');
-const CANONICAL_DOCS_BASE = path.join(REPO_ROOT, 'plugins/atp/docs');
+const PLUGINS_ROOT = resolveCanonicalPluginsRoot(__dirname);
+
+const CANONICAL_AGENTS_BASE = path.join(PLUGINS_ROOT, 'atp', 'agents');
+const CANONICAL_AGENTS_GRAPHIFY = path.join(PLUGINS_ROOT, 'atp-graphify', 'agents');
+const CANONICAL_SKILLS_DIR = path.join(PLUGINS_ROOT, 'atp', 'skills');
+const CANONICAL_DOCS_BASE = path.join(PLUGINS_ROOT, 'atp', 'docs');
 const CANONICAL_GRAPHIFY_USAGE = path.join(
-  REPO_ROOT,
-  'plugins/atp-graphify/docs/graphify-usage.md',
+  PLUGINS_ROOT,
+  'atp-graphify',
+  'docs',
+  'graphify-usage.md',
 );
-const CANONICAL_TEMPLATES_BASE = path.join(REPO_ROOT, 'plugins/atp/templates');
+const CANONICAL_TEMPLATES_BASE = path.join(PLUGINS_ROOT, 'atp', 'templates');
 
 /**
  * Recursively collect the absolute paths of every file under `dir`
