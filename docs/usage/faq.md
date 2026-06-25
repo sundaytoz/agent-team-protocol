@@ -145,13 +145,19 @@ codex plugin add atp@agent-team-protocol
 # Gemini extension 설치 명령 및 정확한 호출 표기(/atp:task 콜론 추정)는 install 스모크로 확정 예정.
 ```
 
+**opencode (verified-empirical 2026-06-24, opencode 1.17.9):**
+```
+# opencode 는 별도 npm 어댑터. 이 레포에서는 로컬 어댑터를 직접 실행한다 (npm 미발행 — 발행 후엔 `npx @atp/opencode install`).
+node adapters/opencode/bin/cli.js install
+```
+
 graphify add-on 도 사용하려면 (Claude Code):
 
 ```
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-이후 새 세션에서 `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp:task` (Gemini, TODO:실측) 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
+이후 새 세션에서 `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp:task` (Gemini, TODO:실측) / `opencode run --command atp-task "..."` (opencode, verified-empirical 2026-06-24, opencode 1.17.9) 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
 
 ---
 
