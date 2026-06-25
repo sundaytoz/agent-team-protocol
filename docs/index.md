@@ -44,3 +44,4 @@ graphify 기능은 옵트인 add-on 이다. 설치·운영·그래프 갱신 규
 - 세션 산출물 `.atp/work-session/` (플러그인 기본=추적 / 이 레포는 opt-out): [docs/architecture/file-map.md#3-런타임-디렉토리](./architecture/file-map.md#3-런타임-디렉토리)
 - 결정 이력: [docs/adr/index.md](./adr/index.md)
 - 코드 지식 그래프: [docs/graph/index.md](./graph/index.md)
+- 릴리스·배포 트리거 (`plugins/atp/` 번들 변경 시 필수): [docs/development/release-checklist.md](./development/release-checklist.md) — **§0 (배포 완결 의무) 먼저**

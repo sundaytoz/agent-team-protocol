@@ -57,6 +57,20 @@ agent-team-protocol/
 
 ---
 
+## 릴리스 — 배포 완결 의무
+
+소비자에게 영향을 주는 변경(`plugins/atp/` 번들 = 에이전트·스킬·런타임 레퍼런스·템플릿)을 `main` 에 머지하는 작업은 **머지로 끝이 아니다**. `/plugin update` 는 manifest 버전 차이로만 갱신을 감지하므로, 버전 bump 이 `main` 에 도달하지 않으면 변경은 소비자에게 **무증상 미도달**한다.
+
+따라서 user-facing feat 를 다룰 때는 **배포 완결까지를 같은 작업 단위로** 본다:
+
+1. **배포 트리거 확인** — `docs/development/release-checklist.md` §0 (feat 머지 = release 완결 의무). docs-first 동선(§문서화 정책)에서 작업 시작·완료 시 이 §0 를 본다.
+2. **bump → PR → `/plugin update` 도달** 까지가 완결. base atp manifest 4곳(release-checklist §4 invariant)을 동기 bump 한다.
+3. **이월 금지** — bump 을 후속으로 미룰 때 평문 메모(커밋 메시지·TEMPLATE_DEV "잔여")로 남기면 잊힌다. 실증: `2.0.0→2.1.0`·`2.2.2→2.3.0` 모두 미bump 이월이 뒤늦게 release 로 해소됐다. 이월 시 추적 가능한 항목으로 격리하고 `release-pending` 표식을 붙여 다음 세션 진입 시 우선 확인한다.
+
+상세 절차·검증 명령은 `docs/development/release-checklist.md` 를 따른다.
+
+---
+
 ## 코딩 규칙
 
 - agent/skill body 의 레퍼런스 Read 경로는 `${CLAUDE_PLUGIN_ROOT}/docs/...`, 편집형 Read 는 `${CLAUDE_PROJECT_DIR}/docs/...`, 산출물 Write 는 `${CLAUDE_PROJECT_DIR}/.atp/work-session/...` 규칙을 따른다.

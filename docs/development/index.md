@@ -14,7 +14,7 @@
 - [search-tool-matrix.md](../../plugins/atp/docs/development/search-tool-matrix.md) — 탐색/검색 도구 선택 매트릭스 (LSP, graphify, Grep, Glob, Read, WebFetch 목적별 기준)
 
 기여자용 문서 (이 디렉토리 — 번들 제외):
-- [release-checklist.md](./release-checklist.md) — 릴리즈 전 문서 링크·TODO 마커·manifest·agent catalog 동기화 점검 목록
+- [release-checklist.md](./release-checklist.md) — **§0 = 언제 릴리즈를 시작하나** (user-facing feat 머지 = release 완결 의무, 진입 조건) / §1~§9 = bump 전제 사후 invariant 점검(문서 링크·TODO 마커·manifest·agent catalog·끊긴 §N 인용 동기화). `plugins/atp/` 번들을 건드리는 작업은 **§0 를 먼저** 본다(루트 `CLAUDE.md` "릴리스 — 배포 완결 의무" 가 docs-first 로 이 §0 를 가리킨다).
 
 편집형(프로젝트 생성) 문서:
 - `verification-strategies.md` — `verification-advisor` 가 읽는 검증 전략 레지스트리. `/atp:init` 이 생성, 프로젝트가 `cmd` 를 채운다.
