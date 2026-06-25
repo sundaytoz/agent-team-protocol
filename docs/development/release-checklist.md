@@ -139,6 +139,61 @@ git grep -niE 'examp[l]e_slug|examp[l]e_bot|examp[l]e_sym' -- ':!docs/developmen
 
 기대값: 출력 없음 + `exit=1`. (토큰 리스트는 작업마다 다르므로 고정이 아니다 — 위는 2026-06-17 backport 의 예시 토큰이며, 그 시점 레포에서 0 hit 으로 실증됐다.)
 
+## 9. opencode 어댑터 릴리즈
+
+opencode 어댑터(`adapters/opencode/`)를 변경하거나 신규 호스트 어댑터를 추가할 때 적용한다.
+
+### (a) adapters/opencode/package.json version 동기 점검
+
+어댑터 기능 변경 시 `adapters/opencode/package.json` 의 `version` 을 bump 하고, CHANGELOG(있는 경우)와 동기되는지 확인한다.
+
+```bash
+grep '"version"' adapters/opencode/package.json
+```
+
+기대값: 이번 변경 의도와 일치하는 버전 번호.
+
+### (b) 신규 호스트 게이트
+
+신규 호스트 어댑터는 정식 스모크(opencode AC L1+L2 전건 PASS) 통과 전 **platform-adapters.md 활성 규칙 등재 금지** — 중립화 유지. platform-adapters.md §8 동결이력 포인터 1줄만 추가한다(ADR-0009 결정2·ADR-0014 D7 SSoT 정정 준거).
+
+### (c) tier→slug as-of staleness 점검
+
+`--provider` 옵션으로 bake 된 tier→slug 매핑이 해당 provider 의 현재 라인업과 여전히 정합하는지 확인한다. 라인업 변동 시 generator 매핑 업데이트 + `as-of` 스탬프 갱신.
+
+```bash
+grep -r 'as-of\|asOf\|haiku\|sonnet\|opus' adapters/opencode/
+```
+
+기대값: 매핑 날짜 스탬프가 최신 라인업 확인 시점을 반영.
+
+### (d) opencode 스모크 절차 요약
+
+```bash
+# 임시 디렉토리에서 실행
+T=$(mktemp -d)
+cd "$T"
+node <repo>/adapters/opencode/bin/cli.js install --project
+
+# L1 정적 확인 (generator 단위)
+ls .opencode/agents/atp-*.md | wc -l          # 개수 = source 와 동등
+grep -L '^mode: subagent' .opencode/agents/atp-*.md   # 출력 없음 기대
+grep -L 'task: deny' .opencode/agents/atp-*.md        # 출력 없음 기대
+node <repo>/adapters/opencode/bin/cli.js uninstall --project
+ls .opencode/agents/ 2>/dev/null | wc -l       # 0 기대 (잔여 0)
+
+# L2 런타임 확인 (opencode 필요)
+node <repo>/adapters/opencode/bin/cli.js install --project
+opencode agent list                             # atp-* 10개, 에러 0 기대
+opencode run --command atp-task "로드 확인만 — 한 줄로 답하고 종료"
+# exit 0 + ProviderModelNotFoundError 0 기대
+node <repo>/adapters/opencode/bin/cli.js uninstall --project
+
+cd / && rm -rf "$T"
+```
+
+기대값: 각 단계 exit 0, L1 전건 PASS, L2 전건 PASS, 잔여 0.
+
 ## 8. 끊긴 §N 인용 0 (protocol 섹션 인용 무결성)
 
 `agent-team-protocol.md` 는 ADR·`agents/*.md`·docs 가 §N 번호로 인용하는 사실상의 공개 앵커다. 섹션 추가/재배열로 인용된 §N 이 본문 헤더에서 사라지면 모든 인용이 무성증상으로 끊긴다(코어 구획은 `<!-- -->` 마커라 `#` 헤더 카운트에 안 잡혀 §N 번호에 영향 0). 본 절은 그 끊긴 인용을 0으로 강제한다.

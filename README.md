@@ -21,6 +21,9 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
 | Codex CLI | ✅ 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | 설치·skill 노출·호출·본문 로드 실측 (2026-06-10, codex-cli 0.138.0). subagent spawn 은 공식 문서 근거(cited) — 팀 모드 E2E 스모크 권장 |
 | Gemini CLI | 🚧 계획 | `/atp:task` (예정, TODO:실측) | `GEMINI.md` | 문서 근거 설계 완료(Tier A-flat) — 배포 산출물 미생성 |
+| opencode | ✅ 지원 (어댑터) | `opencode run --command atp-task "..."` | 생성형 emit (CLAUDE.md형 지침파일 없음) | 정식 스모크 PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
+
+opencode 는 마켓플레이스 plugin 이 아니라 별도 npm 어댑터다 — 설치: `npx @atp/opencode install`. 상세는 [adapters/opencode/README.md](adapters/opencode/README.md), 전략 근거는 [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md).
 
 capability tier 정의·호스트 자가판정 규칙의 정본은 [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) 다. 위 표의 플랫폼별 호출 문법·실측 마커의 동결 이력 정본은 [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록이다 — 번들 런타임은 플랫폼을 열거하지 않고 capability 자가판정으로 동작하므로, 표에 없는 호스트 CLI 에서도 사용할 수 있다.
 

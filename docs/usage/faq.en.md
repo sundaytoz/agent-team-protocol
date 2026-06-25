@@ -150,13 +150,19 @@ codex plugin add atp@agent-team-protocol
 # The Gemini extension install command and the exact invocation form (/atp:task colon form assumed) will be confirmed by an install smoke test.
 ```
 
+**opencode (verified-empirical 2026-06-24, opencode 1.17.9):**
+```
+# opencode ships as a separate npm adapter. In this repo, run the local adapter directly (not yet published to npm — after publish, use `npx @atp/opencode install`).
+node adapters/opencode/bin/cli.js install
+```
+
 To also use the graphify add-on (Claude Code):
 
 ```
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-Afterwards, in a new session, `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp:task` (Gemini, TODO: to be verified) becomes available. See `../../README.md` §5 (self-dogfooding) for details.
+Afterwards, in a new session, `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp:task` (Gemini, TODO: to be verified) / `opencode run --command atp-task "..."` (opencode, verified-empirical 2026-06-24, opencode 1.17.9) becomes available. See `../../README.md` §5 (self-dogfooding) for details.
 
 ---
 

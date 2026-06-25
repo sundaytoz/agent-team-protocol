@@ -92,6 +92,9 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 - **Claude Code**: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
 - **Codex** (verified-empirical 2026-06-10, codex-cli 0.138.0): `$atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
 - **Gemini** (TODO:실측 — 배포형 확정 전): `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
+- **opencode** (verified-empirical 2026-06-24, opencode 1.17.9): `opencode run --command atp-task "안녕, 에이전트 팀이 로드됐는지 확인만 해줘"`
+
+> opencode 는 마켓플레이스 plugin 이 아니라 npm 어댑터로 설치한다: `npx @atp/opencode install` (위 0단계의 marketplace/install 단계 불필요). 상세는 [faq.md](./faq.md) · [`../../adapters/opencode/README.md`](../../adapters/opencode/README.md).
 
 - [ ] orchestrator 가 `docs/development/agent-team-protocol.md` 를 읽었는가?
 - [ ] `.atp/work-session/<sid>/` 디렉토리가 생성됐는가?
