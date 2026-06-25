@@ -1,5 +1,5 @@
 {
-  "name": "@atp/opencode",
+  "name": "@atp-opencode/opencode",
   "version": "0.1.0",
   "description": "ATP (agent-team-protocol) opencode host adapter — generator + npm bin CLI",
   "type": "module",
@@ -8,13 +8,15 @@
   },
   "files": [
     "bin/",
-    "src/"
+    "src/",
+    "vendor/"
   ],
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "test": "node --test test/**/*.test.js"
+    "test": "node --test test/**/*.test.js",
+    "prepack": "node scripts/bundle-canonical.js"
   },
   "keywords": ["atp", "opencode", "agent-team-protocol"],
   "license": "MIT"

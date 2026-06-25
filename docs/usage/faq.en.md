@@ -152,7 +152,7 @@ codex plugin add atp@agent-team-protocol
 
 **opencode (verified-empirical 2026-06-24, opencode 1.17.9):**
 ```
-# opencode ships as a separate npm adapter. In this repo, run the local adapter directly (not yet published to npm — after publish, use `npx @atp/opencode install`).
+# opencode ships as a separate npm adapter. In this repo, run the local adapter directly (not yet published to npm — after publish, use `npx @atp-opencode/opencode install`).
 node adapters/opencode/bin/cli.js install
 ```
 

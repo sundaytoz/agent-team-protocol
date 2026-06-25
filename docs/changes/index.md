@@ -20,6 +20,7 @@ last_reviewed: 2026-06-24
 | 파일 | 내용 | 날짜 |
 |---|---|---|
 | [2026-06-24-opencode-adapter.md](./2026-06-24-opencode-adapter.md) | opencode 4번째 Layer-2 어댑터 — generator + npm bin CLI 추가 (L1 15/15 + L2 7/7 PASS) | 2026-06-24 |
+| [2026-06-25-opencode-adapter-npm-publish.md](./2026-06-25-opencode-adapter-npm-publish.md) | @atp-opencode/opencode npm publish 가능화 — vendor 번들 + prepack (AC 7/7 PASS) | 2026-06-25 |
 
 ## 관련 카테고리
 

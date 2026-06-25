@@ -1,4 +1,4 @@
-# @atp/opencode
+# @atp-opencode/opencode
 
 ATP (agent-team-protocol) opencode host adapter.
 
@@ -7,9 +7,9 @@ Generates opencode-compatible agent/command files from canonical ATP agent defin
 ## Install
 
 ```bash
-npm install -g @atp/opencode
+npm install -g @atp-opencode/opencode
 # or use npx:
-npx @atp/opencode install
+npx @atp-opencode/opencode install
 ```
 
 ## Usage
@@ -76,3 +76,7 @@ opencode agent list
 - Default install does NOT bake model slugs — agents inherit the primary model.
 - Use `--provider amazon-bedrock` only when you want explicit Bedrock model slugs.
 - Uninstall uses a manifest file (`.atp-opencode-manifest.json`) for exact cleanup.
+
+## For Maintainers
+
+`npm publish` runs `scripts/bundle-canonical.js` automatically via the `prepack` hook. This copies canonical sources (`plugins/atp/`, `plugins/atp-graphify/`) into `vendor/` before packaging. The `vendor/` directory is git-ignored and must not be committed. If any of the 7 canonical targets are missing, the script exits with code 1 and blocks publish.

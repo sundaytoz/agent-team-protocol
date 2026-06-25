@@ -147,7 +147,7 @@ codex plugin add atp@agent-team-protocol
 
 **opencode (verified-empirical 2026-06-24, opencode 1.17.9):**
 ```
-# opencode 는 별도 npm 어댑터. 이 레포에서는 로컬 어댑터를 직접 실행한다 (npm 미발행 — 발행 후엔 `npx @atp/opencode install`).
+# opencode 는 별도 npm 어댑터. 이 레포에서는 로컬 어댑터를 직접 실행한다 (npm 미발행 — 발행 후엔 `npx @atp-opencode/opencode install`).
 node adapters/opencode/bin/cli.js install
 ```
 
