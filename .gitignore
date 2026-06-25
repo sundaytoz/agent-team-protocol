@@ -13,3 +13,4 @@
 
 # serena MCP local artifacts
 .serena/
+graphify-out/
