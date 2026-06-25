@@ -184,6 +184,18 @@ strategies:
       신규 호스트 게이트: 이 L2 전건 PASS 전 platform-adapters.md 활성 규칙 등재 금지.
 ```
 
+## 외부 게시 전 검증 게이트
+
+패키지 publish / 이미지 push 등 **되돌리기 어려운 외부 게시** 는 게이트를 통과하기 전에 dry-run 으로 아티팩트 내용물을 검증한다.
+
+| 도구 | dry-run 명령 | 확인 포인트 |
+|---|---|---|
+| npm | `npm pack --dry-run` | tarball 파일 목록에 런타임 의존 파일(canonical 소스 등) 포함 여부 |
+| docker | `docker build --no-cache --dry-run` (지원 시) 또는 `docker run --rm` + 파일 존재 확인 | 이미지 내 필수 파일 경로 |
+| 기타 | 배포 도구 별 dry-run 옵션 적용 | 포함 파일 목록·설정 값 |
+
+dry-run 에서 런타임 의존 파일 누락이 확인되면 `§6 파괴적 게이트 — 2단계 분리 원칙` 의 "중간 — 자동 검증" 단계에서 실패 처리 후 외부 반영 게이트(2단계)를 차단한다.
+
 ## 확장 시
 
 - 새 전략 추가: 위 YAML 블록에 항목 추가.

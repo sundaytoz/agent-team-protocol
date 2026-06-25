@@ -169,6 +169,7 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 1. 산출물 파일이 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/` 에 존재하는가
 2. frontmatter 필수 필드 (phase, agent, agent_version, generated_at, concerns, concerns_checked) 가 포함되어 있는가
 3. concerns 를 의도적으로 검토 완료했는가 (빈 리스트도 OK — 검토 사실 자체가 핵심)
-4. **(일반화·backport 설계 한정)** 설계 문서가 소비 프로젝트 dogfooding 경험을 범용 자산으로 일반화하는 배경·동기를 서술한다면, 그 서술에 출처 식별자(소비 프로젝트 slug·도메인 동반어·코드 심볼)가 남지 않도록 익명화 책임을 설계에 명시했는가(추상 패턴·플레이스홀더로 기술). 강결합 서술은 토큰 치환이 아니라 본문 재작성으로 일반 규약만 추출하되 hedge·교훈 골격은 보존한다. commit 전 잔류 검증 절차는 `${CLAUDE_PROJECT_DIR}/docs/development/release-checklist.md` §7. 일반화·backport 설계가 아니면 N/A.
+4. **설계가 특정 파일·경로 참조를 전제로 하면, 그 경로의 실재를 `Read`/`Glob` 으로 확인했는가.** 존재하지 않으면 설계 문서에 명시하고 방어(생성 또는 대안) 를 포함한다. 확인 생략 시 구현 단계에서 "파일 없음" 오류가 조용히 발생한다.
+5. **(일반화·backport 설계 한정)** 설계 문서가 소비 프로젝트 dogfooding 경험을 범용 자산으로 일반화하는 배경·동기를 서술한다면, 그 서술에 출처 식별자(소비 프로젝트 slug·도메인 동반어·코드 심볼)가 남지 않도록 익명화 책임을 설계에 명시했는가(추상 패턴·플레이스홀더로 기술). 강결합 서술은 토큰 치환이 아니라 본문 재작성으로 일반 규약만 추출하되 hedge·교훈 골격은 보존한다. commit 전 잔류 검증 절차는 `${CLAUDE_PROJECT_DIR}/docs/development/release-checklist.md` §7. 일반화·backport 설계가 아니면 N/A.
 
 실패 시: 자가 수정 1회 시도 → 여전히 실패면 concerns 에 "self_verification_failed: <항목>" 기록 후 반환.
