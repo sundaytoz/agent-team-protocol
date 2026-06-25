@@ -110,6 +110,80 @@ strategies:
 | `failure_severity` | `blocker` (실패 시 전체 검증 실패) \| `warning` (기록만) |
 | `worker` (optional) | spawn 할 worker 이름. 미지정 시 advisor 직접 실행 |
 
+## 호스트 어댑터 스모크 패턴 (재사용형)
+
+신규 호스트 어댑터 추가 시 적용하는 검증 패턴. opencode 어댑터 정식 스모크(2026-06-24, L1 15/15 + L2 7/7 PASS)를 예시로 등록한다.
+
+### 격리 가드
+
+실제 전역 설정이 오염되지 않도록 **HOME-override 격리**를 반드시 적용한다.
+
+```bash
+T_HOME=$(mktemp -d)   # 임시 HOME — 실제 ~/.config/opencode 무수정
+T_DIR=$(mktemp -d)    # 설치 대상 임시 디렉토리
+```
+
+전역 스코프 테스트: `HOME=$T_HOME node cli.js install --global`.
+프로젝트 스코프 테스트: `cd $T_DIR && node cli.js install --project`.
+종료 시 `rm -rf $T_HOME $T_DIR`.
+
+### L1 — generator 단위 / 정적 검증
+
+| 검증 항목 | 명령 / 기대 |
+|---|---|
+| 에이전트 개수 동등 | `ls agents/atp-*.md \| wc -l` vs source 파일 수 — 동등 |
+| `--with-graphify` 개수 동등 | base(10) + graphify(3) = 13 |
+| mode: subagent 전수 | `grep -L '^mode: subagent' agents/atp-*.md` → 빈 목록 |
+| task: deny 전수 | `grep -L 'task: deny' agents/atp-*.md` → 빈 목록 |
+| bash:deny 정확 4파일 | `grep -l 'bash:.*deny' agents/atp-*.md` → 4개(design/documentation/code-writer/retrospective) |
+| 경로변수 잔류 0 | `grep -rl 'CLAUDE_PLUGIN_ROOT\|CLAUDE_PROJECT_DIR' agents/ commands/` → 빈 목록 |
+| write 키 양키 | atp-code-writer 및 atp-migration-writer frontmatter에 `edit: allow` + `write: allow` 동시 존재 |
+| 기본 모델 bake 0 | `grep -rl '^model:' agents/` → 빈 목록(기본 install) |
+| provider bake 존재 | `--provider <name>` install 후 `grep -rl '^model:' agents/` → 비어있지 않음 |
+| uninstall 잔여 0 | uninstall 후 `ls agents/ commands/ atp/` → 모두 없음 / exit 0 |
+| 멱등 재install | 2회 install 후 md5 비교 동일 |
+
+### L2 — 호스트 런타임 검증 (opencode 예시)
+
+| 검증 항목 | 명령 / 기대 |
+|---|---|
+| command 로드·ProviderModelNotFoundError 0 | `opencode run --command atp-task "로드 확인만..."` → exit 0, 오류 없음 |
+| agent list 파싱 | `opencode agent list` → atp-* 10개, 에러 0 |
+| fan-out + 재귀차단 | design-advisor spawn 성공 + design-advisor 내부 재-spawn 없음(task:deny 집행) |
+| worker write 실동작 | atp-code-writer spawn → 파일 write 성공(프로젝트 디렉토리 내) |
+| worker bash 거부 | atp-code-writer bash 실행 시도 → "bash 도구 없음" 거부 |
+| @ref 경로 read | `@.opencode/atp/docs/development/agent-team-protocol.md` Read → `# Agent Team Protocol` H1 |
+| 양 scope(global+project) | HOME-override 전역 install + `opencode agent list` 10개 + smoke exit 0 |
+
+### YAML 전략 등록 예시
+
+```yaml
+strategies:
+  # ── 호스트 어댑터 L1 ────────────────────────────────────────
+  - id: host-adapter-static
+    cmd: node adapters/<host>/bin/cli.js install --project && <검증 명령 모음>
+    scope: adapters/<host>/**
+    timeout_s: 120
+    failure_severity: blocker
+    note: |
+      generator 단위 정적 검증. 호스트 CLI 불요.
+      개수동등·permission grep·uninstall 잔여0 포함.
+
+  # ── 호스트 어댑터 L2 ────────────────────────────────────────
+  - id: host-adapter-runtime
+    cmd: <호스트 runtime smoke 명령>
+    scope: adapters/<host>/**
+    timeout_s: 300
+    failure_severity: blocker
+    preconditions:
+      - "<호스트 CLI 설치 확인>"
+      - "HOME-override 격리 변수 설정"
+    note: |
+      호스트 런타임 실동작 검증(command load, agent list, fan-out, bash 거부, @ref read, 양 scope).
+      HOME-override 격리 필수 — 실제 전역 설정 무수정 보장.
+      신규 호스트 게이트: 이 L2 전건 PASS 전 platform-adapters.md 활성 규칙 등재 금지.
+```
+
 ## 확장 시
 
 - 새 전략 추가: 위 YAML 블록에 항목 추가.

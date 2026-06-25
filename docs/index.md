@@ -24,6 +24,7 @@ last_reviewed: 2026-06-10
 | Development | ATP 프로토콜, 에이전트, 스킬을 유지보수하는 기여자 | [docs/development/index.md](./development/index.md) |
 | Architecture | 레포 구조와 런타임 산출물 경계를 확인하는 기여자 | [docs/architecture/index.md](./architecture/index.md) |
 | ADR | 되돌리기 어려운 기술·운영 결정을 추적하는 유지보수자 | [docs/adr/index.md](./adr/index.md) |
+| Changes | 실제 구현 변경 이력(런타임 동작·설치 경로 변화)을 확인하는 유지보수자 | [docs/changes/index.md](./changes/index.md) |
 
 ## 경계
 
