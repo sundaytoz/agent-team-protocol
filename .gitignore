@@ -14,3 +14,8 @@
 # serena MCP local artifacts
 .serena/
 graphify-out/
+
+# graph 본체(HTML/JSON/audit)는 재생성 가능 — index.md 만 추적 (documentation-guidelines §graphify)
+docs/graph/*.html
+docs/graph/*.json
+docs/graph/GRAPH_REPORT.md

@@ -25,6 +25,8 @@ graphify 로 생성한 코드 구조·관계 그래프 + 커뮤니티 탐지 결
 
 ## 산출물
 
+> graph.html·graph.json·GRAPH_REPORT.md 는 재생성 가능한 빌드 산출물이라 **gitignore** 대상이다(documentation-guidelines §graphify). 원격 저장소엔 없으며, 클론 후 `/graphify adapters/opencode` 로 로컬 생성한다 — 아래 링크는 로컬 생성 후 유효. 이 `index.md`(메타)만 추적된다.
+
 - [graph.html](./graph.html) — 인터랙티브 그래프 (브라우저에서 열기, 서버 불필요)
 - [graph.json](./graph.json) — GraphRAG-ready raw 그래프 데이터
 - [GRAPH_REPORT.md](./GRAPH_REPORT.md) — 감사 리포트 (god nodes·surprising connections·communities·99% EXTRACTED)
