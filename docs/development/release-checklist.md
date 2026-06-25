@@ -13,6 +13,8 @@ last_reviewed: 2026-06-16
 
 ## 0. 릴리즈 트리거 (진입 조건)
 
+> 이 레포 기여자의 진입 동선: 루트 `CLAUDE.md` 의 **"릴리스 — 배포 완결 의무"** 섹션이 docs-first 로 이 §0 를 가리킨다. `plugins/atp/` 번들을 변경하는 작업은 시작·완료 시 본 절을 확인한다.
+
 §1~§6 은 **bump 이 일어난다는 전제** 의 사후 invariant 점검이다. bump 자체가 트리거되지 않으면 점검도 누락된다. 본 절은 릴리즈를 **언제** 시작해야 하는지의 진입 조건이다.
 
 - **트리거 — feat 머지 = release 완결 의무**: user-facing feat(소비자 동작·인터페이스에 영향을 주는 변경)가 `main` 에 머지되면, 같은 작업 단위 안에서 manifest version bump + `/plugin update` 도달까지를 release 완결 조건으로 본다. `/plugin update` 는 manifest version 차이로만 갱신을 감지하므로, feat 가 main 에 들어가도 bump 이 main 에 도달하지 않으면 소비자에게 무증상으로 미도달한다.

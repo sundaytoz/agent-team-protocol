@@ -40,3 +40,4 @@ The graphify feature is an opt-in add-on. Installation, operation, and graph ref
 - Protocol reference (Korean-first/canonical): [plugins/atp/docs/development/agent-team-protocol.md](../plugins/atp/docs/development/agent-team-protocol.md)
 - Agent catalog (Korean-first/canonical): [plugins/atp/docs/development/agent-catalog.md](../plugins/atp/docs/development/agent-catalog.md)
 - File map (Korean-first/canonical): [docs/architecture/file-map.md](./architecture/file-map.md)
+- Release / deploy trigger (required when `plugins/atp/` bundle changes): [docs/development/release-checklist.md](./development/release-checklist.md) — **read §0 first** (release-completion duty; Korean-first/canonical)
