@@ -20,8 +20,10 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 |---|---|---|---|---|
 | Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
 | Codex CLI | ✅ 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | 설치·skill 노출·호출·본문 로드 실측 (2026-06-10, codex-cli 0.138.0). subagent spawn 은 공식 문서 근거(cited) — 팀 모드 E2E 스모크 권장 |
-| Gemini CLI | 🚧 계획 | `/atp:task` (예정, TODO:실측) | `GEMINI.md` | 문서 근거 설계 완료(Tier A-flat) — 배포 산출물 미생성 |
+| Antigravity IDE | ✅ 지원 | `/atp-task` | `GEMINI.md` | 정식 task PASS (verified 2026-06-30, Antigravity 2.2.1): advisor 체인 전수 + TC 10/10. 설치 = Skills 수동 복사 → `~/.gemini/config/skills/` |
 | opencode | ✅ 지원 (어댑터) | `opencode run --command atp-task "..."` | 생성형 emit (CLAUDE.md형 지침파일 없음) | 정식 스모크 PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
+
+Antigravity IDE 는 `/plugin` 없이 Skills 수동 복사로 설치한다 — 설치 방법은 아래 [3. 설치](#3-설치) 참고. 전략 근거는 [ADR-0015](docs/adr/ADR-0015-antigravity-host-verification.md).
 
 opencode 는 마켓플레이스 plugin 이 아니라 별도 npm 어댑터다 — 설치 명령은 아래 [3. 설치](#3-설치) 참고. 상세는 [adapters/opencode/README.md](adapters/opencode/README.md), 전략 근거는 [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md).
 
@@ -82,7 +84,18 @@ graphify 지식 그래프 기능은 옵트인 add-on 이다.
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-opencode 는 마켓플레이스가 아니라 npm 어댑터로 설치한다 (Claude Code/Codex 와 별개 호스트):
+**Antigravity IDE** 는 `/plugin` 시스템 없이 Skills 수동 복사로 설치한다:
+
+```bash
+# ~/.gemini/config/skills/ 에 복사 (global)
+cp -r plugins/atp/skills/init ~/.gemini/config/skills/atp-init
+cp -r plugins/atp/skills/task ~/.gemini/config/skills/atp-task
+# 이후 /atp-init 으로 초기화
+```
+
+상세는 [ADR-0015](docs/adr/ADR-0015-antigravity-host-verification.md) 참고.
+
+**opencode** 는 마켓플레이스가 아니라 npm 어댑터로 설치한다 (Claude Code/Codex 와 별개 호스트):
 
 ```bash
 npx @atp-opencode/opencode install
