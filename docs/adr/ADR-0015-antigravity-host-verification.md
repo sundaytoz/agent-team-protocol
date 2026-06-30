@@ -28,8 +28,11 @@ ADR-0006 이 "Gemini CLI" 로 계획한 Google AI 코딩 호스트는 실측 전
 | 항목 | ADR-0006 계획/추정 | 실측 결과 |
 |---|---|---|
 | 제품명 | Gemini CLI | Antigravity IDE |
-| 호출 문법 | `/ns:cmd` (콜론 추정) | `/atp-task` (하이픈) |
+| task 호출 | `/ns:cmd` (콜론 추정) | `/atp-task` (하이픈) |
+| init 호출 | 미확인 | `/atp-init` (하이픈) |
 | 지침파일 | `gemini-extension.json` + `commands/*.toml` (F-3PLAT-4 이월) | `GEMINI.md` 직접 읽기 |
+| 설치 방식 | `/plugin install` 가정 | Skills 수동 복사 → `~/.gemini/config/skills/` |
+| config 루트 | 미확인 | `~/.gemini/config/` (Gemini CLI 동일) |
 | Tier | A-flat (doc-cited, smoke 보류) | A-flat 확정 |
 | 검증 상태 | TODO:실측 | verified-empirical 2026-06-30 |
 
@@ -46,15 +49,39 @@ Antigravity IDE(© 2026 Google, Version 2.2.1)를 ATP 의 5번째 공식 지원 
 
 ADR-0007 결정 4 가 이월한 F-3PLAT-4(`gemini-extension.json`, `commands/*.toml`)는 Antigravity IDE 에서 **불필요**임이 확인됐다.
 
-Antigravity IDE 는 `GEMINI.md` 를 지침파일로 직접 읽는다 — `/atp:init` 으로 생성된 GEMINI.md 만으로 동작. F-3PLAT-4 상태: **resolved-not-needed (Antigravity IDE 한정)**. Gemini CLI(별도 제품)에 대한 F-3PLAT-4 의존성이 있다면 해당 제품 실측 시 별도 ADR 로 다룬다.
+Antigravity IDE 는 `GEMINI.md` 를 지침파일로 직접 읽는다 — `/atp-init` 으로 생성된 GEMINI.md 만으로 동작. F-3PLAT-4 상태: **resolved-not-needed (Antigravity IDE 한정)**. Gemini CLI(별도 제품)에 대한 F-3PLAT-4 의존성이 있다면 해당 제품 실측 시 별도 ADR 로 다룬다.
 
-### 결정 3 — 호출 문법 확정: `/atp-task` (하이픈)
+### 결정 3 — 호출 문법 확정: 하이픈 패턴 (`/atp-task`, `/atp-init`)
 
-ADR-0006 §핵심결론 추정 `/ns:cmd`(콜론)는 틀렸음이 확인됐다. Antigravity IDE 의 실제 호출 문법은 `/atp-task` (하이픈)다.
+ADR-0006 §핵심결론 추정 `/ns:cmd`(콜론)는 틀렸음이 확인됐다. Antigravity IDE 는 **하이픈 패턴**을 사용한다:
 
-### 결정 4 — 설치 경로 미문서화 (TODO)
+- task: `/atp-task`
+- init: `/atp-init`
 
-Antigravity IDE 자체 플러그인 설치 명령은 이번 실측에서 확인되지 않았다. 테스트 프로젝트의 GEMINI.md 는 Claude Code에서 `/atp:init` 실행으로 생성된 것으로 추정. Antigravity 자체 install 흐름은 별도 실측 필요.
+Claude Code 의 콜론 네임스페이스(`/atp:task`, `/atp:init`)와 대비.
+
+### 결정 4 — 설치 아키텍처 확인 (Skills + Rules, /plugin 없음)
+
+Antigravity IDE 는 **Claude Code의 `/plugin` 마켓플레이스 시스템이 없다**. 대신 Skills + Rules 시스템을 사용한다.
+
+| 항목 | Claude Code | Antigravity IDE |
+|---|---|---|
+| 설치 방식 | `/plugin marketplace add` + `/plugin install` | `plugins/atp/skills/` → `~/.gemini/config/skills/` 수동 복사 |
+| 범위 | 프로젝트별 | 글로벌(`~/.gemini/config/skills/`) 또는 워크스페이스별 |
+| config 루트 | `~/.claude/` | `~/.gemini/config/` (Gemini CLI 동일) |
+
+**실증 설치 경로**:
+```bash
+# Global skills root 에 복사
+cp -r plugins/atp/skills/init ~/.gemini/config/skills/atp-init
+cp -r plugins/atp/skills/task ~/.gemini/config/skills/atp-task
+# (agents 경로는 별도 확인 필요)
+```
+
+- **init**: `/atp-init` (verified-empirical 2026-06-30)
+- **지침파일**: GEMINI.md — `~/.gemini/config/` 가 config 루트 (Gemini CLI와 동일)
+
+**부작용 발견**: `/atp-init` 실행 시 생성된 GEMINI.md 의 `atp:begin` 블록 call_token 이 `/atp:task`(콜론)로 기록됨 — 실제 `/atp-task`(하이픈)와 불일치. init SKILL.md `render_block(call_token)` 자가판정 버그. 기능 영향: prose 지침이라 실제 동작은 무해하나, 사용자 안내로서 부정확 — 별도 수정 필요.
 
 ## 영향
 

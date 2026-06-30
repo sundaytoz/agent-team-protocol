@@ -147,8 +147,11 @@ codex plugin add atp@agent-team-protocol
 
 **Antigravity IDE (verified-empirical 2026-06-30, Antigravity 2.2.1):**
 ```
-# Antigravity IDE reads GEMINI.md as its guidance file.
-# Install command not yet documented — generate GEMINI.md via /atp:init, then invoke with /atp-task (see ADR-0015).
+# Antigravity has no /plugin system — uses Skills + Rules instead.
+# Install: copy skills/ to ~/.gemini/config/skills/ (global skills root)
+# init: /atp-init
+# task: /atp-task
+# Guidance file: GEMINI.md (see ADR-0015)
 ```
 
 **opencode (verified-empirical 2026-06-24, opencode 1.17.9):**

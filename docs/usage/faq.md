@@ -142,8 +142,11 @@ codex plugin add atp@agent-team-protocol
 
 **Antigravity IDE (verified-empirical 2026-06-30, Antigravity 2.2.1):**
 ```
-# Antigravity IDE 는 GEMINI.md 를 지침파일로 사용한다.
-# 자체 설치 명령 미문서화 — GEMINI.md 생성 후 /atp-task 로 호출(ADR-0015 참조).
+# Antigravity 는 /plugin 개념 없음 — Skills + Rules 시스템 사용.
+# 설치: plugins/atp/skills/ → ~/.gemini/config/skills/ 수동 복사 (global skills root)
+# init: /atp-init
+# task: /atp-task
+# 지침파일: GEMINI.md (상세: ADR-0015)
 ```
 
 **opencode (verified-empirical 2026-06-24, opencode 1.17.9):**
