@@ -129,7 +129,7 @@ A. Don't build an integrated script; register multiple strategies in `verificati
 
 ## Self-dogfooding (developing in this repository)
 
-### Q. I want to use `/atp:task` (or the Codex/Gemini equivalent) in this repository itself.
+### Q. I want to use `/atp:task` (or the Codex/Antigravity equivalent) in this repository itself.
 
 A. Local plugin enable is required.
 
@@ -145,9 +145,10 @@ codex plugin marketplace add .
 codex plugin add atp@agent-team-protocol
 ```
 
-**Gemini (TODO: to be verified — extension packaging and namespace not finalized):**
+**Antigravity IDE (verified-empirical 2026-06-30, Antigravity 2.2.1):**
 ```
-# The Gemini extension install command and the exact invocation form (/atp:task colon form assumed) will be confirmed by an install smoke test.
+# Antigravity IDE reads GEMINI.md as its guidance file.
+# Install command not yet documented — generate GEMINI.md via /atp:init, then invoke with /atp-task (see ADR-0015).
 ```
 
 **opencode (verified-empirical 2026-06-24, opencode 1.17.9):**
@@ -162,7 +163,7 @@ To also use the graphify add-on (Claude Code):
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-Afterwards, in a new session, `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp:task` (Gemini, TODO: to be verified) / `opencode run --command atp-task "..."` (opencode, verified-empirical 2026-06-24, opencode 1.17.9) becomes available. See `../../README.md` §5 (self-dogfooding) for details.
+Afterwards, in a new session, `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp-task` (Antigravity IDE, verified-empirical 2026-06-30, Antigravity 2.2.1) / `opencode run --command atp-task "..."` (opencode, verified-empirical 2026-06-24, opencode 1.17.9) becomes available. See `../../README.md` §5 (self-dogfooding) for details.
 
 ---
 

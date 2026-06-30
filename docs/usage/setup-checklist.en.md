@@ -96,7 +96,7 @@ Platform-specific invocation:
 
 - **Claude Code**: `/atp:task hello, just confirm the agent team is loaded`
 - **Codex** (verified-empirical 2026-06-10, codex-cli 0.138.0): `$atp:task hello, just confirm the agent team is loaded`
-- **Gemini** (TODO: to be verified — release artifact not finalized): `/atp:task hello, just confirm the agent team is loaded`
+- **Antigravity IDE** (verified-empirical 2026-06-30, Antigravity 2.2.1): `/atp-task hello, just confirm the agent team is loaded`
 - **opencode** (verified-empirical 2026-06-24, opencode 1.17.9): `opencode run --command atp-task "hello, just confirm the agent team is loaded"`
 
 > opencode installs via an npm adapter, not the marketplace: `npx @atp-opencode/opencode install` (the marketplace/install steps in section 0 are not needed). See [faq.en.md](./faq.en.md) and [`../../adapters/opencode/README.md`](../../adapters/opencode/README.md).

@@ -124,7 +124,7 @@ A. 통합 스크립트를 만들지 말고 `verification-strategies.md` (소비 
 
 ## self-dogfooding (이 레포에서 개발)
 
-### Q. 이 레포 자체에서 `/atp:task` (또는 Codex/Gemini 동등 명령) 를 쓰고 싶다.
+### Q. 이 레포 자체에서 `/atp:task` (또는 Codex/Antigravity 동등 명령) 를 쓰고 싶다.
 
 A. 로컬 플러그인 enable 이 필요하다.
 
@@ -140,9 +140,10 @@ codex plugin marketplace add .
 codex plugin add atp@agent-team-protocol
 ```
 
-**Gemini (TODO:실측 — extension 배포형·namespace 확정 전):**
+**Antigravity IDE (verified-empirical 2026-06-30, Antigravity 2.2.1):**
 ```
-# Gemini extension 설치 명령 및 정확한 호출 표기(/atp:task 콜론 추정)는 install 스모크로 확정 예정.
+# Antigravity IDE 는 GEMINI.md 를 지침파일로 사용한다.
+# 자체 설치 명령 미문서화 — GEMINI.md 생성 후 /atp-task 로 호출(ADR-0015 참조).
 ```
 
 **opencode (verified-empirical 2026-06-24, opencode 1.17.9):**
@@ -157,7 +158,7 @@ graphify add-on 도 사용하려면 (Claude Code):
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-이후 새 세션에서 `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp:task` (Gemini, TODO:실측) / `opencode run --command atp-task "..."` (opencode, verified-empirical 2026-06-24, opencode 1.17.9) 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
+이후 새 세션에서 `/atp:task` (Claude Code) / `$atp:task` (Codex, verified-empirical 2026-06-10, codex-cli 0.138.0) / `/atp-task` (Antigravity IDE, verified-empirical 2026-06-30, Antigravity 2.2.1) / `opencode run --command atp-task "..."` (opencode, verified-empirical 2026-06-24, opencode 1.17.9) 가 활성화된다. 자세한 내용은 `../../README.md` §5 (self-dogfooding) 참조.
 
 ---
 
