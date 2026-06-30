@@ -66,7 +66,7 @@ copy_idem "$PL/templates/graph/.gitignore" "$PR/docs/graph/.gitignore"
 4. `--platforms=claude,codex,gemini` → 명시된 것만 처리 — 레거시 호환 플래그 (`claude`=CLAUDE.md, `codex`=AGENTS.md, `gemini`=GEMINI.md).
 
 `render_block(call_token)` 으로 블록 문자열을 생성한다:
-- `call_token` = 그 지침파일의 호스트에서 ATP task 를 호출하는 토큰. 자기 호스트 대상이면 **이번 세션에서 자신이 호출된 토큰**을 그대로 쓴다. 호스트 이름 분기 없음 — 단일 템플릿에 토큰만 치환.
+- `call_token` = 그 지침파일의 호스트에서 ATP **task** 를 호출하는 토큰. 자기 호스트 대상이면 **자신이 호출된 토큰에서 `init` → `task` 로 교체**한 값을 쓴다 (예: `/atp-init`→`/atp-task`, `/atp:init`→`/atp:task`, `$atp:init`→`$atp:task`, `opencode run --command atp-init`→`opencode run --command atp-task`). 호스트 이름 분기 없음 — 단일 템플릿에 토큰만 치환.
 - 반환: 마커 포함 블록 문자열.
 
 **각 파일 처리 규칙** (모든 지침파일 공통):
@@ -92,7 +92,8 @@ detect_guidance_files() {
 
 # render_block: 안내 블록 반환 — 호스트 이름 분기 없음, 단일 템플릿
 # $1=call_token — 그 지침파일의 호스트에서 ATP task 를 호출하는 토큰
-#   (자기 호스트 대상이면 이번 세션에서 자신이 호출된 토큰 그대로).
+#   (자기 호스트 대상이면 자신의 호출 토큰에서 `init`→`task` 교체:
+#    /atp-init→/atp-task, /atp:init→/atp:task, $atp:init→$atp:task).
 #   토큰에 `$` 등 특수문자가 포함될 수 있으므로 eval/재확장 없이 bash 치환만 사용한다.
 render_block() {
   local call_token="$1"

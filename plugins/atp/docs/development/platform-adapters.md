@@ -181,6 +181,7 @@ ATP 모델 정책(프로토콜 §5)은 플랫폼 중립 tier(`small`/`medium`/`l
 - 동결 이력이므로 **향후 갱신 의무 없음.** 새 호스트 실측이 생기면 신규 ADR 로 발행한다.
 - 번들 런타임은 부록 데이터에 의존하지 않는다 — §3 자가판정만으로 동작한다.
 - opencode(4번째 호스트) 실측 → `docs/adr/ADR-0014-opencode-host-adapter-strategy.md` (generator+CLI 어댑터, Tier A-flat, 스모크 PASS 2026-06-24).
+- Antigravity IDE(5번째 호스트) 실측 → `docs/adr/ADR-0015-antigravity-host-verification.md` (GEMINI.md 지침파일, `/atp-task` 하이픈 문법, Tier A-flat, task PASS 2026-06-30, Antigravity 2.2.1).
 
 ## 검증 체크리스트
 
