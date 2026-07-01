@@ -921,6 +921,7 @@ peer_agents:
 1. `retrospective-advisor` 가 세션 보고서를 읽고 `what_to_improve` / `applied_changes` 초안을 산출.
 2. Orchestrator 가 그 중 **재현성 있는 교훈** 만 선별.
 3. **docs-first (기본 sink)**: 수용한 교훈은 `docs_sync_target` 경로(프로젝트 지침파일 / `docs/development/*.md` / ADR 등) 에 기재하는 것을 **기본**으로 한다 — 같은 커밋에 반영. docs 화가 부적절한 내부 작업 흐름 교훈만 예외.
+   `docs_sync_target` 이 기존 파일을 가리키면, 그 파일이 스코프 선언을 갖고 있는지 확인하고 대조한다(`document-category-classification.md` "함께 작성하는 규칙"). 대조 없이 "카테고리만 맞으면 아무 파일에나" append 하는 것은 반복 관측된 실패 모드다.
 4. **memory 는 사용자 설정 존중 (보조 sink)**: 사용자가 memory 를 활성화한 경우(`memory_optional: true` 후보)에 한해 프로젝트 memory 저장소 + `MEMORY.md` 인덱스를 보조로 갱신한다. memory 가 비활성/미설정이면 docs 단독으로 마감하고 **memory 기록을 강제하지 않는다**.
 5. docs 추가/수정은 사용자 확인 없이 진행 가능 — 단 파괴적 삭제가 아닌 **추가/수정** 만. memory 기록은 위 4 의 사용자 설정 게이트를 따른다.
 6. **구조적 protocol_feedback 의 cross-session 승격**: `report.md` `protocol_feedback[]` 에 `structural: true` 로 기록된 항목은 세션 report 에만 남으면 다음 세션·다른 프로젝트에 도달하지 못한다(번들은 전역/ephemeral 캐시이며, 프로젝트 지침파일·memory 선반영은 해당 프로젝트에만 일반화된다). 따라서 `structural: true` 항목은 세션 종료 시 **번들 소스 레포의 이슈/PR 로 승격**하는 것을 기본으로 한다.
