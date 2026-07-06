@@ -21,7 +21,6 @@
 | [security/](./security/index.md) | 인증/인가, 입력 검증, 비밀 값 관리 | security/index.md |
 | [usage/](./usage/index.md) | 이식자용 사용 가이드·FAQ·체크리스트 | usage/index.md |
 | [work-log/](./work-log/index.md) | 세션 간 handoff, 시점성 있는 작업 메모 | work-log/index.md |
-| [feedback/](./feedback/index.md) | 검토·수정 요청 캡처 inbox (선택) | feedback/index.md |
 | [graph/](./graph/index.md) | **자동 생성** — graphify 산출물 메타 | graph/index.md |
 
 > 프로젝트 성격에 따라 불필요한 카테고리는 제거하거나 새 카테고리를 추가한다. 기준은 `development/document-category-classification.md`.

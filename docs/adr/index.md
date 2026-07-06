@@ -23,3 +23,4 @@
 | [ADR-0013](./ADR-0013-protocol-core-section-on-demand-routing.md) | protocol.md 진입 강제로드 토큰 감축 — 파일내 코어 구획(C1~C7) + on-demand 라우팅 (물리분할 회피, §N 불변·끊긴 인용 0, ~94% 감축) | accepted | 2026-06-18 |
 | [ADR-0014](./ADR-0014-opencode-host-adapter-strategy.md) | opencode 호스트 어댑터 전략 (4번째 Layer-2) — generator 기반 CLI installer + Tier A-flat(PoC 실측) + 모델 슬러그 생략·상속 (빌드는 D7 후속) | accepted | 2026-06-24 |
 | [ADR-0015](./ADR-0015-antigravity-host-verification.md) | Antigravity IDE 호스트 검증 (5번째 Layer-2) — GEMINI.md 지침파일 + `/atp-task` 하이픈 문법 + Tier A-flat 확정 + F-3PLAT-4 resolved-not-needed | accepted | 2026-06-30 |
+| [ADR-0016](./ADR-0016-remove-feedback-inbox-system.md) | feedback inbox 시스템 제거 — "feedback" 3갈래 중 inbox 카테고리만 폐기(14→13), protocol_feedback·memory type:feedback 존치 | accepted | 2026-07-06 |

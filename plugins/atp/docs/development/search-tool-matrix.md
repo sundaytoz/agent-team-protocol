@@ -180,7 +180,6 @@ scope 대상 경로가 `src/**` 처럼 코드만 포함하면, `docs/` 나 `.cla
 | API/이벤트 계약 | `docs/contracts/` | Read + Grep |
 | 모듈 구조 그래프 | `docs/graph/<scope>/` (graph-refresh-checker 선행) | graphify |
 | 심볼 정의·참조 | LSP 또는 Grep | LSP / Grep |
-| 피드백·인박스 | `docs/feedback/inbox/` | Read |
 
 ### 프로젝트 scope 경로 기준 (graph-refresh-checker 용, 작성 예시)
 
