@@ -88,7 +88,6 @@ concerns: []
 
 ## 금기
 
-- feedback/ 디렉토리 임의 수정 (feedback 스킬이 담당하는 프로젝트에서만 해당)
 - graphify 산출물 수정 (graphify-update-advisor 몫)
 - ADR 을 기존 ADR 수정으로 처리 — 반드시 새 파일로 supersede
 - 문서 카테고리를 임의로 새로 만들기

@@ -64,7 +64,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   │       ├── documentation-guidelines.md
 │   │   │       └── search-tool-matrix.md
 │   │   ├── templates/                    ← init 스캐폴딩 원본 (init 이 소비 프로젝트로 복사)
-│   │   │   ├── category-index/*.md       ← 카테고리 index 14종
+│   │   │   ├── category-index/*.md       ← 카테고리 index 13종
 │   │   │   ├── docs-index.md
 │   │   │   ├── verification-strategies.md    ← placeholder 포함 (cmd 교체 필요)
 │   │   │   ├── document-category-classification.md
@@ -119,7 +119,6 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
     │   ├── verification-strategies.md    ← placeholder 포함 — cmd 를 프로젝트 명령으로 교체 필요
     │   └── document-category-classification.md
     ├── domain/index.md
-    ├── feedback/index.md
     ├── graph/
     │   ├── index.md
     │   └── .gitignore

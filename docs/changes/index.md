@@ -21,6 +21,7 @@ last_reviewed: 2026-06-24
 |---|---|---|
 | [2026-06-24-opencode-adapter.md](./2026-06-24-opencode-adapter.md) | opencode 4번째 Layer-2 어댑터 — generator + npm bin CLI 추가 (L1 15/15 + L2 7/7 PASS) | 2026-06-24 |
 | [2026-06-25-opencode-adapter-npm-publish.md](./2026-06-25-opencode-adapter-npm-publish.md) | @atp-opencode/opencode npm publish 가능화 — vendor 번들 + prepack (AC 7/7 PASS) | 2026-06-25 |
+| [2026-07-06-remove-feedback-inbox.md](./2026-07-06-remove-feedback-inbox.md) | feedback inbox 시스템 제거 (14→13 카테고리) — 2.3.2→2.4.0, protocol_feedback·memory type 존치 | 2026-07-06 |
 
 ## 관련 카테고리
 
