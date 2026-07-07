@@ -151,6 +151,7 @@ requirements-advisor
 
 - **effort** (§5.5): 직교 노브 — 미지원 플랫폼은 no-op.
 - **cap** (§5.6): orchestrator 자기 tier 를 초과하는 지정 금지 — 초과 산출 시 자동 clamp + `capped`/`capped_from` 기록. 자기 tier 판정 불가 시 override 미지정(parent 상속).
+- **host 전용 optional route**: platform-adapters §7.1 appendix 는 해당 host 일 때만 Read. route 불가/미지원/실패 시 기존 tier 매핑으로 fallback 하고 `fallback_reason` 기록.
 
 근거 한 줄을 `report.md` 의 `invocations[].model_choice.rationale` 에 기록 (스키마 전체: 프로토콜 §5.8).
 

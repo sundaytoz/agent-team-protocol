@@ -18,3 +18,4 @@ last_reviewed: 2026-06-10
 - [agent-catalog.md](./agent-catalog.md) — base 에이전트 카탈로그
 - [search-tool-matrix.md](./search-tool-matrix.md) — 탐색 도구 선택 매트릭스
 - [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙
+- [codex-spark-routing.md](./codex-spark-routing.md) — Codex host 전용 Spark 조건부 라우팅 appendix

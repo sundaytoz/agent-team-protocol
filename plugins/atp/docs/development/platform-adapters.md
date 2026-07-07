@@ -174,6 +174,12 @@ ATP 모델 정책(프로토콜 §5)은 플랫폼 중립 tier(`small`/`medium`/`l
 | 배포 단위 | 호스트의 플러그인/확장 패키징 규약 자율 적용 |
 | 모델 슬러그 | §6 — 중립 tier 를 자기 라인업으로 해석 |
 
+### 7.1 조건부 host appendix
+
+host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮어쓰지 않는다. 해당 host 에서만 appendix 를 읽고, route 사용이 불가능하면 즉시 §6 의 기존 tier 매핑으로 fallback 한다.
+
+- Codex host: [codex-spark-routing.md](./codex-spark-routing.md) — Spark 를 저지연 code-worker route 후보로만 사용하고, 미지원/미확인/실패 시 기존 tier 매핑으로 fallback.
+
 ## 8. 동결 이력 포인터
 
 과거 특정 3사 CLI 에 대해 실측한 capability matrix(6축) · 플랫폼 Tier 판정표 · 토폴로지 해소표 · per-platform 어댑터 표 · 명령/환경변수/명명 대응표 · 실증 마커 목록은 소스 레포 `docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md` **부록 A~F 에 동결 보존**되어 있다.
