@@ -16,6 +16,7 @@
 
 기여자용 문서 (이 디렉토리 — 번들 제외):
 - [release-checklist.md](./release-checklist.md) — **§0 = 언제 릴리즈를 시작하나** (user-facing feat 머지 = release 완결 의무, 진입 조건) / §1~§9 = bump 전제 사후 invariant 점검(문서 링크·TODO 마커·manifest·agent catalog·끊긴 §N 인용 동기화). `plugins/atp/` 번들을 건드리는 작업은 **§0 를 먼저** 본다(루트 `CLAUDE.md` "릴리스 — 배포 완결 의무" 가 docs-first 로 이 §0 를 가리킨다).
+- [requirements-analysis-methodology.md](./requirements-analysis-methodology.md) — 요구사항 분석 방법론 고찰 (RA 는 왜 실패하나·좋은 요구사항의 속성·구조적 gap-hunt·함정·수렴). §8 에서 `requirements-advisor` 로의 적용 렌즈와 조작화 갭(AC 게이트·우선순위·추적성) 정리.
 
 편집형(프로젝트 생성) 문서:
 - `verification-strategies.md` — `verification-advisor` 가 읽는 검증 전략 레지스트리. `/atp:init` 이 생성, 프로젝트가 `cmd` 를 채운다.
