@@ -4,7 +4,7 @@ title: 문제 해결 / FAQ
 description: plugin 설치·init·사용 중 흔한 문제와 대응.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-01
+last_reviewed: 2026-07-20
 ---
 
 # 문제 해결 / FAQ
@@ -119,6 +119,19 @@ A. 필요 없다. init 후 생성된 프로젝트의 에이전트 설정에서 m
 ### Q. 테스트 명령이 여러 개인데 `verify-all` 하나로 통합하기 어렵다.
 
 A. 통합 스크립트를 만들지 말고 `verification-strategies.md` (소비 프로젝트 `docs/development/`) 에 전략을 여러 개 등록한다. `verification-advisor` 가 변경 scope 에 매칭되는 것만 순차 실행한다.
+
+### Q. Advisor가 오류 없이 `running` 상태에서 첫 활동을 보이지 않는다.
+
+A. ATP는 이를 즉시 실패로 단정하거나 자동 재시도하지 않는다. 설정된 유한 observation budget 뒤에도 정상 API에서 output, 명시적 progress, tool start/result, terminal/blocked 상태를 하나도 관측하지 못했고 queueing·이미 시작된 장기 tool 같은 제외 상태도 없을 때 `suspected_silent_stall`로 보고한다. reasoning/token 내부 이벤트는 판정 신호가 아니다.
+
+orchestrator가 현재 상태와 관측 한계를 보고하면 다음 중 하나를 선택한다.
+
+1. 기존 invocation 종결 후 **clean retry** — 새 invocation ID로 독립 실행한다. 같은 thread에 follow-up을 보내는 것은 clean retry가 아니다.
+2. 다음 확인 조건이나 budget을 정해 더 기다린다.
+3. phase에 허용된 fallback을 수행한다.
+4. 해당 phase 또는 세션을 blocked로 끝낸다.
+
+interrupt, retry, fallback은 사용자 승인 전에 실행되지 않는다. write-capable 호출은 기존 termination/isolation, ownership 회수, partial write를 확인하기 전 같은 scope를 재시도하지 않는다. 회수 뒤 늦게 완료된 기존 결과는 `late_completion`으로 격리하며 자동 merge하지 않는다. 특히 code 변경의 verification은 advisor 장애를 이유로 skip할 수 없고 Tier B 직접 검증 또는 blocked로 끝난다. 상세 의미는 [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md), Codex 도구 mapping은 [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md)를 참고한다.
 
 ---
 

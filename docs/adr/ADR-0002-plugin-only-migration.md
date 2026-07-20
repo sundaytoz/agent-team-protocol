@@ -127,7 +127,7 @@ graphify 에이전트 3종을 base 에 유지하는 방안. **기각** 이유:
 ## 관련 문서
 
 - [`../architecture/file-map.md`](../architecture/file-map.md) — 플러그인 레이아웃 및 경계 규칙
-- [`../development/agent-catalog.md`](../development/agent-catalog.md) — base atp 10개 + add-on atp-graphify 3개 에이전트 목록
+- [`../development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md) — base atp 10개 + add-on atp-graphify 3개 에이전트 목록
 - [`../usage/setup-checklist.md`](../usage/setup-checklist.md) — plugin 설치 후 설정 체크리스트
 - `.claude/work-session/20260601-115424/design.md` — plugin-only 전환 설계 확정 문서 (v2, OQ-1/2/3 해소)
 - `.claude/work-session/20260601-115424/research/plugin-spec-findings.md` — 플러그인 스펙 리서치 결과

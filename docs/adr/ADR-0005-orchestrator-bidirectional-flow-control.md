@@ -66,6 +66,6 @@ v1.3.0 으로 다음을 추가한다. 모두 신규 섹션 또는 순번 append 
 ## 관련 문서
 
 - [ADR-0004](./ADR-0004-consuming-project-generalization-backport-followup.md) — v1.2.0 후속 역이식
-- [agent-team-protocol.md](../development/agent-team-protocol.md) — §2.3, §2.6, §2.7, §8
-- [research-advisor.md](../../agents/research-advisor.md) — 출처 신뢰도 게이팅
-- [retrospective-advisor.md](../../agents/retrospective-advisor.md) — 시그널 세탁 경계
+- [agent-team-protocol.md](../../plugins/atp/docs/development/agent-team-protocol.md) — §2.3, §2.6, §2.7, §8
+- [research-advisor.md](../../plugins/atp/agents/research-advisor.md) — 출처 신뢰도 게이팅
+- [retrospective-advisor.md](../../plugins/atp/agents/retrospective-advisor.md) — 시그널 세탁 경계

@@ -1,7 +1,7 @@
 {
   "name": "atp",
   "description": "Agent Team Protocol — Orchestrator + Advisor + Worker 3-tier agent team orchestration for Claude Code and Codex",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "author": {
     "name": "sundaytoz"
   },

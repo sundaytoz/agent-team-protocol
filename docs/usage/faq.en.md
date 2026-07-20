@@ -4,7 +4,7 @@ title: Troubleshooting / FAQ (English)
 description: Common issues during plugin install, init, and daily use.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-10
+last_reviewed: 2026-07-20
 ---
 
 <p align="center">
@@ -124,6 +124,19 @@ A. No. Remove the migration-writer mentions from the agent configuration generat
 ### Q. I have multiple test commands and can't merge them into one `verify-all`.
 
 A. Don't build an integrated script; register multiple strategies in `verification-strategies.md` (in the consuming project's `docs/development/`). `verification-advisor` runs only the ones matching the change scope, in sequence.
+
+### Q. An advisor stays `running` without an error or any first activity.
+
+A. ATP does not immediately declare failure or retry automatically. It reports `suspected_silent_stall` only after the configured finite observation budget has elapsed, the normal API has exposed no output, explicit progress, tool start/result, or terminal/blocked state, and no exclusion such as queueing or an already-started long-running tool applies. Internal reasoning/token events are not classification signals.
+
+After the orchestrator reports the state and observability limits, choose one of these options:
+
+1. Terminate the old invocation and perform a **clean retry** with a new invocation ID. A follow-up on the same thread is not a clean retry.
+2. Wait until a user-selected next condition or extended budget.
+3. Use the fallback allowed for that phase.
+4. End the phase or session as blocked.
+
+ATP does not interrupt, retry, or execute a fallback before user approval. For a write-capable call, it does not retry the same scope until termination/isolation, ownership revocation, and partial writes have been checked. An old result that arrives after ownership revocation is quarantined as `late_completion` and is never merged automatically. In particular, verification for a code change cannot be skipped because an advisor failed; it ends with Tier B direct verification or blocked. See [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md) for the common semantics and [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md) for the Codex tool mapping.
 
 ---
 

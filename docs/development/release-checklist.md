@@ -4,7 +4,7 @@ title: Release Checklist
 description: ATP 릴리즈 전 문서·매니페스트 동기화 점검 목록.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-16
+last_reviewed: 2026-07-20
 ---
 
 # Release Checklist
@@ -15,9 +15,10 @@ last_reviewed: 2026-06-16
 
 > 이 레포 기여자의 진입 동선: 루트 `CLAUDE.md` 의 **"릴리스 — 배포 완결 의무"** 섹션이 docs-first 로 이 §0 를 가리킨다. `plugins/atp/` 번들을 변경하는 작업은 시작·완료 시 본 절을 확인한다.
 
-§1~§6 은 **bump 이 일어난다는 전제** 의 사후 invariant 점검이다. bump 자체가 트리거되지 않으면 점검도 누락된다. 본 절은 릴리즈를 **언제** 시작해야 하는지의 진입 조건이다.
+§1~§10 은 **bump 이 일어난다는 전제** 의 사후 invariant 점검이다. bump 자체가 트리거되지 않으면 점검도 누락된다. 본 절은 릴리즈를 **언제** 시작해야 하는지의 진입 조건이다.
 
 - **트리거 — feat 머지 = release 완결 의무**: user-facing feat(소비자 동작·인터페이스에 영향을 주는 변경)가 `main` 에 머지되면, 같은 작업 단위 안에서 manifest version bump + `/plugin update` 도달까지를 release 완결 조건으로 본다. `/plugin update` 는 manifest version 차이로만 갱신을 감지하므로, feat 가 main 에 들어가도 bump 이 main 에 도달하지 않으면 소비자에게 무증상으로 미도달한다.
+- **번들 변경은 같은 작업 단위에서 완결**: `plugins/atp/`의 소비자-visible 동작·계약을 변경한 작업은 base manifest/marketplace version, changes·index, 관련 appendix/index, 본 체크리스트의 적용 gate를 같은 작업 단위에서 동기화한다. 검증과 소비자 추적 ref 도달 경로가 확인되기 전에는 구현만 완료됐다고 종료하지 않는다. 실제 push/update가 현재 권한·환경 밖이면 명령과 확인 항목을 `needs_user_verification`에 남기고 프로젝트 gate 미수행 상태를 명시한다.
 - **이월 금지 — 메모는 트리거가 아니다**: bump 을 후속 release 로 미룰 때 평문 메모(TEMPLATE_DEV "잔여" 등)로 남기면 잊힌다(2026-06-09 → 2026-06-16 약 1주 방치 실증). 이월 시 추적 가능한 Open Item 으로 격리하고 `release-pending` 태그를 붙여 다음 세션 진입 시 우선 확인한다.
 - **bump 대상 브랜치 = 소비자 추적 ref**: bump/release 커밋은 소비자가 추적하는 ref(보통 `main`) 기반 release 브랜치에서 수행한다. 커밋 직전 현재 HEAD 와 `origin/main` 의 관계(ahead/behind/diverged)·내용 동일성을 진단한다. 이미 머지 완료된 stale 로컬 feat 브랜치에 bump 하면 PR 머지 후에도 update 미도달이 반복된다.
 
@@ -210,3 +211,29 @@ comm -23 \
 ```
 
 기대값: **출력 없음**(끊긴 §N 인용 0). 좌변은 `docs`·`plugins` 전체에서 인용된 정수 §N 집합, 우변은 protocol 본문 §헤더 번호 집합이며, 좌변에만 있는 번호(=인용됐으나 본문에 없는 §N)가 끊긴 인용이다. `--exclude='release-checklist.md'` 로 이 체크리스트 자신의 §N 산문(self-match)을 검사 대상에서 빼 자기매치를 차단한다(§4.6 실행 통과 판정 — 2026-06-18 레포에서 출력 0 으로 실증). 신규 섹션은 §14 다음 정수로만 추가하고 기존 번호를 재배열하지 않는다(코어 구획 C7 규칙).
+
+## 10. Subagent lifecycle recovery 계약
+
+`agent-team-protocol.md` §2.5의 silent-start lifecycle 의미, host appendix 경계, report schema v2 호환성을 함께 변경할 때 적용한다. 한 문서만 갱신해 공통 의미와 실행 mapping이 drift한 상태로 릴리즈하지 않는다.
+
+### (a) Lifecycle fixture와 schema v2 역호환
+
+```bash
+python3 tests/lifecycle-contract/validate.py
+```
+
+기대값: `PASS: lifecycle contract fixtures and documentation invariants`, exit 0. 기존 lifecycle 필드가 없는 v2와 optional 4필드(`attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`)가 있는 v2가 모두 유효해야 한다. same-invocation follow-up은 `attempt`를 올리지 않고, 승인 전 interrupt/retry/fallback action은 0건이어야 한다. write scope ownership handoff와 `late_completion` 격리, verification의 Tier B 실행 또는 blocked 종단도 fixture로 확인한다.
+
+### (b) 공통 정본 host-neutrality와 appendix 연결
+
+위 validator는 공통 §2.5에 Codex collaboration 도구명과 고정 시간값이 0건인지, `codex-lifecycle-routing.md`에는 필요한 Codex mapping과 calibration 지침이 있는지 함께 검사한다. 공통 정본의 숫자 budget은 configurable/calibration 의미만 허용하고 특정 초·polling 간격·context turn 수를 정책 상수로 두지 않는다.
+
+신규 host mapping을 추가하면 공통 §2.5가 아니라 해당 host appendix에 배치하고 `platform-adapters.md`에는 host-neutral capability만 추가한다. `model_choice.fallback_reason`과 §5.7은 모델 routing 전용이며 lifecycle 사유는 `lifecycle_fallback_reason`에 기록한다.
+
+### (c) 링크·index·§N·릴리스 메타데이터 전수 확인
+
+- 신규 appendix는 `plugins/atp/docs/development/index.md`와 `docs/development/index.md` 양쪽에 등록한다.
+- 신규 ADR/changes는 각각 `docs/adr/index.md`, `docs/changes/index.md`에 등록한다.
+- §8의 끊긴 protocol 인용 검사를 재실행한다. 기존 §N을 재배열하지 않는다.
+- §4의 base manifest 4곳 version invariant를 확인하고 add-on version과 `.agents/plugins/marketplace.json`의 versionless 계약을 변경하지 않는다.
+- user-facing FAQ는 한국어/영어에서 승인 gate, clean retry identity, ownership/late completion, verification non-skip 의미가 동등한지 대조한다.

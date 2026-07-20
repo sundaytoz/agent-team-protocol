@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "invocations": [
+    {
+      "id": "inv-legacy",
+      "layer": "advisor",
+      "name": "research-advisor",
+      "started_at": "2026-07-20T15:00:00+09:00",
+      "ended_at": "2026-07-20T15:01:00+09:00",
+      "model_choice": {
+        "fallback_reason": null
+      }
+    }
+  ]
+}

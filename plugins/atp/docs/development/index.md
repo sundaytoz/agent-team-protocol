@@ -4,7 +4,7 @@ title: Development — 번들 런타임 레퍼런스
 description: atp 번들에 포함되는 development 런타임 문서 목록.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-10
+last_reviewed: 2026-07-20
 ---
 
 # Development — 번들 런타임 레퍼런스
@@ -19,3 +19,4 @@ last_reviewed: 2026-06-10
 - [search-tool-matrix.md](./search-tool-matrix.md) — 탐색 도구 선택 매트릭스
 - [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙
 - [codex-spark-routing.md](./codex-spark-routing.md) — Codex host 전용 Spark 조건부 라우팅 appendix
+- [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — Codex host 전용 subagent silent-start lifecycle 관측·복구 appendix
