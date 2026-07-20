@@ -145,6 +145,21 @@ requirements-advisor
 
 **병렬 호출**: 독립 advisor (예: `research-advisor` 내부 `parallel-explorer`) 는 병렬 실행이 기본. orchestrator 가 상위 advisor 여러 개를 동시 호출하는 것은 컨텍스트 오염 리스크로 기본 금지. 자세한 규약은 프로토콜 §2.
 
+#### 5.2 호출 lifecycle 관측과 유한 복구
+
+모든 advisor/worker invocation 을 만들 때 프로토콜 §2.5의 lifecycle 관측을 함께 초기화한다. 최소한 logical task, invocation identity, `attempt`, 시작 시각, host의 progress/status/termination/isolation capability, 설정된 start-silence·unchanged-check·clean-retry budget을 `report.md` 또는 연결된 진단 artifact에 기록한다. 값은 host/config calibration 대상이며 무상한 budget은 허용하지 않는다.
+
+- first observable activity는 orchestrator가 정상 API로 실제 관측한 output, explicit progress, tool start/result, terminal/blocked 상태만 인정한다. 내부 reasoning/token 이벤트는 판정 근거가 아니다.
+- queueing, explicit blocked 또는 이미 시작된 long-running tool이 관측되면 silent-start stall로 판정하지 않는다. progress capability가 unknown이고 authoritative status도 확인할 수 없으면 `silent_stall`로 단정하지 않고 `progress_unobservable`로 보고한다.
+- configured budget과 유한 status 재확인을 거쳐 `suspected_silent_stall`이면 즉시 `awaiting_user_decision`으로 전환해 사용자에게 관측 근거와 wait / 기존 invocation 종결 후 clean retry / phase fallback / blocked 옵션을 제시한다. **사용자 확인 전 interrupt, retry, fallback 실행은 0건이어야 한다.**
+- 사용자가 clean retry를 승인하면 기존 invocation의 termination 또는 안전한 isolation을 먼저 확인한 뒤 **새 invocation identity**로 호출한다. 같은 invocation에 보내는 follow-up은 진단/상태 확인일 뿐 clean retry가 아니며 `attempt`를 증가시키지 않는다.
+- retry 승인 직전에 기존 invocation이 완료되면 재시도를 취소하고 기존 결과를 정상 후보로 검토한다. termination/ownership 회수 뒤 도착한 결과는 `late_completion`으로 격리하고 자동 merge나 phase 성공 판정에 쓰지 않는다.
+- 상태 확인·clean retry budget이 소진되거나 clean retry도 같은 lifecycle failure로 끝나면 반복 polling/재호출을 멈추고 §2.5 phase criticality에 따라 skip, Tier B self-check/direct 수행, 사용자 결정 또는 blocked 중 하나로 종결한다. write-capable·destructive scope는 termination/isolation을 확인할 수 없으면 같은 scope를 재호출하지 않는다.
+
+`attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`은 §8의 optional lifecycle 필드에 기록한다. lifecycle 복구 사유는 모델 라우팅용 `model_choice.fallback_reason`과 분리하며, lifecycle 장애를 이유로 §5.7 모델 선택 의미를 변경하지 않는다.
+
+**verification 불변식**: code 변경이 있으면 verification advisor 장애나 lifecycle budget 소진도 skip 사유가 아니다. Tier B로 동일 통합 검증을 직접 실행하거나 요구되는 검증을 수행할 수 없어 `blocked`로 끝내며, 기존 L2 허용 규칙 밖의 `needs_user_verification`으로 대체하지 않는다.
+
 ### 6. 각 호출에 모델 override
 
 프로토콜 §5 루브릭으로 판단 천장(tier: `small` / `medium` / `large`)을 평가한 뒤 호스트 CLI 의 per-call override 문법으로 지정한다(tier→슬러그 매핑 원칙: platform-adapters §6 — 호스트가 자기 라인업·자기 override 문법으로 해석한다. 생략 시 parent 상속).

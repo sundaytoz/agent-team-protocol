@@ -13,6 +13,7 @@
 - [platform-adapters.md](../../plugins/atp/docs/development/platform-adapters.md) — 호스트 capability tier 정의와 자가판정 절차. 호스트 고유 문법·슬러그는 에이전트가 자율 적용 (과거 3사 실측 데이터는 [ADR-0009](../adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록에 동결)
 - [search-tool-matrix.md](../../plugins/atp/docs/development/search-tool-matrix.md) — 탐색/검색 도구 선택 매트릭스 (LSP, graphify, Grep, Glob, Read, WebFetch 목적별 기준)
 - [codex-spark-routing.md](../../plugins/atp/docs/development/codex-spark-routing.md) — Codex host 전용 Spark 조건부 라우팅 appendix
+- [codex-lifecycle-routing.md](../../plugins/atp/docs/development/codex-lifecycle-routing.md) — Codex host 전용 subagent silent-start lifecycle 관측·종결·독립 재시도 appendix
 
 기여자용 문서 (이 디렉토리 — 번들 제외):
 - [release-checklist.md](./release-checklist.md) — **§0 = 언제 릴리즈를 시작하나** (user-facing feat 머지 = release 완결 의무, 진입 조건) / §1~§9 = bump 전제 사후 invariant 점검(문서 링크·TODO 마커·manifest·agent catalog·끊긴 §N 인용 동기화). `plugins/atp/` 번들을 건드리는 작업은 **§0 를 먼저** 본다(루트 `CLAUDE.md` "릴리스 — 배포 완결 의무" 가 docs-first 로 이 §0 를 가리킨다).

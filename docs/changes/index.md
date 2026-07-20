@@ -4,7 +4,7 @@ title: Changes 카테고리 인덱스
 description: 실제 구현 변경 이력(changelog). 런타임 동작·설치 경로·외부 인터페이스가 바뀐 경우.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-24
+last_reviewed: 2026-07-20
 ---
 
 # Changes — 런타임 동작 변경 이력
@@ -25,6 +25,7 @@ last_reviewed: 2026-06-24
 | [2026-07-07-codex-spark-routing.md](./2026-07-07-codex-spark-routing.md) | Codex Spark 조건부 라우팅 appendix — 2.4.0→2.5.0, 미지원 시 기존 tier 매핑 fallback | 2026-07-07 |
 | [2026-07-20-requirements-advisor-v2.md](./2026-07-20-requirements-advisor-v2.md) | requirements-advisor v2 (AC·MoSCoW·traces_to·위장 해결책 판별) + 프로토콜 §2.10 doc-저술 트리거 — 2.5.0→2.6.0 | 2026-07-20 |
 | [2026-07-20-requirements-advisor-v3.md](./2026-07-20-requirements-advisor-v3.md) | requirements-advisor v3 (명확성 게이트 + 착수·종료 판정/되돌리기 비용) — 2차 교차검사 G1/G2 흡수 — 2.6.0→2.7.0 | 2026-07-20 |
+| [2026-07-20-subagent-lifecycle-recovery.md](./2026-07-20-subagent-lifecycle-recovery.md) | silent-start stall 감지·사용자 승인·독립 invocation retry·유한 phase 종단 — 2.7.0→2.8.0 | 2026-07-20 |
 
 ## 관련 카테고리
 

@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "invocations": [
+    {
+      "id": "inv-new",
+      "layer": "advisor",
+      "name": "research-advisor",
+      "started_at": "2026-07-20T15:02:00+09:00",
+      "ended_at": "2026-07-20T15:03:00+09:00",
+      "attempt": 2,
+      "termination": "silent_stall",
+      "retry_of": "inv-old",
+      "lifecycle_fallback_reason": "retry_budget_exhausted",
+      "model_choice": {
+        "fallback_reason": null
+      }
+    }
+  ]
+}

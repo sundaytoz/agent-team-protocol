@@ -38,6 +38,18 @@ peer_agents:
   - 기대 반환 형식 (요약 문단 + 인용 파일:라인)
   - 금기 (다른 영역으로 범위 확장 금지)
 
+## Worker lifecycle 복구
+
+각 `parallel-explorer` invocation을 만들 때 프로토콜 §2.5에 따라 invocation identity, logical task의 `attempt`, 시작 시각, progress/status capability와 유한 status/retry budget을 초기화해 공유 상태에 남긴다. worker output, explicit progress, tool start/result, terminal/blocked 상태가 first observable activity다. reasoning/token 내부 이벤트는 사용하지 않는다.
+
+- queueing, explicit blocked, 이미 시작된 long-running tool은 silent-start stall에서 제외한다. progress capability가 unknown이고 authoritative status도 확인할 수 없으면 stall로 확정하지 말고 `progress_unobservable` concern으로 orchestrator에 반환한다.
+- configured start-silence budget과 유한 unchanged-check budget을 소진했는데 관측 가능한 활동 없이 nonterminal이면 `suspected_silent_stall`로 기록하고 즉시 orchestrator에 관측 근거와 wait / termination 후 clean retry / research fallback / blocked 옵션을 반환한다. research-advisor가 사용자 승인 전에 interrupt, retry spawn 또는 fallback을 실행하면 안 된다.
+- 승인된 clean retry는 기존 invocation의 termination 또는 read-result isolation을 확인한 뒤 새 invocation identity로만 만든다. 같은 invocation follow-up은 `attempt`를 올리지 않으며 clean retry로 세지 않는다. retry 승인 직전 기존 invocation이 완료되면 retry를 취소하고 정상 결과로 검토한다.
+- research worker는 read-only다. 기존 invocation의 수용권을 회수한 뒤 도착한 결과는 `late_completion`으로 격리하고 자동 취합·성공 판정에 쓰지 않는다. 참고 가치가 있어도 orchestrator가 출처와 충돌을 별도로 검토하기 전에는 새 결과에 merge하지 않는다.
+- clean retry도 같은 lifecycle failure로 끝나거나 유한 budget이 소진되면 추가 polling/retry를 멈춘다. research가 optional이면 사용자 승인 하에 확인된 자료만으로 축소/skip하고, 필수 artifact면 advisor가 Tier B 순차 조사로 계약을 채우거나 근거 부족을 `blocked`로 반환한다.
+
+lifecycle 결과는 `attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`에 기록한다. 이 사유는 모델 라우팅의 `model_choice.fallback_reason`과 섞지 않는다.
+
 ## 출력
 
 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/index.md` + 필요 시 포인트별 파일:
@@ -98,6 +110,8 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 - 프로젝트 코드 수정
 - graph 갱신 (graphify-update-advisor 몫)
 - worker 에게 서로 의존하는 순차 작업 부여 (worker 는 독립 병렬이어야 함)
+- 사용자 승인 전 suspected stall worker interrupt/retry/fallback
+- 결과 수용권 회수 뒤 도착한 read-only late result 자동 취합
 
 ## 충돌 시
 

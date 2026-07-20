@@ -1,0 +1,110 @@
+{
+  "observable_activity": ["output", "explicit_progress", "tool_start", "tool_result", "terminal_or_blocked"],
+  "cases": [
+    {
+      "name": "first_activity_before_budget",
+      "signals": ["output"],
+      "state": "active",
+      "actions_before_approval": []
+    },
+    {
+      "name": "long_running_tool_started",
+      "signals": ["tool_start"],
+      "state": "active",
+      "actions_before_approval": []
+    },
+    {
+      "name": "queued",
+      "signals": ["queueing"],
+      "state": "active",
+      "actions_before_approval": []
+    },
+    {
+      "name": "explicit_blocked",
+      "signals": ["terminal_or_blocked"],
+      "state": "blocked",
+      "actions_before_approval": []
+    },
+    {
+      "name": "terminal",
+      "signals": ["terminal_or_blocked"],
+      "state": "completed",
+      "actions_before_approval": []
+    },
+    {
+      "name": "no_activity_budget_elapsed",
+      "signals": [],
+      "authoritative_status": "running",
+      "observability": "known",
+      "state_path": ["active", "suspected_silent_stall", "awaiting_user_decision"],
+      "actions_before_approval": []
+    },
+    {
+      "name": "unknown_observability",
+      "signals": [],
+      "authoritative_status": "unknown",
+      "observability": "unknown",
+      "state": "progress_unobservable",
+      "actions_before_approval": []
+    },
+    {
+      "name": "same_invocation_followup",
+      "old_invocation_id": "inv-1",
+      "new_invocation_id": "inv-1",
+      "attempt_before": 1,
+      "attempt_after": 1,
+      "clean_retry": false
+    },
+    {
+      "name": "approved_clean_retry_read_only",
+      "approved": true,
+      "old_invocation_id": "inv-1",
+      "new_invocation_id": "inv-2",
+      "retry_of": "inv-1",
+      "state_path": ["awaiting_user_decision", "terminating", "retrying"],
+      "actions": ["confirm_termination", "spawn_new_invocation"],
+      "clean_retry": true
+    },
+    {
+      "name": "approved_clean_retry_write_scope",
+      "approved": true,
+      "old_invocation_id": "inv-write-1",
+      "new_invocation_id": "inv-write-2",
+      "retry_of": "inv-write-1",
+      "actions": ["confirm_termination", "inspect_partial_write", "revoke_ownership", "spawn_new_invocation"],
+      "clean_retry": true
+    },
+    {
+      "name": "completion_before_retry_approval",
+      "approved": false,
+      "old_completion": "before_approval",
+      "actions": ["review_old_result", "cancel_retry"],
+      "auto_merge": false
+    },
+    {
+      "name": "late_old_completion",
+      "old_completion": "after_ownership_revoke",
+      "termination": "late_completion",
+      "actions": ["quarantine_old_result"],
+      "auto_merge": false,
+      "counts_as_success": false
+    },
+    {
+      "name": "write_scope_isolation_unknown",
+      "approved": true,
+      "write_scope": "same",
+      "termination_confirmed": false,
+      "isolation_confirmed": false,
+      "state": "blocked",
+      "actions": []
+    }
+  ],
+  "retry_exhausted": {
+    "optional_advisory": ["skip_with_user_approval", "orchestrator_summary"],
+    "required_artifact": ["tier_b_self_check", "user_decision", "blocked"],
+    "implementation": ["ownership_safe_direct", "independent_dispatch", "blocked"],
+    "verification": ["tier_b_execute", "blocked"],
+    "destructive_action": ["blocked"],
+    "closing_docs_retro": ["orchestrator_self_check", "blocked"]
+  }
+}
