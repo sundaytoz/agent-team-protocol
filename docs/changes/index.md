@@ -24,6 +24,7 @@ last_reviewed: 2026-06-24
 | [2026-07-06-remove-feedback-inbox.md](./2026-07-06-remove-feedback-inbox.md) | feedback inbox 시스템 제거 (14→13 카테고리) — 2.3.2→2.4.0, protocol_feedback·memory type 존치 | 2026-07-06 |
 | [2026-07-07-codex-spark-routing.md](./2026-07-07-codex-spark-routing.md) | Codex Spark 조건부 라우팅 appendix — 2.4.0→2.5.0, 미지원 시 기존 tier 매핑 fallback | 2026-07-07 |
 | [2026-07-20-requirements-advisor-v2.md](./2026-07-20-requirements-advisor-v2.md) | requirements-advisor v2 (AC·MoSCoW·traces_to·위장 해결책 판별) + 프로토콜 §2.10 doc-저술 트리거 — 2.5.0→2.6.0 | 2026-07-20 |
+| [2026-07-20-requirements-advisor-v3.md](./2026-07-20-requirements-advisor-v3.md) | requirements-advisor v3 (명확성 게이트 + 착수·종료 판정/되돌리기 비용) — 2차 교차검사 G1/G2 흡수 — 2.6.0→2.7.0 | 2026-07-20 |
 
 ## 관련 카테고리
 
