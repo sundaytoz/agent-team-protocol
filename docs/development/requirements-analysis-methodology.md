@@ -189,6 +189,8 @@ HOW 를 요구 단계에 적어 넣어 설계 자유도를 죽인다(§2 경계 
 
 ### 아직 갭인 것 (개선 후보)
 
+> **갱신(2026-07-20)**: 아래 4건은 이후 `requirements-advisor` v2 에서 해소됐다 — FR 별 `acceptance`·`priority`(MoSCoW)·`traces_to` 필드 + "위장 해결책 판별" 구조적 소절. 상세: [docs/changes/2026-07-20-requirements-advisor-v2.md](../changes/2026-07-20-requirements-advisor-v2.md). 아래 서술은 그 결정의 근거 기록으로 보존한다.
+
 1. **검증가능성 게이트 부재 (§4)** — 가장 큰 갭. 현재 FR 은 "~할 수 있어야 한다" 서술로 끝나고, 수용 기준(AC) 작성은 verification 단계로 미뤄진다. §4 의 논지는 **AC 를 쓸 수 없는 요구는 아직 요구가 아니다**이므로, 각 FR 옆에 한 줄 AC 를 요구 단계에서 강제하면 명확성·완전성 결함이 조기에 드러난다. → `requirements.md` 스키마에 FR 별 `acceptance:` 필드 추가 검토.
 
 2. **우선순위 축 부재 (§3.2/3.3)** — 현재 FR 이 평면 나열이고 MoSCoW/Kano 등급이 없다. Must 와 Could 가 구분되지 않으면 스코프 협상과 부분 구현 판단의 근거가 없다. → FR 에 `priority: must|should|could|wont` 태깅 검토.
