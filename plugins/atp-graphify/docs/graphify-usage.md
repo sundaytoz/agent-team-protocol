@@ -82,7 +82,7 @@ docs/graph/
 /graphify src
 ```
 
-default output 은 `graphify-out/` 이다. 본 템플릿 규약은 **scope 별 `docs/graph/<scope>/`** 이므로 실행 후 산출물을 이동하거나, 다음 절차대로 출력 경로를 지정한다.
+default output 은 `graphify-out/` 이다. 본 템플릿 규약은 **scope 별 `docs/graph/<scope>/`** 이므로 실행 후 산출물을 이동하거나, 다음 절차대로 출력 경로를 지정한다. (v2.2.0+) 배치를 잊어도 `graphify-lookup-advisor`/`graph-refresh-checker` 가 `graphify-out/` 잔존을 Glob 으로 감지해 **no-graph (misplaced-output)** 사유로 반환한다 — 오판(그래프가 있는데 research 낭비)은 막아주지만, 배치(mv)·메타 갱신 자체는 여전히 아래 절차의 책임이다.
 
 ### 4.2 Scope 경로로 산출물 배치
 

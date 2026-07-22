@@ -75,7 +75,7 @@ mkdir -p ${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/{research,implementation,
 
 ### 3. report.md 초기화
 
-해당 디렉토리에 `report.md` 를 프로토콜 §8 스키마(현행 `schema_version`)로 생성. 최초엔 헤더 + `user_request` + `Invocations: []` 만.
+해당 디렉토리에 `report.md` 를 프로토콜 §8 스키마(현행 `schema_version`)로 생성. 최초엔 헤더 + `user_request` + `Invocations: []` 만. 조사·고찰 전용(코드 변경 0 예상) 세션은 §8 경량 프로파일(`profile: research-lite`)로 시작할 수 있다 — 코드 변경이 1줄이라도 생기면 풀 스키마로 승격.
 
 생성 직후 **Advisor Invocation Decision Log** 섹션을 함께 둔다:
 

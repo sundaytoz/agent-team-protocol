@@ -2,7 +2,7 @@
 name: graph-refresh-checker
 description: ${CLAUDE_PROJECT_DIR}/docs/graph/ 의 graphify 산출물이 현재 코드베이스 대비 얼마나 낡았는지 판정한다. 메인 에이전트가 구조 파악이 필요한 작업을 시작하기 전, 대규모 변경 직후, PR/커밋 직전에 호출한다. graphify 자체는 실행하지 않고 staleness 판정과 재생성 범위·삭제 대상 권고만 반환한다.
 tools: Bash, Read, Glob, Grep
-version: 1
+version: 2
 peer_agents:
   - graphify-lookup-advisor
   - graphify-update-advisor
@@ -15,7 +15,10 @@ peer_agents:
 - 프로젝트 루트의 `${CLAUDE_PROJECT_DIR}/docs/graph/index.md` (frontmatter: `last_generated_at`, `source_commit`, `scopes`, 표의 scope 별 "대상 경로").
 - 필요 시 Bash 로 `git log --since`, `git diff --stat`, `git diff --name-status` 를 실행해 변경을 수집한다.
 
-`${CLAUDE_PROJECT_DIR}/docs/graph/index.md` 가 없거나 frontmatter 의 `source_commit` 이 null 이면 → **no-graph** 로 즉시 반환하고, 호출자에게 최초 생성 (`/graphify`) 을 권고한다.
+`${CLAUDE_PROJECT_DIR}/docs/graph/index.md` 가 없거나 frontmatter 의 `source_commit` 이 null 이면 → **no-graph 반환 전에 `${CLAUDE_PROJECT_DIR}/graphify-out/` 존재를 Glob 1회 확인**한다(peer `graphify-lookup-advisor` 와 동일 방어 — §11.1 대칭):
+
+- 존재하면 → **no-graph (misplaced-output)**: 근거에 "graphify 산출물이 `graphify-out/` 에 미이동 잔존" 을 명시하고, 후속 행동을 최초 생성이 아니라 **배치(mv → `docs/graph/<scope>/`) + `index.md` 메타 작성** 으로 권고한다. lookup 과 같은 경로(`docs/graph/`)만 보면 동일 사각을 공유해 상호 교정이 불가하므로 이 분기가 그 사각을 닫는다.
+- 없으면 → **no-graph** 로 반환하고, 호출자에게 최초 생성 (`/graphify`) 을 권고한다.
 
 ## 판정 절차
 
@@ -79,7 +82,7 @@ peer_agents:
 
 반환 직전 다음을 점검한다 (프로토콜 §11.2, 판정 반환형):
 
-1. 판정(fresh | partial-stale | fully-stale | no-graph)과 근거(커밋 차이·구조 시그널)를 모두 포함했는가
+1. 판정(fresh | partial-stale | fully-stale | no-graph)과 근거(커밋 차이·구조 시그널)를 모두 포함했는가. no-graph 면 `graphify-out/` 존재 Glob 을 수행했는가(misplaced-output 분기)
 2. 재생성/삭제 권고 + 후속 행동을 명시했는가
 3. `/graphify` 를 직접 호출하거나 `docs/graph/` 파일을 수정하지 않았는가 (판정·권고만)
 
