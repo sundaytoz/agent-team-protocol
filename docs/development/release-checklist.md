@@ -20,17 +20,40 @@ last_reviewed: 2026-07-20
 - **트리거 — feat 머지 = release 완결 의무**: user-facing feat(소비자 동작·인터페이스에 영향을 주는 변경)가 `main` 에 머지되면, 같은 작업 단위 안에서 manifest version bump + `/plugin update` 도달까지를 release 완결 조건으로 본다. `/plugin update` 는 manifest version 차이로만 갱신을 감지하므로, feat 가 main 에 들어가도 bump 이 main 에 도달하지 않으면 소비자에게 무증상으로 미도달한다.
 - **번들 변경은 같은 작업 단위에서 완결**: `plugins/atp/`의 소비자-visible 동작·계약을 변경한 작업은 base manifest/marketplace version, changes·index, 관련 appendix/index, 본 체크리스트의 적용 gate를 같은 작업 단위에서 동기화한다. 검증과 소비자 추적 ref 도달 경로가 확인되기 전에는 구현만 완료됐다고 종료하지 않는다. 실제 push/update가 현재 권한·환경 밖이면 명령과 확인 항목을 `needs_user_verification`에 남기고 프로젝트 gate 미수행 상태를 명시한다.
 - **이월 금지 — 메모는 트리거가 아니다**: bump 을 후속 release 로 미룰 때 평문 메모(TEMPLATE_DEV "잔여" 등)로 남기면 잊힌다(2026-06-09 → 2026-06-16 약 1주 방치 실증). 이월 시 추적 가능한 Open Item 으로 격리하고 `release-pending` 태그를 붙여 다음 세션 진입 시 우선 확인한다.
-- **bump 대상 브랜치 = 소비자 추적 ref**: bump/release 커밋은 소비자가 추적하는 ref(보통 `main`) 기반 release 브랜치에서 수행한다. 커밋 직전 현재 HEAD 와 `origin/main` 의 관계(ahead/behind/diverged)·내용 동일성을 진단한다. 이미 머지 완료된 stale 로컬 feat 브랜치에 bump 하면 PR 머지 후에도 update 미도달이 반복된다.
+- **bump 대상 브랜치 = 소비자 추적 ref**: bump/release 커밋은 소비자가 추적하는 ref(보통 `main`) 기반 release 브랜치에서 수행한다. 커밋 직전 현재 HEAD 와 `origin/main` 의 관계(ahead/behind/diverged)·내용 동일성을 진단한다. **진단 결과를 두 케이스로 분기한다 — 한쪽 처방을 다른 쪽에 적용하면 안 된다**:
+  - **(A) stale 머지-완료 브랜치** — HEAD 의 커밋들이 이미 `origin/main` 에 있다(내용 중복). 여기에 bump 하면 PR 머지 후에도 update 미도달이 반복된다. → **`origin/main` 기반으로 새 release 브랜치를 만든다.**
+  - **(B) 미머지 릴리스 위 스택** — HEAD 가 `origin/main` 에 없는 **직전 bump 커밋**을 포함하고, 이번 작업이 그 커밋의 *내용* 에 의존한다(예: 직전 릴리스가 도입한 가드의 구멍을 이번 작업이 닫는다). 이 경우 스택이 **정당하며 `main` 기반 분기는 오히려 틀리다** — 직전 버전의 내용이 `main` 에 없으므로 그 위 버전만 올리면 **버전만 뛰고 내용이 비는** 상태가 된다. → **스택을 유지하고 PR 이 두 릴리스를 함께 머지함을 `open_items` 에 명시**한다. 버전 연속성(N-1 → N)은 PR 머지로 함께 확보된다.
+  - 분기 기준은 "HEAD 가 main 보다 앞서 있는가" 가 아니라 **"직전 bump 커밋이 `origin/main` 에 있는가"** 다. (A) 는 있고 (B) 는 없다.
+  - **진단 전 `git fetch origin main` 필수** — 로컬 `origin/main` ref 는 세션 중에도 stale 해진다(다른 PR 이 머지되면). fetch 없이 판정하면 (B) 로 오진하고, 그 오진이 `open_items`·사용자 보고까지 전파된다. 2026-07-30 세션 실증: fetch 전 "미머지 스택(B)" 으로 진단·보고했으나 fetch 후 직전 릴리스가 이미 머지돼 있어 (A) 였다.
 
 검증 명령:
 
 ```bash
 git fetch origin main -q
-last_bump=$(git log -1 --format=%h -S'"version": "2.' -- plugins/atp/.claude-plugin/plugin.json origin/main)
+last_bump=$(git log -1 --format=%h -G'"version": *"2\.' origin/main -- plugins/atp/.claude-plugin/plugin.json)
 git log --oneline ${last_bump}..origin/main --grep='^feat' --grep='!:'
 ```
 
+> **명령 형태 주의 (2026-07-30 실행으로 발견한 결함 2건 — 둘 다 조용히 틀린 커밋을 집는다)**:
+> - **`-S` 대신 `-G`** 를 쓴다. `-S` 는 문자열 **출현 횟수** 변화를 찾으므로 `2.9.0 → 2.10.0` 같은 bump 은 `"version": "2.` 의 횟수를 바꾸지 않아 **매치되지 않는다**. 실측: `-S` 는 2.0.0 시절 커밋(`bb75f21`)을 집었다.
+> - **revision 은 `--` 앞에** 둔다. `-- <path> origin/main` 처럼 `--` 뒤에 두면 revision 이 아니라 **pathspec** 으로 해석돼 대상 브랜치 한정이 무효가 된다.
+>
+> 두 결함이 겹치면 명령은 에러 없이 무관한 커밋을 반환하므로 텍스트 리뷰로는 보이지 않는다(§4.6 "검증 명령은 실행으로만 통과 판정" 의 실제 사례).
+
 기대값: 출력이 **비어있으면** 마지막 version bump 이후 user-facing feat 머지가 없으므로 release 불요. 출력이 **비어있지 않으면** 미릴리즈 feat 가 존재하므로 §4 버전 invariant 점검 **전에** version bump 이 선행되어야 하고, 그 bump 커밋이 `origin/main` 에 도달하는 경로(PR base=main)인지 확인한다.
+
+브랜치 케이스 (A)/(B) 분기 진단:
+
+```bash
+git fetch origin main -q          # 필수 — stale ref 로 판정하면 (B) 로 오진한다
+# 직전 bump 커밋(현 브랜치 기준)이 origin/main 에 있는가
+prev_bump=$(git log -1 --format=%H -G'"version": *"2\.' HEAD~1 -- plugins/atp/.claude-plugin/plugin.json)
+git merge-base --is-ancestor "$prev_bump" origin/main \
+  && echo "case A (stale) — origin/main 기반 재분기" \
+  || echo "case B (미머지 릴리스 위 스택) — 스택 유지 + open_items 명시"
+```
+
+`HEAD~1` 기준인 이유: 이번 세션이 방금 만든 bump 커밋 자신은 당연히 `origin/main` 에 없으므로 판정에서 제외해야 한다. 아직 bump 하지 않은 시점에 진단하면 `HEAD` 로 바꿔 쓴다.
 
 ## 1. 상대 링크 유효성
 
