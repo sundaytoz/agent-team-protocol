@@ -87,7 +87,7 @@ superseded_note: <후속 결정으로 전제가 바뀌었다면 그 사실 — �
 
 ## graphify 산출물 관리 규칙
 
-- 그래프 본체(HTML/JSON/audit) 는 `docs/graph/<scope>/` 하위에 두되 **gitignore 대상**. 재생성 가능하므로 저장소 비대화 방지.
+- 그래프 본체(HTML/JSON/GRAPH_REPORT.md) 는 `docs/graph/<scope>/` 하위에 두되 **gitignore 대상**. 재생성 가능하므로 저장소 비대화 방지.
 - `docs/graph/index.md` 는 커밋 대상. scope 별 마지막 생성 시각, 소스 커밋 SHA, 요약 통계를 기록.
 - 더 이상 관련 없는 scope (제거된 모듈, 폐기된 기능) 의 그래프 산출물은 **삭제** 한다. 메인 에이전트가 `graph-refresh-checker` 권고를 받아 제거.
 - 재생성 전 기존 산출물은 삭제 후 새로 생성하여 혼재 방지.

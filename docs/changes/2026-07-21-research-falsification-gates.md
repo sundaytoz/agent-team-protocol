@@ -27,6 +27,8 @@ versions:
 - **graph-refresh-checker v1→v2**: 동일 misplaced-output 분기 (peer 대칭 §11.1).
 - **graphify-usage.md §4.1**: 감지 동작 안내 1줄.
 
+> **후속 정정 (2026-07-30, add-on 2.3.0)**: 위 misplaced-output 게이트는 발동 전제가 "index.md 부재 또는 `source_commit: null`" 이었기 때문에, index.md 가 정상인 레포에서는 잔존 `graphify-out/` 을 **영구히 보지 못하는 구멍**이 있었다. add-on 2.3.0 이 이 확인을 판정 조건에서 분리해 무조건 1회 실행으로 바꿨다 — [2026-07-30-graphify-skill-restructure-adaptation.md](./2026-07-30-graphify-skill-restructure-adaptation.md) P1-1.
+
 ## 소비자 영향
 
 - `/plugin update` 로 base 2.9.0 + add-on 2.2.0 수신 시: research 산출물에 `single-source` 플래그·반증 기록이 추가로 나타나고, graphify 산출물 미배치 상태에서 research 낭비가 차단된다. 기존 세션 보고서·산출물 소급 영향 없음(옵셔널·additive).

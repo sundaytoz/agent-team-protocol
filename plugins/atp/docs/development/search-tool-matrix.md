@@ -90,7 +90,7 @@ related:
 | 심볼 정의 점프 (함수/클래스/변수 위치 확인) | LSP | Grep | 파일 경로가 이미 확실할 때 Read | 구문 분석 기반 정확도 > 텍스트 매칭 |
 | 참조·호출처 전수 조회 | LSP | Grep | - | LSP find-all-references 는 rename-safe 수준 정확도 |
 | 모듈 연관·군집 파악 | graphify | Grep | 그래프 fresh 판정이 없으면 skip 불가 | 엣지 시각화가 핵심 목적 |
-| god node·순환 의존 탐지 | graphify | Grep | - | audit.md 가 자동 집계 |
+| god node·순환 의존 탐지 | graphify | Grep | - | GRAPH_REPORT.md 가 자동 집계 |
 | 키워드·패턴 검색 (코드/문서 혼재) | Grep | Glob | - | 파일 타입 무관 동일 인터페이스 |
 | 파일·경로 목록 수집 | Glob | Grep | 경로가 확실하면 Read | 내용 불필요 시 Glob 이 빠름 |
 | 로드맵·Phase 정보 조회 | Read (docs 직접) | Grep | - | 구조화 문서는 직접 읽기가 정확 |
@@ -121,7 +121,7 @@ git diff <source_commit>..HEAD -- <scope 대상 경로>
 | **fresh** | `source_commit == HEAD` OR scope 내 변경 파일 0건 |
 | **partial-stale** | scope 내 변경 있으나 구조적 시그널 미미 (주석·docstring·타입 힌트 조정만), 또는 일부 scope 만 변경 |
 | **fully-stale** | 여러 scope 에 걸쳐 구조적 시그널 다수 (import/export 경로 변경, 함수 시그너처 변경, 파일 A/D 10건 이상) |
-| **no-graph** | `docs/graph/index.md` 없거나 `source_commit: null` |
+| **no-graph** | `docs/graph/index.md` 없거나 `source_commit: null`. 단 이 판정 전에 `graphify-out/` 존재를 **무조건 1회** 확인해, 존재하면 **no-graph (misplaced-output)** 로 구분한다 — 배치 미완은 "그래프 없음" 이 아니다. index.md 가 정상이어도 잔존이 있으면 후속 행동에 정리 선행을 넣는다 |
 
 ### 문서 전용 커밋 오판 방지
 
