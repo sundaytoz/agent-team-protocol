@@ -27,6 +27,7 @@ last_reviewed: 2026-07-20
 | [2026-07-20-requirements-advisor-v3.md](./2026-07-20-requirements-advisor-v3.md) | requirements-advisor v3 (명확성 게이트 + 착수·종료 판정/되돌리기 비용) — 2차 교차검사 G1/G2 흡수 — 2.6.0→2.7.0 | 2026-07-20 |
 | [2026-07-20-subagent-lifecycle-recovery.md](./2026-07-20-subagent-lifecycle-recovery.md) | silent-start stall 감지·사용자 승인·독립 invocation retry·유한 phase 종단 — 2.7.0→2.8.0 | 2026-07-20 |
 | [2026-07-21-research-falsification-gates.md](./2026-07-21-research-falsification-gates.md) | research 불확실성 게이트 3종(반증·단건 독립확증·수확 점검) + graphify-out 방어·prior_lookup — 2.8.0→2.9.0, add-on 2.1.0→2.2.0 | 2026-07-21 |
+| [2026-07-30-graphify-skill-restructure-adaptation.md](./2026-07-30-graphify-skill-restructure-adaptation.md) | 상류 graphify 스킬 구조 재편 대응 15건(P0 거짓 안내 5건 포함) + `docs/graph/<scope>/` 정본화·전량 재생성 — 2.9.0→2.10.0, add-on 2.2.0→2.3.0 | 2026-07-30 |
 
 ## 관련 카테고리
 

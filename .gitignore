@@ -15,7 +15,11 @@
 .serena/
 graphify-out/
 
-# graph 본체(HTML/JSON/audit)는 재생성 가능 — index.md 만 추적 (documentation-guidelines §graphify)
+# graph 본체(HTML/JSON/GRAPH_REPORT)·빌드 상태는 재생성 가능 — index.md 만 추적 (documentation-guidelines §graphify)
+docs/graph/*/
 docs/graph/*.html
 docs/graph/*.json
 docs/graph/GRAPH_REPORT.md
+
+# adapter installer 산출물(설치본 사본) — 재생성 가능
+.opencode/

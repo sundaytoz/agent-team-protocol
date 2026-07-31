@@ -402,3 +402,64 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 **문제/기회**: `§N`·앵커 인용이 코드베이스 전반에 산재하면 사실상 공개 API. 무게/구조 개선 시 물리 재배치 전에 인용망을 실측하고 로딩전략 변경(코어상주+on-demand)을 분할보다 우선해야 끊긴 인용·이력문서 사후수정을 0 으로 만든다. ADR-0013 에서 실증(Q2=B).
 **제안**: `documentation-guidelines.md` 또는 design 휴리스틱 절에 1줄 등재.
 - 태그: [self] · P2 · docs_sync_target: `documentation-guidelines.md`
+
+---
+
+## 10. 후속 백로그 (세션 20260729-172132 발생 — 상류 graphify 스킬 구조 재편 대응)
+
+retrospective 가 승격 판정한 후보 8건 중 **번들(`plugins/`) 변경을 요구하는 6건**을 이월한다. 사용자 승인 스코프("graphify 반영 15건")를 넘는 별개 작업 단위이고, base manifest 4곳 동기 bump + `docs/changes` 1건이 같은 작업 단위로 따라오기 때문이다.
+
+**`release-pending`** — 다음 세션 진입 시 우선 확인(루트 `CLAUDE.md` §릴리스 이월 규약 / `release-checklist.md` §0 "메모는 트리거가 아니다"). 세션 report 는 `.atp/work-session/` opt-out(ADR-0010)으로 미추적이라 이 등재가 유일한 생존 경로다.
+
+같은 회고의 후보 2건은 **본 세션에서 반영 완료**(번들 밖이라 bump 불요): release-checklist §0 브랜치 케이스 분기 + bump 탐지 명령 결함 2건 수정(`894950e`), 루트 `CLAUDE.md` §self-dogfooding 에 "편집한 에이전트 실호출" 1줄.
+
+### G-ACTYPE1-1 — AC self-audit 3번째 축: 판별력(Type I) (P1) `release-pending`
+
+**문제**: 이 세션에서 AC 정식화 결함 3건이 나왔고 **전부 "불변식이 정상 상태를 위반으로 판정"**(Type I)이었다. 메커니즘은 서로 달랐다 — S4=판별 키 부족(파일별 `__dirname` 을 중복 노드로 오판) / S5=외부 도구 동작 전제 오류(상류가 의도한 캐시 위치를 미배치로 오판) / AC-S4=검사 pathspec 범위(자기 이력 문서가 개명 사실을 기술하는 것을 위반으로 오판). §4.7 의 2축은 메커니즘(시점 드리프트·리터럴 grep 의존)으로 정의돼 있어 **셋 다 통과한다**. design 이 2축을 실제로 수행하고 통과 판정한 것이 노력 문제가 아니라 축 부재라는 직접 증거다.
+**제안**: `agent-team-protocol.md` §4.7 에 3번째 축 신설 — "**판별력**: 이 불변식이 *정상* 상태를 위반으로 판정할 경우가 있는가? 위반으로 잡힐 대상을 3개 열거해보고 그중 정상인 것이 있으면 판별 키를 좁힌다(예: label → (label, 정의파일)). 검사 범위가 산출물 표면을 넘어 이력·메타 문서까지 가는지도 확인한다." `design-advisor.md` 의 self-audit 절 제목도 (시점·표현·**판별력**) 3축으로 갱신.
+- 태그: [self] · P1 · 번들 → base manifest 4곳 bump + changes 1건
+- docs_sync_target: `plugins/atp/docs/development/agent-team-protocol.md` §4.7 + `plugins/atp/agents/design-advisor.md`
+- 재현성 근거: 동일 세션 n=3, 메커니즘 상이, 축 직교성 논증 확보
+
+### G-UNIVCLAIM-1 — 전칭 부정 주장의 확증 표면 병기 (P1) `release-pending`
+
+**문제**: research 가 "**경로 규약은 불변 — 전부 `graphify-out/` = cwd 기준**" 이라고 `확인됨` 으로 단정했으나 캐시에 대해서는 거짓이었다(상류가 `cache_root` ≠ `root` 를 명시적으로 구분). design 이 이를 불변식 전제로 승격해 S5 AC 가 오작동했고, verification 실행에서야 드러났다. ADR-0018 반증 패스가 통과한 이유는 그 사실이 §3.2 load-bearing 목록에 **없었기 때문** — research 가 자기분류하지 않았는데 design 은 전제로 썼다. 추가 진단: `확인됨` 에는 hedge 가 없어 §2.6 불확실성 보존이 발동하지 않는다 → **범위 한정은 hedge 와 독립된 승계 대상**인데 규율이 hedge 에만 걸려 있다.
+**같은 세션 A/B 대조가 처방을 지목**: 범위를 한정한 CLI 축 주장("문서 표면 기준으로만 닫혔다")은 개방성이 하류로 전달돼 `.graphifyignore` 발견으로 이어졌고, 한정하지 않은 경로 규약 주장은 AC 전제로 무조건 승격됐다.
+**제안**: (a) 전칭/부정 주장("전부 X 다", "Y 는 없다", "규약은 불변이다")에는 **확증 표면을 병기**한다 — "무엇을 근거로 전수라 하는가"(문서 표면 / 실행 표면 / 소스 표면). (b) **경로·기준(base) 규약은 load-bearing 기본 편입** — 기본 반례로 "한 시스템에 base 가 복수 공존"을 반드시 시도한다.
+- 태그: [self] · P1 · 번들
+- docs_sync_target: `agent-team-protocol.md` §4.8(ADR-0018 확장 문단) + `plugins/atp/agents/research-advisor.md` 자가검증 + `design-advisor.md`(전제 승계)
+- 재현성 근거: 동일 세션 A/B 대조
+
+### G-DESTPREM-1 — 파괴적 조작 전제는 게이트 전 read-only 실측으로 닫는다 (P1) `release-pending`
+
+**문제/기회**: design 이 DO-1(3,477파일 61MB 격리)을 `미확정:` 으로 정직하게 표시하고 "보수적으로" 요구했으나, orchestrator 의 read-only 실측(`detect()` 직접 호출, write 0)이 전제를 반증해 **ignore 1줄로 대체**했다. 파괴적 조작 5건 → 2건, 삭제 0건. §6 에 전제 폐쇄를 요구하는 조항이 0 이라 이번엔 orchestrator 재량으로 성립했다.
+**제안**: §6 에 소절 1개 — 파괴적 조작을 설계에 넣을 때 **그 필요성의 전제를 신뢰도와 함께 표기**하고(design 측), 게이트 제시 **직전에 read-only 로 전제를 재확인**한다(orchestrator 측). 양면 계약으로 명문화. 기존 "게이트 2단계 분리"는 시간축 뒷단이라 상보.
+- 태그: [self] · P1 · 번들 · n=1 이나 비용 비대칭 큼(불필요한 61MB·3,477파일 이동) + 조항 0 = structural-latent
+- docs_sync_target: `agent-team-protocol.md` §6 + `plugins/atp/agents/design-advisor.md`
+
+### G-VERIFINDEP-1 — verification 은 기록 감사가 아니라 독립 재실행 (P1) `release-pending`
+
+**문제**: 이 세션에서 verification 이 orchestrator 판정표를 **감사하지 않고 독립 재실행**해 S5 를 반증했다(orchestrator 는 레포 루트만 관측했고 실제 빌드 cwd 를 놓쳤다). 결과: AC 재정식화 + 소비자 문안 3곳 정정 + misplaced-output 판정 키 정밀화. 반대로 기록만 감사하는 verification(rubber-stamp)은 **조용히 실패**하므로 사후 관측이 불가능하다 — 이 성질 때문에 규약화 가치가 있다.
+**제안**: `verification-advisor.md` 입력·실행 절차 뒤에 소절 — "orchestrator 가 제공한 판정 기록은 **입력이지 근거가 아니다**. 판정 가능한 항목은 반드시 재실행하고, 기록과 어긋나면 기록이 아니라 실행 결과를 채택한다. 재실행 불가 항목(사용자 확인 이력 등)만 기록에 의존하고 그 사실을 명시한다."
+- 태그: [self] · P1 · 번들
+- docs_sync_target: `plugins/atp/agents/verification-advisor.md` + `agent-team-protocol.md` §4.7 인접 1줄
+
+### G-CONSTRSURF-1 — 제약 집행 AC 의 검사 표면이 제약 문안보다 좁으면 안 된다 (P2) `release-pending`
+
+**문제** (Type I 의 역방향 = Type II): design 이 R-1("상류 버전 번호 0건")을 부과하고 AC-22 로 집행했는데, 본문은 0 hit 통과인 반면 **산출 파일명** `2026-07-30-graphify-0.9x-adaptation.md` 가 정규식(`0\.(7|8|9)\.[0-9]+`)을 우회했다. 게다가 그 파일명은 dispatch·design §5 가 지정한 것 — **제약 작성 단계와 경로 지시 단계가 갈리면 제약이 경로 지시에 적용되지 않는다.** 본 세션은 리네임으로 해소(참조 4사이트 동반 수정).
+**제안**: 제약(R-n)을 부과하는 design 은 그 제약의 **검사 표면을 열거**한다 — 본문 / 파일명·경로 / frontmatter / 커밋 메시지 / index 링크. 그리고 자기가 지정하는 산출 경로 자신을 그 표면에 넣어 1회 대조한다.
+- 태그: [self] · P2 · 번들
+- docs_sync_target: `plugins/atp/agents/design-advisor.md`(제약 작성 소절) + `agent-team-protocol.md` §2.6 불확실성 보존 1줄
+
+### G-GATEAXIS-1 — plan-gate 축이 코드베이스 사실로 판정 가능한지 먼저 자문 (P3) `release-pending`
+
+**문제**: §2.7 plan-gate 발동은 정당했으나(H5 반전 + 범위 확장), 얹은 2번째 축(배치 규약 flat vs `<scope>/`)이 **"판단 보류 — design 위임"** 으로 돌아왔고 design 이 코드베이스 사실("flat 은 scope ≥ 2 에서 파일명 충돌로 성립 불가")로 단독 결정했다. 물어볼 필요가 없던 축을 얹었을 가능성.
+**제안**: `§4.4` 자가 점검에 1줄 — "이 축이 **코드베이스 사실로 판정 가능한가**? 가능하면 묻지 말고 그 사실을 근거로 결정하고 결과를 보고한다. 선호·우선순위·비용 감수 의사만 사용자 축이다."
+**반영 전제 (필수 병기)**: 이 점검은 **위임 축소 방향으로 쓰면 안 된다.** 안 물어봐서 틀린 방향으로 구현하는 비용이, 물어봐서 위임받는 비용보다 훨씬 크다(비대칭). 애매하면 묻는다.
+- 태그: [self] · P3 · 번들 · signal_source: negative(약한 신호 — 명시적 지적 아님)
+- docs_sync_target: `agent-team-protocol.md` §4.4 자가 점검
+
+### (조건부) 통합 검증 게이트가 이 레포에서 상시 N/A
+
+`/atp:init` 미실행으로 `docs/development/verification-strategies.md` 가 없어 이번에도 통합 검증을 AC 직접 실행으로 대체했다(반복 관측). 템플릿 `verification-strategies.md` 에 **문서·매니페스트 전용 전략 블록**(JSON 유효성 / 매니페스트 버전 invariant / 상대 링크 유효성 / 카테고리 index 등록)이 있으면 코드 없는 레포에서도 게이트를 정식으로 켤 수 있다. `/atp:init` 실행 + 템플릿 보강을 함께 검토.
+- 태그: [self] · P2 · 번들(템플릿) · docs_sync_target: `plugins/atp/templates/verification-strategies.md`

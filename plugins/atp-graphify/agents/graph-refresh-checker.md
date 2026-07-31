@@ -15,10 +15,15 @@ peer_agents:
 - 프로젝트 루트의 `${CLAUDE_PROJECT_DIR}/docs/graph/index.md` (frontmatter: `last_generated_at`, `source_commit`, `scopes`, 표의 scope 별 "대상 경로").
 - 필요 시 Bash 로 `git log --since`, `git diff --stat`, `git diff --name-status` 를 실행해 변경을 수집한다.
 
-`${CLAUDE_PROJECT_DIR}/docs/graph/index.md` 가 없거나 frontmatter 의 `source_commit` 이 null 이면 → **no-graph 반환 전에 `${CLAUDE_PROJECT_DIR}/graphify-out/` 존재를 Glob 1회 확인**한다(peer `graphify-lookup-advisor` 와 동일 방어 — §11.1 대칭):
+## 사전 확인 (무조건 1회)
 
-- 존재하면 → **no-graph (misplaced-output)**: 근거에 "graphify 산출물이 `graphify-out/` 에 미이동 잔존" 을 명시하고, 후속 행동을 최초 생성이 아니라 **배치(mv → `docs/graph/<scope>/`) + `index.md` 메타 작성** 으로 권고한다. lookup 과 같은 경로(`docs/graph/`)만 보면 동일 사각을 공유해 상호 교정이 불가하므로 이 분기가 그 사각을 닫는다.
-- 없으면 → **no-graph** 로 반환하고, 호출자에게 최초 생성 (`/graphify`) 을 권고한다.
+판정 절차에 들어가기 **전에** `${CLAUDE_PROJECT_DIR}/graphify-out/graph.json` 존재를 Glob 1회 확인한다. index.md 상태와 무관하게 항상 수행한다 — 이 확인을 `source_commit` null 조건에 묶으면 index.md 가 정상인 레포에서는 잔존 산출물을 영구히 보지 못한다. 결과를 `graphify_out_present: true|false` 로 근거에 기록한다(peer `graphify-lookup-advisor` 와 동일 필드명 — §11.1 대칭).
+
+> **판정 키는 디렉토리가 아니라 `graph.json` 이다.** `graphify-out/` 디렉토리만으로 판정하면 오탐한다 — 추출 캐시는 그래프 대상 경로(스캔 루트) 기준으로 관리되므로, 배치가 정상 완료된 뒤에도 `graphify-out/cache/` 만 담은 디렉토리가 남는 것이 **정상**이다. 미배치의 실제 증거는 `graph.json` 의 잔존이며, 질의 가로채기를 일으키는 것도 그 파일이다.
+
+- `graphify_out_present: true` + index.md 없음 또는 `source_commit: null` → **no-graph (misplaced-output)**: 근거에 "graphify 산출물이 `graphify-out/` 에 미이동 잔존" 을 명시하고, 후속 행동을 최초 생성이 아니라 **배치(`docs/graph/<scope>/`) + `index.md` 메타 작성** 으로 권고한다.
+- `graphify_out_present: true` + index.md 정상 → 판정은 정상 절차대로 낸다(**fresh 도 가능**). 단 후속 행동에 **`graphify-out/` 정리 선행**을 반드시 포함한다: 정본이 `docs/graph/` 인데 `graphify-out/graph.json` 이 남아 있으면 이후 `/graphify` 질의가 탐지 단계를 건너뛰고 그 잔존 사본으로 즉답한다(정본 무시 = 조용한 오답).
+- `graphify_out_present: false` + index.md 없음 또는 `source_commit: null` → **no-graph** (최초 생성 권고)
 
 ## 판정 절차
 
@@ -32,6 +37,14 @@ peer_agents:
    - 변경된 라인 수 (`git diff --shortstat`)
    - import/export, 라우트 정의, 스키마 정의 같은 **구조적 시그널** 이 포함됐는지 (Grep 으로 확인 — 프로젝트 언어·프레임워크 패턴에 맞게: `^export\s+(class|function|const)`, 라우트 등록 DSL, 스키마 정의 DSL 등)
 
+## (보조·선택) graphify 측 상태 신호
+
+`${CLAUDE_PROJECT_DIR}/docs/graph/<scope>/manifest.json` 이 **있으면** 파일별 수정시각·해시로 `git diff` 결과를 교차확인할 수 있다(어느 파일이 실제로 다시 추출돼야 하는지). 사용 규칙:
+
+- **부재가 정상이다** — 빌드 상태 파일은 gitignore 대상이라 클론 직후 환경엔 없다. 부재를 stale 근거로 쓰지 않는다.
+- **판정 로직이 이 파일에 의존하지 않는다.** 정본 입력은 `docs/graph/index.md` frontmatter + `git diff` 다. manifest 는 근거 보강용이며, 없으면 해당 문장을 생략한다.
+- 스키마는 graphify 버전에 따라 필드가 추가될 수 있다. 읽기 전에 기대 키의 존재를 확인하고 없으면 사용하지 않는다. 관측하지 않은 필드를 전제로 분기하지 않는다.
+
 ## 출력 스키마
 
 다음 형식으로 **간결히** 반환한다. 장황한 변경 목록을 나열하지 말고 상위 n 건만 예시로 든다.
@@ -43,6 +56,7 @@ peer_agents:
   - 기준 커밋: <sha> (ΔYd, N커밋 차이)
   - scope별 변경 요약 (파일수, 라인수, 구조적 시그널 개수)
   - 구조적 시그널이 집중된 파일 상위 3~5건
+  - graphify_out_present: true | false
 
 재생성 권고:
   - scope: <scope>, 사유: <왜 이 scope 를 다시 그려야 하는지>
@@ -82,7 +96,7 @@ peer_agents:
 
 반환 직전 다음을 점검한다 (프로토콜 §11.2, 판정 반환형):
 
-1. 판정(fresh | partial-stale | fully-stale | no-graph)과 근거(커밋 차이·구조 시그널)를 모두 포함했는가. no-graph 면 `graphify-out/` 존재 Glob 을 수행했는가(misplaced-output 분기)
+1. 판정(fresh | partial-stale | fully-stale | no-graph)과 근거(커밋 차이·구조 시그널)를 모두 포함했는가. **판정 종류와 무관하게** `graphify-out/` Glob 을 1회 수행하고 `graphify_out_present` 를 근거에 기록했는가(misplaced-output 분기)
 2. 재생성/삭제 권고 + 후속 행동을 명시했는가
 3. `/graphify` 를 직접 호출하거나 `docs/graph/` 파일을 수정하지 않았는가 (판정·권고만)
 
