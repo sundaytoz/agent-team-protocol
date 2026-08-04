@@ -277,6 +277,14 @@ active
 
 사용자가 retry를 승인하기 직전에 기존 invocation이 완료되면 결과를 정상 후보로 검토하고 retry를 취소한다.
 
+#### 실패의 기록 의무 (silent absorption 금지)
+
+lifecycle 실패를 **사용자 보고도 기록도 없이 orchestrator 직접 수행으로 흡수하고 세션을 진행하는 것은 금지**한다. 아래 phase 종단 표의 Tier B self-check·phase fallback·skip 은 허용된 **종단**이지 보고·기록의 면제가 아니다. 흡수했더라도 해당 invocation 의 `termination` 과 대체 수행 범위·근거를 §8 에 남긴다(비정상 종결의 기록 의무는 §8 참조).
+
+기록이 없으면 `report.md` 만 보는 후속 세션·회고·사후 분석은 그 phase 가 정상 완료된 것으로 읽는다. 그러면 같은 실패의 재발 여부를 판정할 근거가 사라지고, 본 절의 규약은 존재하지만 집행 흔적이 없는 dead gate 가 된다.
+
+**배경**: 운영 세션에서 문서화 단계 advisor 가 API 커넥션 오류로 종결됐는데 clean retry·사용자 보고 없이 orchestrator 직접 검증으로 마감되고 보고서에는 usage 0 행만 남았다. 이후 그 세션을 분석한 별도 보고서가 그 행을 실행 실패가 아닌 no-op 으로 읽어, 실패 사실 자체가 분석에서 소실됐다. 본 절의 규약은 그 시점에 이미 존재했으므로 결함은 규약 부재가 아니라 **기록 경로의 optional 성**이었다(§8 대응 조항 참조).
+
 #### clean retry와 유한 수렴
 
 **clean retry의 정본은 실패 호출과 다른 새 invocation ID**다. 동일 thread/invocation에 추가 지시를 보내는 행위는 진단 또는 continuation일 뿐 clean retry가 아니며 `attempt`를 증가시키지 않는다. 승인 후 기존 invocation에는 새 작업을 보내지 않고 termination 또는 결과 격리를 확인한 다음 최소 권위 payload로 새 invocation을 만든다. payload에는 목표, 권위 자료·확정 계약, write scope, 보존할 partial, 필수 산출물과 검증/반환 형식을 포함하며 전체 대화 이력 상속을 요구하지 않는다.
@@ -897,6 +905,8 @@ user_signals:
 
 `attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`은 v2에 추가된 optional lifecycle 필드다. `retry_of`는 host thread가 아니라 report 내부 invocation ID만 참조한다. 필드 부재는 legacy/unknown이며 유효하다. lifecycle fallback은 모델 선택의 `model_choice.fallback_reason`을 대신하거나 덮어쓰지 않는다.
 
+**비정상 종결의 기록 의무 (optional 의 예외)**: `completed` 가 아닌 종결(`failed` / `interrupted` / `silent_stall` / `late_completion`)에는 해당 invocation 의 `termination` 기록이 **의무**다. orchestrator 가 그 phase 를 직접 수행·skip·fallback 으로 흡수한 경우에도 같으며, 선택한 종단의 사유를 `lifecycle_fallback_reason` 에 남긴다(§2.5 silent absorption 금지). 즉 필드 부재가 유효한 범위는 **정상 완료와 legacy report** 에 한정되고, 비정상 종결을 무기록으로 남기는 것은 스키마 위반이다. 이 조항은 기존 v2 report 의 유효성을 바꾸지 않는다 — legacy 는 종결 정보가 `unknown` 이며 소급 기재 대상이 아니다(§8 진화 규칙·`retroactive` 라벨 규약).
+
 > **v2 (ADR-0008)**: `model_choice.model` enum 제거, `tier`/`effort`/`resolved_model`/`capped`/`capped_from` 도입 + `dispatch_size` 라벨 `-batch` 화. 기존 v1 보고서는 소급 수정하지 않는다 — 과거 세션 디렉토리를 읽을 때 v1(`model`)·v2(`tier`) 혼재를 허용한다.
 
 ## 9. 확장 트리거 레지스트리
@@ -1000,6 +1010,8 @@ peer_agents:
 ## 12. 회고 → 교훈 반영 절차 (docs-first)
 
 1. `retrospective-advisor` 가 세션 보고서를 읽고 `what_to_improve` / `applied_changes` 초안을 산출.
+   **산출 sink 는 `report.md` 의 `Retrospective` 섹션이며(`Edit` 으로 갱신), 별 파일(`retrospective.md` 등)을 산출하지 않는다.** advisor 에 `Write` 를 부여하지 않는 것은 아래 3~5 의 "orchestrator 가 수용 판단 후 반영" 설계를 지키는 **의도된 제약**이다 — `Write` 를 주면 advisor 가 docs/MEMORY 를 직접 쓸 수 있게 되어 이 절의 게이트가 무력화된다.
+   따라서 orchestrator 는 회고 dispatch 에서 **별 파일 산출을 요구하지 않는다**. 요구하면 advisor 가 규약대로 거부하고 `report.md` 섹션만 채우는데, 그 정상 동작이 "산출물 생성 실패" 로 오독되어 tools 부여 결함으로 잘못 진단된 관측이 있다. 회고의 산출물 유무는 `report.md` 의 해당 섹션으로만 판정한다.
 2. Orchestrator 가 그 중 **재현성 있는 교훈** 만 선별.
 3. **docs-first (기본 sink)**: 수용한 교훈은 `docs_sync_target` 경로(프로젝트 지침파일 / `docs/development/*.md` / ADR 등) 에 기재하는 것을 **기본**으로 한다 — 같은 커밋에 반영. docs 화가 부적절한 내부 작업 흐름 교훈만 예외.
    `docs_sync_target` 이 기존 파일을 가리키면, 그 파일이 스코프 선언을 갖고 있는지 확인하고 대조한다(`document-category-classification.md` "함께 작성하는 규칙"). 대조 없이 "카테고리만 맞으면 아무 파일에나" append 하는 것은 반복 관측된 실패 모드다.
