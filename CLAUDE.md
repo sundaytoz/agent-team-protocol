@@ -57,6 +57,13 @@ agent-team-protocol/
 
 **에이전트 정의를 편집했으면 세션 종료 전에 그 에이전트를 1회 실호출한다.** 정의 파일은 실행되지 않는 산문이라 자기모순·미해소 참조가 정적 검토를 통과한다 — 실호출만이 새 규약이 실제로 적용되는지 보여준다. 비용은 거의 0이고, 세션 종료 조건이 이미 요구하는 호출(예: `graph-refresh-checker`)로 갈음되는 경우도 많다. 실증: 2026-07-30 세션에서 `graph-refresh-checker` 의 판정 키를 바꾼 뒤 종료 조건 호출이 그 규약을 실제로 적용해 오탐을 피하는 것을 확인했다.
 
+> **캐비트 — 설치 캐시가 stale 하면 실호출은 거짓 PASS 다.** 이 규약은 호출이 **편집한 정의**를 태운다고 가정한다. 그런데 로컬 enable 은 `~/.claude/plugins/cache/agent-team-protocol/atp/<version>/` 의 스냅샷을 쓰므로, 같은 세션에서 소스를 편집하고 bump 까지 한 상태(= 캐시 version < 소스 version)에서 `atp:<agent>` 를 호출하면 **편집 전 정의**가 실행된다. 검증했다는 기록만 남고 실제로는 무관한 스펙을 검증한다.
+>
+> 판정: 캐시 version 과 `plugins/atp/.claude-plugin/plugin.json` 의 version 을 비교한다. 불일치면 실호출로 갈음하지 말고 아래 둘을 함께 한다.
+>
+> 1. **dry-run 대리검증** — 신 spec 본문을 프롬프트에 주입해 범용 에이전트로 1회 수행시키고, 자기모순·미해소 참조·판단 불가 지점을 보고하게 한다. 실증: 2026-08-04 세션에서 `parallel-explorer`/`research-advisor` 개정안을 이 방식으로 태워 실행상 결함 3건(파일명 규칙 부재·frontmatter 리터럴/placeholder 모호·"관계만 재서술 금지" 의 무관계 사각)을 검출하고 같은 커밋에 반영했다.
+> 2. **실환경 검증을 `needs_user_verification` 으로 이월** — `/plugin update` 도달 후 그 에이전트를 1회 호출해 확인할 항목을 명시한다. dry-run 은 대리이지 대체가 아니다.
+
 ---
 
 ## 릴리스 — 배포 완결 의무

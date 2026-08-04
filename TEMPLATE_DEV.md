@@ -463,3 +463,60 @@ retrospective 가 승격 판정한 후보 8건 중 **번들(`plugins/`) 변경�
 
 `/atp:init` 미실행으로 `docs/development/verification-strategies.md` 가 없어 이번에도 통합 검증을 AC 직접 실행으로 대체했다(반복 관측). 템플릿 `verification-strategies.md` 에 **문서·매니페스트 전용 전략 블록**(JSON 유효성 / 매니페스트 버전 invariant / 상대 링크 유효성 / 카테고리 index 등록)이 있으면 코드 없는 레포에서도 게이트를 정식으로 켤 수 있다. `/atp:init` 실행 + 템플릿 보강을 함께 검토.
 - 태그: [self] · P2 · 번들(템플릿) · docs_sync_target: `plugins/atp/templates/verification-strategies.md`
+
+---
+
+## 11. 후속 백로그 (세션 20260804-120432 발생 — 세션 병목 분석 보고서 검토 + 교정 조치 3건)
+
+세션 성격: 외부 세션 병목 분석 보고서의 타당성 2층 검증(Phase 1) → 검토가 도출한 교정 조치 3건 번들 반영(Phase 2, PR #27 / 2.11.0). 아래는 그 PR 스코프 **밖**으로 남은 항목이다.
+
+**`release-pending`** — 다음 세션 진입 시 우선 확인. 세션 report 는 `.atp/work-session/` opt-out(ADR-0010)으로 미추적이라 이 등재가 유일한 생존 경로다.
+
+> **역할 분리 (이번 회고가 지목한 규율)**: `report.md` 의 `open_items` 는 **동일 로컬·동일 작업자의 다음 세션 재진입 인터페이스**로만 유효하다. gitignore 되므로 durable·cross-contributor 기록이 아니다. 검토/평가형 세션이 "후속 작업 단위 후보" 를 산출하면 종료 전 이 파일에 최소 스텁(ID·제목·태그·연관 sid)을 등재한다 — §2 "원본 자료 접근 전략"(2026-05-06)이 이미 선언한 선례의 집행 경로다. 이번 세션은 초기에 `open_items` 에만 남겨 이 선례를 어겼고, 본 §11 등재로 해소했다.
+
+### G-ADVPARA-1 — orchestrator 상위 advisor 동시 호출 금지 완화 검토 (ADR급) `release-pending`
+
+**문제/기회**: 검토 대상 보고서가 최우선 조치로 "독립 advisor 3종 동시 dispatch(-32min)" 를 제시했으나, 이는 코어 구획 **C2** 와 §2 L103 의 명시 금지("컨텍스트 오염 리스크로 기본 금지")와 정면 충돌한다. 보고서는 그 규약의 존재를 언급하지 않아 조치로선 부적격 판정.
+**그러나 개정 논거는 실측으로 존재한다**: 같은 보고서의 §7.1(subagent 1.45M tok 중 메인 진입 1.2%)·§3.1(advisor 보고서는 최종 컨텍스트의 5.8%)이 곧 금지 사유("컨텍스트 오염")의 반증 데이터다. 즉 금지의 근거가 실측으로 약화된 상태다.
+**정정된 기대효과**: 보고서의 -32min 은 직렬 합계를 회수량으로 오독한 산술 오류. 순수 산술 **-15.5min**, 단계 의존성(documentation ← fix, retrospective ← verification·documentation) 반영 시 **-9.7min**.
+**제안**: 금지를 유지/완화 어느 쪽이든 **ADR 로 판정**한다. 완화 시 코어 C2 + §2 L103 동시 개정 + 동시 호출 상한·산출 격리 조건 명시가 따라온다.
+- 태그: [self] · P2 · 번들 → 코어 구획 개정이므로 base manifest 4곳 bump + changes + ADR
+- docs_sync_target: `agent-team-protocol.md` 코어 C2 + §2 + `docs/adr/`
+- 재현성 근거: 실측 데이터 있음(n=1 세션). 단 금지 완화의 리스크(동시 알림 처리·중재 복잡도)는 미측정
+
+### G-RETROSPLIT-1 — retrospective 별 세션 분리 (보류 판정, 재검토 조건 명시) `release-pending`
+
+**문제**: 검토 대상 보고서가 "retro 를 세션 종료 후 별 세션으로 분리(-17min, -162k tok, 난이도 낮음)" 를 제시. 검증 결과 **보류** — 끊기는 사슬 3개: §2 단계표의 "세션 종료 직전" 위치 / SKILL §9 의 `user_signals` 선기록 의무 + `report.md` 충족 전제 / §12 의 `memory_candidates` → docs 같은 커밋 반영. 게다가 이 레포 `CLAUDE.md` 가 "이월 금지" 를 실증 2건과 함께 명문화하고 있어, 조치 자체가 이월 패턴이다. 난이도 "낮음" 은 오판.
+**재검토 조건**: 이월 추적 장치(추적 가능 항목 격리 + `release-pending` 류 표식)가 retro 에도 적용되도록 설계되면 재평가 가능.
+- 태그: [self] · P3 · 번들
+- docs_sync_target: `agent-team-protocol.md` §12 + `plugins/atp/skills/task/SKILL.md` §9
+
+### G-SKILLTRIM-1 — `atp:task` SKILL 본문 축약 `release-pending`
+
+**문제**: 검토 대상 보고서가 "스킬 본문 21KB 인라인 → 세션당 -6k tok" 을 제시했고 근거로 "내용 대부분이 1회성 마이그레이션 절차" 를 들었다. **정량 반증**: `SKILL.md` 19,873 B 중 §0.5 마이그레이션 블록은 **2,185 B = 11.0%**(최대 섹션은 §5, 30.95%). 마커 정리 실효는 ≈600 tok 이고 "-6k tok" 은 본문 **전체 축약**을 전제해야 성립한다 — 보고서가 두 규모를 한 조치로 묶었다. 부수로 "6k × 60턴 = 360k tok 재청구" 도 `cache_read` 10% 요율을 무시한 10배 과장(비용 등가 ≈36k).
+**제안**: 축약은 여전히 유효한 방향이나 **§0.5 정리와 본문 축약을 분리**해 다룬다. 본문 축약은 절차 전문 인라인 대신 `agent-team-protocol.md` 참조로 대체하는 형태이며, 코어 구획 로드 규약(§1 프로토콜 로드)과의 정합을 함께 봐야 한다.
+- 태그: [self] · P2 · 번들
+- docs_sync_target: `plugins/atp/skills/task/SKILL.md`
+
+### G-TOOLGRANT-1 — 새 tool/권한 상향 전 대칭성 자가점검 (P1) `release-pending`
+
+**문제/기회**: 이 세션에서 orchestrator 가 `parallel-explorer` 에 `Write` 를 부여하려던 원안을, 같은 세션에서 `retrospective-advisor` 에 `Write` 부여를 "가드레일 제거" 로 기각한 논리와 **동일 구조**임을 구현 착수 시점에 포착해 폐기하고 read-only 유지 대안으로 교체했다(§2.5 `late_completion` 격리가 read-only 에 의존).
+**그러나 절차로 보장되지 않는다**: 포착이 가능했던 것은 (a) 기각 논리가 같은 세션 Decisions 로그에 텍스트로 남아 접근 가능했고 (b) read-only ↔ 격리 근거가 프로토콜 본문에 이미 명문화돼 있었기 때문이다. `design-advisor.md`/`implementation-advisor.md` 자가검증 목록을 대조했으나 이를 강제하는 항목은 **없다**. 세션이 분리됐다면 재현 근거가 약하다.
+**제안**: 자가검증 항목 신설 — "agent 의 tools 에 새 권한(`Write`/`Bash`/`Agent` 등)을 추가하기 전, 같은 세션 Decisions 로그 또는 `agent-team-protocol.md` 의 명시 invariant(§2.5 `late_completion`, §12 "권고만" 등)에서 **동일 구조의 권한 상향을 이미 거부한 판단**이 있는지 대조한다."
+- 태그: [self] · P1 · 번들 · `structural_class: structural-latent`(구조가 허용, n=1)
+- docs_sync_target: `plugins/atp/agents/design-advisor.md` + `plugins/atp/agents/implementation-advisor.md`
+
+### G-RECOPURPOSE-1 — `AskUserQuestion` Recommended 는 사용자 지시 목적을 축으로 (P1) `release-pending`
+
+**문제**: 이 세션에서 orchestrator 가 "검토 소견 문서만(release 의무 없음)" 을 Recommended 로 제시했으나 사용자는 "교정 조치만"(실제 번들 수정)을 택했다. Recommended 근거가 **안전/저비용** 축이었고 "사용자가 방금 이 검토를 시킨 목적(결함을 찾으면 고친다)" 축이 아니었다.
+**§4.4 원문 대조**: 자가점검 7항목 중 3번("Recommended 근거 명시")은 근거의 **명시성**만 요구하고 근거의 **소스**를 규정하지 않는다 — 정확히 이 공백에서 발생.
+**재발 판정**: 동일 뿌리 패턴이 별도 세션 2건에 이미 기록돼 있어 **n=3** (`standing-goal-check-before-deferral` 2026-06-10 / `confirm-top-goal-before-branching-questions` 2026-06-01). 세 건 모두 "orchestrator 의 안전측 판단이 사용자의 실제 우선순위보다 기본값으로 앞선다" 는 같은 구조.
+**제안**: §4.4 자가점검에 항목 추가 — "Recommended 근거가 '안전/저비용' 뿐인가, 아니면 '사용자가 이 작업을 지시한 목적' 과 먼저 정합하는가. 후자를 우선 축으로 삼고 안전측 대안은 trade-off 병기해 옵션으로만 제시한다." 기존 standing-goal 계열 항목과의 통합도 함께 검토.
+- 태그: [self] · P1 · 번들 · `structural_class: structural-frequent`(n=3, 별도 세션)
+- docs_sync_target: `agent-team-protocol.md` §4.4 자가 점검
+- 주의: 위 `G-GATEAXIS-1` 의 "반영 전제"(위임 축소 방향으로 쓰지 말 것)와 같은 §4.4 를 건드린다 — 두 항목을 함께 반영해 상충 없는지 대조
+
+### (참고) 검토 대상 보고서 조치 중 기각·이관 결론 — 백로그 대상 아님
+
+- **조치 4 (graph-refresh-checker 를 research 와 동시 실행)**: 기각. §9 종료 게이트이므로 판정 대상이 *변경 후* 코드베이스 — research 시점 실행은 판정 자체가 무효. 추가로 보고서의 실행 위치 서술(06:34)이 실제(08:00:42)와 다른 사실 오류.
+- **조치 5 (worker notification 전파 범위 제한)**: ATP 스코프 이탈. 프로토콜 전문에 `notification`/`enqueue` 레버 0건 — 하네스 동작이며 env 보고서 소관.
