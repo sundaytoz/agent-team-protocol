@@ -14,7 +14,7 @@ peer_agents:
 
 - graphify-lookup 에서 miss 된 항목 또는 외부 자료 조사
 - 조사 포인트가 ≥ 2 개로 쪼갤 수 있으면 **병렬 worker spawn**
-- 발견 결과를 하나의 research.md 로 취합
+- 발견 결과를 결론 전용 `index.md` + 포인트별 근거 파일로 취합 (아래 "취합 규약")
 
 ## 입력
 
@@ -36,7 +36,7 @@ peer_agents:
 - 최대 6개 동시 spawn (그 이상은 배치 분할)
 - 각 worker 프롬프트에 **최소 필요 정보만** 넣는다:
   - 탐색 타겟 (경로/키워드/URL)
-  - 기대 반환 형식 (요약 문단 + 인용 파일:라인)
+  - 기대 반환 형식 — `parallel-explorer` 출력 계약 그대로: `결론`(1줄) · `source_confidence` · `concerns` · `요약` · `인용` · `범위 밖 관찰`. **이 규격을 프롬프트에 명시**해야 취합이 재작성 없이 끝난다
   - 금기 (다른 영역으로 범위 확장 금지)
 
 ## Worker lifecycle 복구
@@ -53,7 +53,9 @@ lifecycle 결과는 `attempt`, `termination`, `retry_of`, `lifecycle_fallback_re
 
 ## 출력
 
-`${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/index.md` + 필요 시 포인트별 파일:
+산출은 **결론 전용 `index.md` + 포인트별 근거 파일** 2층으로 분리한다.
+
+`${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/index.md` — 하류(design/implementation/report)가 읽는 유일한 파일:
 
 ```yaml
 ---
@@ -71,21 +73,44 @@ workers_spawned: <n>
 ## 주제
 <원 주제>
 
-## 포인트별 발견
-### 포인트 1: <...>
-- 경로 / URL: <...>
-- 요약: <...>
-- 관련 파일:라인: <...>
-- 신뢰도: 확인됨 | 추정 | 미확인   # 사실 항목마다 표기 (아래 참조)
-
-### 포인트 2: ...
+## 결론 요약표
+| 포인트 | 결론 | source_confidence |
+|---|---|---|
+| <P1 제목> | <worker 의 `결론` 1줄 그대로> | high |
+| <P2 제목> | ... | mixed |
 
 ## 종합 판단
-<상위 패턴 · 충돌 · 갭>
+<상위 패턴 · 충돌 · 갭 — 개별 포인트 요약의 재서술이 아니라 포인트 간 관계만>
+<포인트 간 실질적 관계가 희박하면 "포인트 간 관계 없음(독립 조사 n건)" 1줄로 마감>
 
 ## 미해결
 - <조사로도 해소 안 된 것>
+
+## 세부 근거 파일
+- `P1-<slug>.md` · `P2-<slug>.md` — 포인트별 원문(요약·인용·범위 밖 관찰)
 ```
+
+`${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/P<n>-<slug>.md` — 근거 보관용. **worker 반환 본문을 그대로 저장한다.**
+
+**파일명 규칙**: `P<포인트번호>-<제목-slug>.md`. 번호는 worker 할당 순서(1부터), slug 는 포인트 제목의 소문자 하이픈 형태(예: `P1-session-close-conditions.md`). 번호만 쓰면 나중에 어느 파일이 무엇인지 열어봐야 하고, slug 만 쓰면 정렬이 조사 순서와 어긋난다.
+
+**frontmatter `concerns`**: 형식 예시의 `[]` 는 placeholder 이며 **실제 목록을 채운다**. 승계·발견한 concern 이 하나도 없을 때만 `[]` 로 둔다.
+
+**`generated_at`**: 프로젝트 타임존 기준 ISO 8601(offset 포함). `<sid>` 와 같은 타임존을 쓴다.
+
+### 취합 규약 (재작성 금지)
+
+worker 는 `결론`(1줄) · `source_confidence` · `concerns` 를 규격 헤더로 반환한다(`parallel-explorer` 출력 계약). advisor 의 취합은 다음 3동작으로 끝나며, **원문 재서술은 금지**한다:
+
+1. 각 worker 반환 본문을 포인트별 파일로 **그대로** 저장 (헤더 순서 유지)
+2. 각 worker 의 `결론` 1줄과 `source_confidence` 를 `index.md` 결론 요약표로 **발췌**
+3. 각 worker 의 `concerns` 를 **합집합**으로 승계 + advisor 자신이 포인트 간 대조에서 새로 발견한 concern 만 추가
+
+`index.md` 에 포인트별 요약 문단을 옮겨 적지 않는다 — 하류 advisor 가 index.md 만 읽어도 판단이 서게 하는 것이 목적이고, 원문 중복은 하류 토큰과 advisor 직렬 시간을 동시에 늘린다. 하류가 근거 원문을 필요로 하면 포인트별 파일을 지목한다.
+
+**예외**: worker 반환이 규격을 벗어났거나(빈 `결론` 등) 포인트 간 결론이 상충하면 그 항목만 advisor 가 보정한다. 보정한 항목은 `concerns` 에 "규격 이탈 보정: <포인트>" 로 남긴다.
+
+`종합 판단`·`미해결`·frontmatter 는 advisor 고유 산출이므로 이 재작성 금지 규약의 대상이 아니다. 단 `종합 판단` 에서 **관계를 만들어내기 위해 각 포인트 결론을 다시 풀어쓰는 것은 재서술에 해당한다** — 포인트들이 서로 무관하면 관계를 억지로 구성하지 않고 "포인트 간 관계 없음(독립 조사 n건)" 으로 마감한다. 실증: 개정 규약 dry-run 에서 무관한 2개 포인트에 대해 "관계만 쓰라" 는 지시가 재서술을 우회할 수 없게 만드는 것이 관측됐고, 본 예외 조항이 그 사각을 닫는다.
 
 ### 출처 신뢰도 게이팅 (프로토콜 §2.6 불확실성 보존 연계)
 

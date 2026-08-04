@@ -201,7 +201,7 @@ advisor 산출물의 `concerns` 필드 교차 검사. 프로토콜 §4 절차 �
 
 그 외:
 - **retro 호출 전 orchestrator 가 `user_signals` 기록**: 세션 중 사용자 발화에서 감지한 부정 시그널("왜 안 했어?", "또야?", "틀렸어") 과 긍정 시그널("좋더라", "그거 맞아", 한 번 만에 수락) 을 `report.md` 의 `user_signals.{positive|negative}` 에 한 줄씩 인용·요약. 구조적 허점이면 `negative[*].structural: true`. 한쪽이 없으면 빈 리스트.
-- 모든 advisor 산출이 수렴 + verification pass 면 retrospective-advisor 호출 (기록된 `user_signals` 를 입력으로). **호출 전 전제**: `report.md` 의 `Summary` / `Invocations` / `Decisions` 세 섹션이 최소 1줄 이상 채워져 있어야 함. 빈 Summary 로 회고를 돌리면 입력 품질이 무너진다.
+- 모든 advisor 산출이 수렴 + verification pass 면 retrospective-advisor 호출 (기록된 `user_signals` 를 입력으로). **호출 전 전제**: `report.md` 의 `Summary` / `Invocations` / `Decisions` 세 섹션이 최소 1줄 이상 채워져 있어야 함. 빈 Summary 로 회고를 돌리면 입력 품질이 무너진다. **회고 산출 sink 는 `report.md` 의 `Retrospective` 섹션이다 — 별 파일(`retrospective.md` 등) 산출을 요구하지 않는다**(advisor 의 `Write` 미보유는 프로토콜 §12 "권고만" 설계의 의도된 제약). 산출물 유무는 그 섹션으로만 판정한다.
 - 회고 결과의 `memory_candidates`(교훈 후보) 검토 후 orchestrator 가 수용 여부 결정. **docs-first**: 수용한 교훈은 `docs_sync_target` 경로(`CLAUDE.md` / `docs/development/*.md` / ADR 등) 에 **같은 커밋으로 기재하는 것을 기본**으로 한다. **memory 기록은 사용자의 memory 설정을 존중** — 사용자가 memory 를 활성화한 경우(`memory_optional: true` 후보)에만 보조로 갱신하고, 비활성/미설정이면 docs 단독으로 마감하며 memory 기록을 강제하지 않는다. `signal_source: negative` 뿐 아니라 `positive` 후보도 동등하게 검토 (비자명한 판단이 검증된 경우).
 - `report.md` 에 `ended_at` 기록
 - 커밋/push 는 프로젝트 커밋 정책에 따라 작업 단위 끝에서 진행
