@@ -1,0 +1,464 @@
+{
+  "logical_contract_cases": {
+    "wake_on": [
+      "completed",
+      "failed",
+      "interrupted",
+      "approval_required",
+      "user_steering"
+    ],
+    "ledger_events": [
+      "await_capability_checked",
+      "await_registered",
+      "wake_batch",
+      "wait_wakeup_capability_unavailable",
+      "external_continuation_selected",
+      "measurement"
+    ],
+    "cases": [
+      {
+        "name": "running_keepalive_is_internal",
+        "condition": "all",
+        "targets": ["env-a", "env-b"],
+        "environment_inputs": [
+          "running",
+          "unchanged_running",
+          "internal_keepalive",
+          "unchanged_running"
+        ],
+        "expected": {
+          "lifecycle_transitions": 0,
+          "root_model_resumes": 0,
+          "semantic_recovery_actions": 0,
+          "retry_calls": 0,
+          "list_calls": 0,
+          "fallback_calls": 0,
+          "root_visible_events": []
+        }
+      },
+      {
+        "name": "single_completion_one_wake",
+        "condition": "any",
+        "targets": ["env-a"],
+        "environment_inputs": [
+          {
+            "event_id": "event-completed-a",
+            "environment_invocation_id": "env-a",
+            "state": "completed",
+            "source_ref": "environment:event:event-completed-a",
+            "detail_ref": "artifact:result-a"
+          }
+        ],
+        "expected": {
+          "root_model_resumes": 1,
+          "wake_batches": 1,
+          "compact_deltas": 1,
+          "result_acceptances": 1,
+          "batch_event_ids": ["event-completed-a"]
+        }
+      },
+      {
+        "name": "completion_events_are_coalesced",
+        "condition": "all",
+        "targets": ["env-a", "env-b"],
+        "environment_inputs": [
+          {
+            "event_id": "event-completed-a",
+            "environment_invocation_id": "env-a",
+            "state": "completed",
+            "source_ref": "environment:event:event-completed-a",
+            "detail_ref": "artifact:result-a"
+          },
+          {
+            "event_id": "event-completed-b",
+            "environment_invocation_id": "env-b",
+            "state": "completed",
+            "source_ref": "environment:event:event-completed-b",
+            "detail_ref": "artifact:result-b"
+          }
+        ],
+        "expected": {
+          "root_model_resumes": 1,
+          "wake_batches": 1,
+          "compact_deltas": 2,
+          "result_acceptances": 2,
+          "batch_event_ids": ["event-completed-a", "event-completed-b"]
+        }
+      },
+      {
+        "name": "approval_required_relays_without_recovery",
+        "condition": "all",
+        "targets": ["env-write-a", "env-write-b"],
+        "environment_inputs": [
+          {
+            "event_id": "event-approval-a",
+            "environment_invocation_id": "env-write-a",
+            "state": "approval_required",
+            "source_ref": "environment:approval:event-approval-a",
+            "detail_ref": "artifact:approval-a"
+          }
+        ],
+        "expected": {
+          "wake_reason": "approval_required",
+          "root_model_resumes": 1,
+          "child_state": "approval_required",
+          "environment_invocation_id": "env-write-a",
+          "authority_preserved": true,
+          "write_ownership_preserved": true,
+          "relay_to_user": true,
+          "retry_calls": 0,
+          "fallback_calls": 0,
+          "ownership_mutations": 0
+        }
+      },
+      {
+        "name": "user_steering_preempts_subscription",
+        "condition": "all",
+        "targets": ["env-a", "env-b"],
+        "environment_inputs": ["internal_keepalive", "user_steering"],
+        "expected": {
+          "wake_reason": "user_steering",
+          "root_model_resumes": 1,
+          "control_returned": true,
+          "preempts_subscription": true,
+          "delivery_owner": "environment",
+          "steering_latency_ms": null,
+          "child_cancellations_synthesized": 0
+        }
+      },
+      {
+        "name": "duplicate_event_is_deduplicated",
+        "condition": "any",
+        "targets": ["env-a"],
+        "environment_inputs": [
+          {
+            "event_id": "event-completed-a",
+            "environment_invocation_id": "env-a",
+            "state": "completed",
+            "source_ref": "environment:event:event-completed-a",
+            "detail_ref": "artifact:result-a"
+          },
+          {
+            "event_id": "event-completed-a",
+            "environment_invocation_id": "env-a",
+            "state": "completed",
+            "source_ref": "environment:event:event-completed-a",
+            "detail_ref": "artifact:result-a"
+          }
+        ],
+        "expected": {
+          "root_model_resumes": 1,
+          "wake_batches": 1,
+          "compact_deltas": 1,
+          "result_acceptances": 1,
+          "deduped_event_ids": ["event-completed-a"]
+        }
+      },
+      {
+        "name": "explicit_capability_error_is_unknown",
+        "condition": "any",
+        "targets": ["env-a"],
+        "environment_inputs": [
+          {
+            "event_id": "event-capability-error-a",
+            "environment_invocation_id": "env-a",
+            "state": "environment_state_unknown",
+            "source_ref": "environment:status:error:event-capability-error-a",
+            "detail_ref": "artifact:status-error-a"
+          }
+        ],
+        "expected": {
+          "wake_reason": "capability_error",
+          "root_model_resumes": 1,
+          "child_state": "environment_state_unknown",
+          "failure_inferred": false,
+          "retry_calls": 0,
+          "fallback_calls": 0
+        }
+      }
+    ]
+  },
+  "recovery_preservation_cases": [
+    {
+      "name": "explicit_failed_waits_for_user",
+      "lifecycle_case_ref": "explicit_failed_opens_recovery",
+      "environment_event": "failed",
+      "recovery_review": "open",
+      "before_user_approval": {
+        "interrupt_calls": 0,
+        "retry_calls": 0,
+        "fallback_calls": 0,
+        "authority_mutations": 0,
+        "write_ownership_mutations": 0
+      }
+    },
+    {
+      "name": "explicit_interrupted_waits_for_user",
+      "lifecycle_case_ref": "interrupted_checks_ownership",
+      "environment_event": "interrupted",
+      "recovery_review": "open",
+      "before_user_approval": {
+        "interrupt_calls": 0,
+        "retry_calls": 0,
+        "fallback_calls": 0,
+        "authority_mutations": 0,
+        "write_ownership_mutations": 0
+      }
+    },
+    {
+      "name": "completion_before_retry_cancels_retry",
+      "lifecycle_case_ref": "completion_before_retry_approval",
+      "sequence": [
+        "recovery_review_opened",
+        "user_retry_approved",
+        "completion_race_rechecked",
+        "old_invocation_completed",
+        "retry_cancelled",
+        "old_result_validated_as_normal_candidate"
+      ],
+      "expected": {
+        "new_invocations": 0,
+        "authority_revocations": 0,
+        "late_completion_dispositions": 0,
+        "result_disposition": "normal_candidate"
+      }
+    },
+    {
+      "name": "late_completion_after_revocation_is_quarantined",
+      "lifecycle_case_ref": "read_only_late_completion_after_acceptance_revocation",
+      "old_environment_invocation_id": "env-read-old",
+      "new_environment_invocation_id": "env-read-new",
+      "sequence": [
+        "user_retry_approved",
+        "completion_race_rechecked",
+        "result_acceptance_revoked",
+        "new_identity_issued",
+        "old_invocation_completed",
+        "late_completion"
+      ],
+      "expected": {
+        "result_disposition": "quarantine_only",
+        "auto_merge": false,
+        "counts_as_success": false,
+        "ownership_pause_scopes": []
+      }
+    },
+    {
+      "name": "late_disk_write_pauses_dependency_closure",
+      "lifecycle_case_ref": "write_late_disk_write_pauses_dependency_closure",
+      "old_environment_invocation_id": "env-write-old",
+      "new_environment_invocation_id": "env-write-new",
+      "sequence": [
+        "user_retry_approved",
+        "completion_race_rechecked",
+        "ownership_pending",
+        "new_identity_issued",
+        "old_invocation_completed",
+        "late_completion",
+        "late_disk_write_detected",
+        "ownership_paused"
+      ],
+      "expected": {
+        "result_disposition": "quarantine_only",
+        "auto_merge": false,
+        "counts_as_success": false,
+        "pause_only_after_late_disk_write": true
+      }
+    }
+  ],
+  "capability_gap_cases": [
+    {
+      "name": "unsupported_required_capability_blocks",
+      "capability_profile": {
+        "timeout_free_suspend": "unsupported",
+        "targeted_wait_any": "supported",
+        "targeted_wait_all": "supported",
+        "terminal_event_subscription": "supported",
+        "approval_event_subscription": "supported",
+        "user_steering_preemption": "supported",
+        "await_cancellation": "supported",
+        "compact_changed_invocation_delta": "supported",
+        "stable_event_identity": "supported",
+        "environment_deduplication": "supported",
+        "completion_coalescing": "supported",
+        "internal_keepalive_no_model_wake": "supported"
+      },
+      "adapter_enabled": false,
+      "ledger_events": ["wait_wakeup_capability_unavailable"],
+      "unavailable_capabilities": ["timeout_free_suspend"],
+      "last_authoritative_states": {"env-a": "running"},
+      "preserved_authorities": ["result_acceptance:env-a"],
+      "preserved_write_ownership": [],
+      "phase_disposition": "blocked",
+      "automatic_actions": {
+        "await_calls": 0,
+        "timed_wait_calls": 0,
+        "list_calls": 0,
+        "retry_calls": 0,
+        "interrupt_calls": 0,
+        "fallback_calls": 0,
+        "root_model_resumes": 0,
+        "synthetic_terminal_transitions": 0
+      }
+    },
+    {
+      "name": "unknown_required_capability_blocks",
+      "capability_profile": {
+        "timeout_free_suspend": "supported",
+        "targeted_wait_any": "supported",
+        "targeted_wait_all": "unknown",
+        "terminal_event_subscription": "supported",
+        "approval_event_subscription": "supported",
+        "user_steering_preemption": "supported",
+        "await_cancellation": "supported",
+        "compact_changed_invocation_delta": "supported",
+        "stable_event_identity": "supported",
+        "environment_deduplication": "supported",
+        "completion_coalescing": "supported",
+        "internal_keepalive_no_model_wake": "supported"
+      },
+      "adapter_enabled": false,
+      "ledger_events": ["wait_wakeup_capability_unavailable"],
+      "unavailable_capabilities": ["targeted_wait_all"],
+      "last_authoritative_states": {"env-write-a": "approval_required"},
+      "preserved_authorities": ["result_acceptance:env-write-a"],
+      "preserved_write_ownership": ["write_ownership:scope-a"],
+      "phase_disposition": "explicit_external_continuation_required",
+      "automatic_actions": {
+        "await_calls": 0,
+        "timed_wait_calls": 0,
+        "list_calls": 0,
+        "retry_calls": 0,
+        "interrupt_calls": 0,
+        "fallback_calls": 0,
+        "root_model_resumes": 0,
+        "synthetic_terminal_transitions": 0
+      }
+    },
+    {
+      "name": "event_only_external_continuation_is_allowed",
+      "selected_by_user_ref": "user-message:event-only-continuation",
+      "continuation_identity": "host-continuation-1",
+      "wake_event_contract_ref": "host-contract:event-delivery-1",
+      "cancellation_contract_ref": "host-contract:cancellation-1",
+      "timer_driven": false,
+      "polling_driven": false,
+      "ledger_events": ["external_continuation_selected"],
+      "valid": true
+    },
+    {
+      "name": "polling_external_continuation_is_rejected",
+      "selected_by_user_ref": "user-message:polling-continuation",
+      "continuation_identity": "polling-continuation-1",
+      "wake_event_contract_ref": null,
+      "cancellation_contract_ref": null,
+      "timer_driven": true,
+      "polling_driven": true,
+      "ledger_events": [],
+      "valid": false,
+      "rejection_reason": "event_only_continuation_required"
+    }
+  ],
+  "comparison_workload": {
+    "targets": ["env-a", "env-b"],
+    "event_trace": [
+      "running:env-a",
+      "running:env-b",
+      "internal_keepalive:1",
+      "unchanged_running:1",
+      "internal_keepalive:2",
+      "completed:env-a:event-completed-a",
+      "completed:env-b:event-completed-b"
+    ],
+    "schedulers": [
+      {
+        "name": "historical_short_polling",
+        "evidence_only": true,
+        "adapter_enabled": false,
+        "root_model_resumes": 5,
+        "timed_wait_calls": 5,
+        "logical_await_calls": 0,
+        "list_calls": 3,
+        "semantic_recovery_actions": 0,
+        "compact_batches": 0,
+        "disposition": "baseline_evidence_only"
+      },
+      {
+        "name": "current_codex_capability_gated",
+        "evidence_only": false,
+        "adapter_enabled": false,
+        "root_model_resumes": 0,
+        "timed_wait_calls": 0,
+        "logical_await_calls": 0,
+        "list_calls": 0,
+        "semantic_recovery_actions": 0,
+        "compact_batches": 0,
+        "disposition": "blocked"
+      },
+      {
+        "name": "logical_environment_subscription",
+        "evidence_only": false,
+        "adapter_enabled": true,
+        "root_model_resumes": 1,
+        "timed_wait_calls": 0,
+        "logical_await_calls": 1,
+        "list_calls": 0,
+        "semantic_recovery_actions": 0,
+        "compact_batches": 1,
+        "compact_delta_event_ids": [
+          "event-completed-a",
+          "event-completed-b"
+        ],
+        "disposition": "condition_satisfied"
+      }
+    ]
+  },
+  "codex_capabilities": {
+    "profile_ref": "codex-collaboration-api-observed-2026-08-13",
+    "required_capabilities": {
+      "timeout_free_suspend": "unsupported",
+      "targeted_wait_any": "unsupported",
+      "targeted_wait_all": "unsupported",
+      "terminal_event_subscription": "unknown",
+      "approval_event_subscription": "unknown",
+      "user_steering_preemption": "supported",
+      "await_cancellation": "unsupported",
+      "compact_changed_invocation_delta": "unsupported",
+      "stable_event_identity": "unsupported",
+      "environment_deduplication": "unsupported",
+      "completion_coalescing": "unsupported",
+      "internal_keepalive_no_model_wake": "unsupported"
+    },
+    "ineligible_capabilities": {
+      "bounded_single_mailbox_wait": "supported",
+      "global_mailbox_wait_any": "supported",
+      "scheduler_watchdog": "unknown",
+      "child_cancellation": "unsupported"
+    },
+    "adapter_enabled": false,
+    "mode": "capability_gap",
+    "phase_disposition": "blocked"
+  },
+  "bounded_observation": {
+    "evidence_only": true,
+    "adapter_enabled": false,
+    "new_live_probe_performed": false,
+    "user_short_probe": {
+      "wait_returns": 2,
+      "timeout_returns": 1,
+      "completion_returns": 1,
+      "root_model_resumes": 2,
+      "input_tokens": 212698,
+      "cached_input_tokens": 210432,
+      "output_tokens": 71
+    },
+    "historical_root_session": {
+      "session_id": "019ff496-ec67-7740-b64b-73a2c0049d59",
+      "wait_agent_calls": 209,
+      "timeout_returns": 148,
+      "root_resume_proxy_input_tokens": 34471967,
+      "root_resume_proxy_cached_input_tokens": 34161408,
+      "tree_token_total_is_reconstructed": false
+    }
+  }
+}

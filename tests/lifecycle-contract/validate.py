@@ -257,6 +257,117 @@ DEPRECATED_ACTIVE_TERMS = {
     "start_silence_budget",
     "unchanged_check_budget",
 }
+WAIT_WAKE_TOP_LEVEL = {
+    "logical_contract_cases",
+    "recovery_preservation_cases",
+    "capability_gap_cases",
+    "comparison_workload",
+    "codex_capabilities",
+    "bounded_observation",
+}
+DEFAULT_WAKE_EVENTS = {
+    "completed",
+    "failed",
+    "interrupted",
+    "approval_required",
+    "user_steering",
+}
+REQUIRED_WAIT_WAKE_CAPABILITIES = {
+    "timeout_free_suspend",
+    "targeted_wait_any",
+    "targeted_wait_all",
+    "terminal_event_subscription",
+    "approval_event_subscription",
+    "user_steering_preemption",
+    "await_cancellation",
+    "compact_changed_invocation_delta",
+    "stable_event_identity",
+    "environment_deduplication",
+    "completion_coalescing",
+    "internal_keepalive_no_model_wake",
+}
+CAPABILITY_STATUSES = {"supported", "unsupported", "unknown"}
+SCHEDULING_LEDGER_EVENTS = {
+    "await_capability_checked",
+    "await_registered",
+    "wake_batch",
+    "wait_wakeup_capability_unavailable",
+    "external_continuation_selected",
+    "measurement",
+}
+FORBIDDEN_ACTIVE_SCHEDULING_EVENTS = {
+    "timeout",
+    "wait_timeout",
+    "timed_wait",
+    "host_wait_started",
+    "spurious_host_wake",
+    "timeout_exhausted",
+}
+LOGICAL_WAIT_WAKE_CASES = {
+    "running_keepalive_is_internal",
+    "single_completion_one_wake",
+    "completion_events_are_coalesced",
+    "approval_required_relays_without_recovery",
+    "user_steering_preempts_subscription",
+    "duplicate_event_is_deduplicated",
+    "explicit_capability_error_is_unknown",
+}
+RECOVERY_PRESERVATION_CASES = {
+    "explicit_failed_waits_for_user",
+    "explicit_interrupted_waits_for_user",
+    "completion_before_retry_cancels_retry",
+    "late_completion_after_revocation_is_quarantined",
+    "late_disk_write_pauses_dependency_closure",
+}
+CAPABILITY_GAP_CASES = {
+    "unsupported_required_capability_blocks",
+    "unknown_required_capability_blocks",
+    "event_only_external_continuation_is_allowed",
+    "polling_external_continuation_is_rejected",
+}
+GAP_AUTOMATIC_ACTIONS = {
+    "await_calls",
+    "timed_wait_calls",
+    "list_calls",
+    "retry_calls",
+    "interrupt_calls",
+    "fallback_calls",
+    "root_model_resumes",
+    "synthetic_terminal_transitions",
+}
+COMPARISON_SCHEDULERS = {
+    "historical_short_polling",
+    "current_codex_capability_gated",
+    "logical_environment_subscription",
+}
+CODEX_INELIGIBLE_CAPABILITIES = {
+    "bounded_single_mailbox_wait",
+    "global_mailbox_wait_any",
+    "scheduler_watchdog",
+    "child_cancellation",
+}
+SCHEDULING_LEDGER_FIELDS = {
+    "recorded_at",
+    "await_id",
+    "owner_report_invocation_id",
+    "event",
+    "source_ref",
+    "details",
+    "batch_id",
+    "wake_reason",
+    "deltas",
+    "control_delta",
+    "unavailable_capabilities",
+    "last_authoritative_states",
+    "preserved_authorities",
+    "preserved_write_ownership",
+    "phase_disposition",
+}
+WAIT_WAKE_DISPOSITIONS = {
+    "environment_subscription",
+    "blocked",
+    "explicit_external_continuation_required",
+}
 
 
 def load(name: str) -> dict:
@@ -656,7 +767,11 @@ def validate_reports(failures: list[str]) -> None:
         "report schema v2 optional lifecycle field contract is not exactly four fields",
         failures,
     )
-    ledger_only_fields = (LEDGER_FIELDS - {"attempt"}) | AUTHORITY_LEDGER_FIELDS
+    ledger_only_fields = (
+        (LEDGER_FIELDS - {"attempt"})
+        | AUTHORITY_LEDGER_FIELDS
+        | SCHEDULING_LEDGER_FIELDS
+    )
     require(
         OPTIONAL_FIELDS.isdisjoint(ledger_only_fields),
         "phase-local lifecycle ledger fields leaked into report optional fields",
@@ -666,7 +781,7 @@ def validate_reports(failures: list[str]) -> None:
         require(report["schema_version"] == 2, f"{label} report is not schema v2", failures)
         require(len(report["invocations"]) == 1, f"{label} fixture must contain one invocation", failures)
         require(
-            set(report["invocations"][0]).isdisjoint(ledger_only_fields),
+            collect_keys(report["invocations"][0]).isdisjoint(ledger_only_fields),
             f"{label} report contains phase-local lifecycle ledger fields",
             failures,
         )
@@ -1480,6 +1595,556 @@ def validate_cases(failures: list[str]) -> None:
     )
 
 
+def validate_wait_wakeup(failures: list[str]) -> None:
+    scheduling = load("wait-wakeup-cases.json")
+    require(
+        set(scheduling) == WAIT_WAKE_TOP_LEVEL,
+        "wait/wakeup fixture top-level contract is not the exact closed set",
+        failures,
+    )
+
+    logical = scheduling.get("logical_contract_cases", {})
+    require(
+        set(logical) == {"wake_on", "ledger_events", "cases"},
+        "logical wait/wakeup fixture keys are not closed",
+        failures,
+    )
+    require(
+        set(logical.get("wake_on", [])) == DEFAULT_WAKE_EVENTS
+        and len(logical.get("wake_on", [])) == len(DEFAULT_WAKE_EVENTS),
+        "default wake event set is not exactly terminal/approval/user steering",
+        failures,
+    )
+    active_ledger_events = logical.get("ledger_events", [])
+    require(
+        set(active_ledger_events) == SCHEDULING_LEDGER_EVENTS
+        and len(active_ledger_events) == len(SCHEDULING_LEDGER_EVENTS),
+        "scheduling ledger event vocabulary is incomplete or duplicated",
+        failures,
+    )
+    require(
+        set(active_ledger_events).isdisjoint(FORBIDDEN_ACTIVE_SCHEDULING_EVENTS)
+        and not any(
+            "timeout" in event or "timed_wait" in event
+            for event in active_ledger_events
+        ),
+        "active scheduling vocabulary exposes a timed-wait/timeout event",
+        failures,
+    )
+
+    logical_case_list = logical.get("cases", [])
+    logical_cases = {case.get("name"): case for case in logical_case_list}
+    require(
+        len(logical_cases) == len(logical_case_list)
+        and set(logical_cases) == LOGICAL_WAIT_WAKE_CASES,
+        "logical wait/wakeup case set is incomplete or duplicated",
+        failures,
+    )
+    for name, case in logical_cases.items():
+        targets = case.get("targets", [])
+        require(
+            case.get("condition") in {"any", "all"}
+            and bool(targets)
+            and len(targets) == len(set(targets)),
+            f"logical wait case lacks a closed condition or unique targets: {name}",
+            failures,
+        )
+        visible_events = [
+            value
+            for value in case.get("environment_inputs", [])
+            if isinstance(value, str)
+        ] + case.get("expected", {}).get("root_visible_events", [])
+        require(
+            set(visible_events).isdisjoint(FORBIDDEN_ACTIVE_SCHEDULING_EVENTS),
+            f"logical wait case contains a root-visible timeout event: {name}",
+            failures,
+        )
+
+    running = logical_cases.get("running_keepalive_is_internal", {})
+    running_expected = running.get("expected", {})
+    require(
+        running.get("environment_inputs", []).count("unchanged_running") >= 2
+        and "internal_keepalive" in running.get("environment_inputs", [])
+        and running_expected
+        == {
+            "lifecycle_transitions": 0,
+            "root_model_resumes": 0,
+            "semantic_recovery_actions": 0,
+            "retry_calls": 0,
+            "list_calls": 0,
+            "fallback_calls": 0,
+            "root_visible_events": [],
+        },
+        "repeated running/keepalive changed lifecycle or resumed the root model",
+        failures,
+    )
+
+    single = logical_cases.get("single_completion_one_wake", {})
+    single_events = single.get("environment_inputs", [])
+    single_expected = single.get("expected", {})
+    require(
+        len(single_events) == 1
+        and single_events[0].get("state") == "completed"
+        and bool(single_events[0].get("event_id"))
+        and bool(single_events[0].get("environment_invocation_id"))
+        and single_expected.get("root_model_resumes") == 1
+        and single_expected.get("wake_batches") == 1
+        and single_expected.get("compact_deltas") == 1
+        and single_expected.get("result_acceptances") == 1
+        and single_expected.get("batch_event_ids")
+        == [single_events[0].get("event_id")],
+        "one completed event did not produce exactly one compact wake",
+        failures,
+    )
+
+    coalesced = logical_cases.get("completion_events_are_coalesced", {})
+    coalesced_events = coalesced.get("environment_inputs", [])
+    coalesced_expected = coalesced.get("expected", {})
+    coalesced_ids = [event.get("event_id") for event in coalesced_events]
+    require(
+        len(coalesced_events) >= 2
+        and all(event.get("state") == "completed" for event in coalesced_events)
+        and len(set(coalesced_ids)) == len(coalesced_ids)
+        and coalesced_expected.get("root_model_resumes") == 1
+        and coalesced_expected.get("wake_batches") == 1
+        and coalesced_expected.get("compact_deltas") == len(coalesced_events)
+        and coalesced_expected.get("batch_event_ids") == coalesced_ids,
+        "adjacent completion events were not coalesced in source order",
+        failures,
+    )
+
+    approval = logical_cases.get("approval_required_relays_without_recovery", {})
+    approval_events = approval.get("environment_inputs", [])
+    approval_expected = approval.get("expected", {})
+    require(
+        len(approval_events) == 1
+        and approval_events[0].get("state") == "approval_required"
+        and approval_expected.get("wake_reason") == "approval_required"
+        and approval_expected.get("child_state") == "approval_required"
+        and approval_expected.get("environment_invocation_id")
+        == approval_events[0].get("environment_invocation_id")
+        and approval_expected.get("authority_preserved") is True
+        and approval_expected.get("write_ownership_preserved") is True
+        and approval_expected.get("relay_to_user") is True
+        and all(
+            approval_expected.get(field) == 0
+            for field in ("retry_calls", "fallback_calls", "ownership_mutations")
+        ),
+        "approval wake did not preserve identity/authority or user relay gating",
+        failures,
+    )
+
+    steering = logical_cases.get("user_steering_preempts_subscription", {})
+    steering_inputs = steering.get("environment_inputs", [])
+    steering_expected = steering.get("expected", {})
+    require(
+        steering_inputs
+        and steering_inputs[-1] == "user_steering"
+        and steering_expected.get("wake_reason") == "user_steering"
+        and steering_expected.get("root_model_resumes") == 1
+        and steering_expected.get("control_returned") is True
+        and steering_expected.get("preempts_subscription") is True
+        and steering_expected.get("delivery_owner") == "environment"
+        and steering_expected.get("steering_latency_ms") is None
+        and steering_expected.get("child_cancellations_synthesized") == 0,
+        "user steering does not immediately return environment-owned control",
+        failures,
+    )
+
+    duplicate = logical_cases.get("duplicate_event_is_deduplicated", {})
+    duplicate_events = duplicate.get("environment_inputs", [])
+    duplicate_ids = [event.get("event_id") for event in duplicate_events]
+    duplicate_expected = duplicate.get("expected", {})
+    require(
+        len(duplicate_events) == 2
+        and len(set(duplicate_ids)) == 1
+        and duplicate_expected.get("root_model_resumes") == 1
+        and duplicate_expected.get("wake_batches") == 1
+        and duplicate_expected.get("compact_deltas") == 1
+        and duplicate_expected.get("result_acceptances") == 1
+        and duplicate_expected.get("deduped_event_ids") == [duplicate_ids[0]],
+        "duplicate environment event was delivered or accepted more than once",
+        failures,
+    )
+
+    capability_error = logical_cases.get("explicit_capability_error_is_unknown", {})
+    capability_error_events = capability_error.get("environment_inputs", [])
+    capability_error_expected = capability_error.get("expected", {})
+    require(
+        len(capability_error_events) == 1
+        and capability_error_events[0].get("state") == "environment_state_unknown"
+        and "error" in capability_error_events[0].get("source_ref", "")
+        and capability_error_expected.get("wake_reason") == "capability_error"
+        and capability_error_expected.get("child_state")
+        == "environment_state_unknown"
+        and capability_error_expected.get("failure_inferred") is False
+        and capability_error_expected.get("retry_calls") == 0
+        and capability_error_expected.get("fallback_calls") == 0,
+        "environment_state_unknown was not limited to an explicit capability error",
+        failures,
+    )
+
+    lifecycle = load("lifecycle-cases.json")
+    lifecycle_refs = (
+        {case.get("name") for case in lifecycle.get("cases", [])}
+        | {case.get("name") for case in lifecycle.get("safety_cases", [])}
+        | {case.get("name") for case in lifecycle.get("authority_isolation_cases", [])}
+    )
+    recovery_case_list = scheduling.get("recovery_preservation_cases", [])
+    recovery_cases = {case.get("name"): case for case in recovery_case_list}
+    require(
+        len(recovery_cases) == len(recovery_case_list)
+        and set(recovery_cases) == RECOVERY_PRESERVATION_CASES
+        and all(
+            case.get("lifecycle_case_ref") in lifecycle_refs
+            for case in recovery_cases.values()
+        ),
+        "wait/wakeup recovery preservation cases are incomplete or unlinked",
+        failures,
+    )
+    for name in (
+        "explicit_failed_waits_for_user",
+        "explicit_interrupted_waits_for_user",
+    ):
+        case = recovery_cases.get(name, {})
+        require(
+            case.get("environment_event") in {"failed", "interrupted"}
+            and case.get("recovery_review") == "open"
+            and set(case.get("before_user_approval", {}))
+            == {
+                "interrupt_calls",
+                "retry_calls",
+                "fallback_calls",
+                "authority_mutations",
+                "write_ownership_mutations",
+            }
+            and all(value == 0 for value in case.get("before_user_approval", {}).values()),
+            f"explicit terminal recovery mutated state before user approval: {name}",
+            failures,
+        )
+
+    race = recovery_cases.get("completion_before_retry_cancels_retry", {})
+    require_ordered_sequence(
+        race.get("sequence", []),
+        [
+            "user_retry_approved",
+            "completion_race_rechecked",
+            "old_invocation_completed",
+            "retry_cancelled",
+            "old_result_validated_as_normal_candidate",
+        ],
+        "wait/wakeup completion race",
+        failures,
+    )
+    require(
+        race.get("expected")
+        == {
+            "new_invocations": 0,
+            "authority_revocations": 0,
+            "late_completion_dispositions": 0,
+            "result_disposition": "normal_candidate",
+        },
+        "completion race did not preserve the old result as a normal candidate",
+        failures,
+    )
+
+    late = recovery_cases.get("late_completion_after_revocation_is_quarantined", {})
+    late_disk = recovery_cases.get("late_disk_write_pauses_dependency_closure", {})
+    for case, authority_anchor, label in (
+        (late, "result_acceptance_revoked", "read-only late completion"),
+        (late_disk, "ownership_pending", "write late completion"),
+    ):
+        require_ordered_sequence(
+            case.get("sequence", []),
+            [
+                "user_retry_approved",
+                "completion_race_rechecked",
+                authority_anchor,
+                "new_identity_issued",
+                "old_invocation_completed",
+                "late_completion",
+            ],
+            label,
+            failures,
+        )
+        require(
+            case.get("old_environment_invocation_id")
+            != case.get("new_environment_invocation_id")
+            and case.get("expected", {}).get("result_disposition")
+            == "quarantine_only"
+            and case.get("expected", {}).get("auto_merge") is False
+            and case.get("expected", {}).get("counts_as_success") is False,
+            f"{label} lost retry identity or quarantine semantics",
+            failures,
+        )
+    require(
+        late.get("expected", {}).get("ownership_pause_scopes") == []
+        and late_disk.get("expected", {}).get("pause_only_after_late_disk_write")
+        is True
+        and late_disk.get("sequence", []).index("late_disk_write_detected")
+        < late_disk.get("sequence", []).index("ownership_paused"),
+        "late completion paused ownership without a proven late disk write",
+        failures,
+    )
+
+    gap_case_list = scheduling.get("capability_gap_cases", [])
+    gap_cases = {case.get("name"): case for case in gap_case_list}
+    require(
+        len(gap_cases) == len(gap_case_list)
+        and set(gap_cases) == CAPABILITY_GAP_CASES,
+        "capability-gap case set is incomplete or duplicated",
+        failures,
+    )
+    for name in (
+        "unsupported_required_capability_blocks",
+        "unknown_required_capability_blocks",
+    ):
+        case = gap_cases.get(name, {})
+        profile = case.get("capability_profile", {})
+        unavailable = {
+            capability
+            for capability, status in profile.items()
+            if status != "supported"
+        }
+        gate_enabled = (
+            set(profile) == REQUIRED_WAIT_WAKE_CAPABILITIES
+            and all(status == "supported" for status in profile.values())
+        )
+        automatic_actions = case.get("automatic_actions", {})
+        require(
+            set(profile) == REQUIRED_WAIT_WAKE_CAPABILITIES
+            and set(profile.values()) <= CAPABILITY_STATUSES
+            and bool(unavailable)
+            and set(case.get("unavailable_capabilities", [])) == unavailable
+            and case.get("adapter_enabled") is gate_enabled
+            and case.get("adapter_enabled") is False,
+            f"all-required capability gate was not enforced: {name}",
+            failures,
+        )
+        require(
+            case.get("ledger_events", []).count(
+                "wait_wakeup_capability_unavailable"
+            )
+            == 1
+            and len(case.get("ledger_events", [])) == 1
+            and set(automatic_actions) == GAP_AUTOMATIC_ACTIONS
+            and all(value == 0 for value in automatic_actions.values())
+            and case.get("phase_disposition")
+            in {"blocked", "explicit_external_continuation_required"}
+            and bool(case.get("last_authoritative_states"))
+            and bool(case.get("preserved_authorities"))
+            and isinstance(case.get("preserved_write_ownership"), list),
+            f"capability gap did not converge once with zero automatic actions: {name}",
+            failures,
+        )
+
+    for name in (
+        "event_only_external_continuation_is_allowed",
+        "polling_external_continuation_is_rejected",
+    ):
+        case = gap_cases.get(name, {})
+        computed_valid = (
+            bool(case.get("selected_by_user_ref"))
+            and bool(case.get("continuation_identity"))
+            and bool(case.get("wake_event_contract_ref"))
+            and bool(case.get("cancellation_contract_ref"))
+            and case.get("timer_driven") is False
+            and case.get("polling_driven") is False
+            and case.get("ledger_events") == ["external_continuation_selected"]
+        )
+        require(
+            computed_valid is case.get("valid"),
+            f"external continuation validity mismatch: {name}",
+            failures,
+        )
+    rejected_continuation = gap_cases.get(
+        "polling_external_continuation_is_rejected", {}
+    )
+    require(
+        rejected_continuation.get("rejection_reason")
+        == "event_only_continuation_required",
+        "timer/polling continuation lacks an explicit rejection",
+        failures,
+    )
+
+    comparison = scheduling.get("comparison_workload", {})
+    require(
+        set(comparison) == {"targets", "event_trace", "schedulers"}
+        and len(comparison.get("targets", [])) == 2
+        and len(set(comparison.get("targets", []))) == 2
+        and sum(
+            event.startswith("completed:")
+            for event in comparison.get("event_trace", [])
+        )
+        == 2,
+        "comparison workload is not the deterministic two-target completion trace",
+        failures,
+    )
+    scheduler_list = comparison.get("schedulers", [])
+    schedulers = {row.get("name"): row for row in scheduler_list}
+    require(
+        len(schedulers) == len(scheduler_list)
+        and set(schedulers) == COMPARISON_SCHEDULERS,
+        "comparison scheduler set is incomplete or duplicated",
+        failures,
+    )
+    historical = schedulers.get("historical_short_polling", {})
+    current = schedulers.get("current_codex_capability_gated", {})
+    target = schedulers.get("logical_environment_subscription", {})
+    require(
+        historical.get("evidence_only") is True
+        and historical.get("adapter_enabled") is False
+        and historical.get("root_model_resumes") == 5
+        and historical.get("timed_wait_calls") == 5
+        and historical.get("list_calls") == 3
+        and historical.get("disposition") == "baseline_evidence_only",
+        "historical polling comparison is not isolated as evidence only",
+        failures,
+    )
+    require(
+        current.get("evidence_only") is False
+        and current.get("adapter_enabled") is False
+        and current.get("disposition") == "blocked"
+        and all(
+            current.get(field) == 0
+            for field in (
+                "root_model_resumes",
+                "timed_wait_calls",
+                "logical_await_calls",
+                "list_calls",
+                "semantic_recovery_actions",
+                "compact_batches",
+            )
+        ),
+        "current Codex gated mode performed polling or implied workload completion",
+        failures,
+    )
+    require(
+        target.get("adapter_enabled") is True
+        and target.get("root_model_resumes") == 1
+        and target.get("logical_await_calls") == 1
+        and target.get("timed_wait_calls") == 0
+        and target.get("list_calls") == 0
+        and target.get("semantic_recovery_actions") == 0
+        and target.get("compact_batches") == 1
+        and target.get("compact_delta_event_ids")
+        == ["event-completed-a", "event-completed-b"]
+        and target.get("disposition") == "condition_satisfied",
+        "logical subscription target does not coalesce completion into one wake",
+        failures,
+    )
+
+    codex = scheduling.get("codex_capabilities", {})
+    codex_required = codex.get("required_capabilities", {})
+    codex_gate_enabled = (
+        set(codex_required) == REQUIRED_WAIT_WAKE_CAPABILITIES
+        and all(status == "supported" for status in codex_required.values())
+    )
+    require(
+        set(codex_required) == REQUIRED_WAIT_WAKE_CAPABILITIES
+        and set(codex_required.values()) <= CAPABILITY_STATUSES
+        and any(status != "supported" for status in codex_required.values())
+        and codex.get("adapter_enabled") is codex_gate_enabled
+        and codex.get("adapter_enabled") is False
+        and codex.get("mode") == "capability_gap"
+        and codex.get("phase_disposition") == "blocked"
+        and set(codex.get("ineligible_capabilities", {}))
+        == CODEX_INELIGIBLE_CAPABILITIES
+        and set(codex.get("ineligible_capabilities", {}).values())
+        <= CAPABILITY_STATUSES,
+        "current Codex capability mirror improperly enables formal scheduling",
+        failures,
+    )
+
+    observation = scheduling.get("bounded_observation", {})
+    short_probe = observation.get("user_short_probe", {})
+    historical_session = observation.get("historical_root_session", {})
+    require(
+        observation.get("evidence_only") is True
+        and observation.get("adapter_enabled") is False
+        and observation.get("new_live_probe_performed") is False
+        and short_probe
+        == {
+            "wait_returns": 2,
+            "timeout_returns": 1,
+            "completion_returns": 1,
+            "root_model_resumes": 2,
+            "input_tokens": 212698,
+            "cached_input_tokens": 210432,
+            "output_tokens": 71,
+        }
+        and historical_session.get("session_id")
+        == "019ff496-ec67-7740-b64b-73a2c0049d59"
+        and historical_session.get("wait_agent_calls") == 209
+        and historical_session.get("timeout_returns") == 148
+        and historical_session.get("root_resume_proxy_input_tokens") == 34471967
+        and historical_session.get("root_resume_proxy_cached_input_tokens")
+        == 34161408
+        and historical_session.get("tree_token_total_is_reconstructed") is False,
+        "bounded wait evidence was altered, enabled, or presented as a new probe",
+        failures,
+    )
+
+    protocol_path = ROOT / "plugins/atp/docs/development/agent-team-protocol.md"
+    platform_path = ROOT / "plugins/atp/docs/development/platform-adapters.md"
+    appendix_path = ROOT / "plugins/atp/docs/development/codex-lifecycle-routing.md"
+    task_path = ROOT / "plugins/atp/skills/task/SKILL.md"
+    research_path = ROOT / "plugins/atp/agents/research-advisor.md"
+    implementation_path = ROOT / "plugins/atp/agents/implementation-advisor.md"
+    protocol = active_scope(protocol_path, "### 2.5", "### 2.6", failures)
+    task = active_scope(task_path, "#### 5.2", "\n### 6.", failures)
+    research = active_scope(
+        research_path, "## Worker lifecycle", "\n## 출력", failures
+    )
+    implementation = active_scope(
+        implementation_path, "## Worker lifecycle", "\n## 출력", failures
+    )
+    platform = platform_path.read_text(encoding="utf-8")
+    appendix = appendix_path.read_text(encoding="utf-8")
+    for label, body in (
+        ("protocol §2.5", protocol),
+        ("task §5.2", task),
+        ("research-advisor lifecycle", research),
+        ("implementation-advisor lifecycle", implementation),
+    ):
+        require_terms(
+            body,
+            {
+                "await_invocations",
+                "wait_wakeup_capability_unavailable",
+                "environment_subscription",
+            },
+            label,
+            failures,
+        )
+        require(
+            "wait_agent" not in body and "timeout_ms" not in body,
+            f"active scheduling path invokes a timed host wait: {label}",
+            failures,
+        )
+    require_terms(
+        platform,
+        REQUIRED_WAIT_WAKE_CAPABILITIES | SCHEDULING_LEDGER_EVENTS,
+        "platform wait/wakeup capability contract",
+        failures,
+    )
+    require(
+        "requested_mode: environment_subscription" in appendix
+        and "effective_mode: unavailable" in appendix
+        and "adapter_enabled: false" in appendix
+        and "wait_wakeup_capability_unavailable" in appendix,
+        "Codex appendix does not separate requested and effective scheduling mode",
+        failures,
+    )
+    require(
+        re.search(r"^mode:\s*environment_subscription\s*$", appendix, re.MULTILINE)
+        is None,
+        "Codex appendix serializes environment_subscription as an effective mode "
+        "while the adapter is disabled",
+        failures,
+    )
+
+
 def validate_agent_source_specs(failures: list[str]) -> None:
     protocol_path = ROOT / "plugins/atp/docs/development/agent-team-protocol.md"
     platform_path = ROOT / "plugins/atp/docs/development/platform-adapters.md"
@@ -1521,6 +2186,12 @@ def validate_agent_source_specs(failures: list[str]) -> None:
     )
     implementation_return = active_scope(
         implementation_path, "## 반환값", "\n## 자가 검증", failures
+    )
+    research_input = active_scope(
+        research_path, "## 입력", "\n## 도구 사용 규칙", failures
+    )
+    implementation_input = active_scope(
+        implementation_path, "## 입력", "\n## 도구 사용 규칙", failures
     )
 
     # AC-R1/R2: research can write only its phase-local artifacts, and its
@@ -1572,10 +2243,124 @@ def validate_agent_source_specs(failures: list[str]) -> None:
         "research-advisor scoped write contract",
         failures,
     )
+    research_write_rule = next(
+        (line for line in research.splitlines() if line.startswith("- `Write` / `Edit`")),
+        "",
+    )
+    require_terms(
+        research_write_rule,
+        {"index.md", "lifecycle-events.jsonl", "wait-wakeup-events.jsonl"},
+        "research-advisor scheduling-ledger write allowlist",
+        failures,
+    )
     require_terms(
         research_output,
         {"concerns: []", "concerns_checked: true"},
         "research output frontmatter template",
+        failures,
+    )
+
+    # AC-R48/R49: scheduling artifacts have one common advisor return shape,
+    # remain separate from artifacts/lifecycle_ledger, and carry a closed
+    # disposition enum. Phase summaries link the ledger only when created.
+    research_artifacts = source_example(research_output, "artifacts")
+    for label, body, output_body, expected_path in (
+        (
+            "research-advisor",
+            research_output,
+            research_output,
+            "research/wait-wakeup-events.jsonl",
+        ),
+        (
+            "implementation-advisor",
+            implementation_return,
+            implementation_output,
+            "implementation/wait-wakeup-events.jsonl",
+        ),
+    ):
+        require_terms(
+            body,
+            {
+                "wait_wakeup_ledger",
+                "wait_wakeup_disposition",
+                "environment_subscription | blocked | explicit_external_continuation_required",
+                "top-level field",
+                "lifecycle_ledger",
+            },
+            f"{label} scheduling return contract",
+            failures,
+        )
+        disposition_match = re.search(
+            r"wait_wakeup_disposition[^\n]*정확히 `([^`]+)`",
+            body,
+        )
+        documented_dispositions = (
+            {
+                value.strip()
+                for value in disposition_match.group(1).split("|")
+            }
+            if disposition_match
+            else set()
+        )
+        require(
+            documented_dispositions == WAIT_WAKE_DISPOSITIONS,
+            f"{label} wait_wakeup_disposition enum drift",
+            failures,
+        )
+        require_terms(
+            output_body,
+            {"Wait/wakeup ledger", expected_path, "실제 생성된 경우에만 링크"},
+            f"{label} phase scheduling-ledger link",
+            failures,
+        )
+    require(
+        "wait-wakeup-events.jsonl" not in research_artifacts,
+        "research scheduling ledger leaked into artifacts instead of the separate "
+        "wait_wakeup_ledger field",
+        failures,
+    )
+    require(
+        "정확히 두 객체" in implementation_return
+        and "wait_wakeup_ledger" in implementation_return
+        and "별도인 top-level field" in implementation_return,
+        "implementation scheduling return expanded or conflated the exact-two artifacts",
+        failures,
+    )
+
+    # AC-R50: orchestrator preallocates one report-domain advisor identity and
+    # injects it before spawn. Advisors reuse that exact input identity for
+    # scheduling ownership and every nested worker parent join.
+    for label, body in (
+        ("research-advisor", research_input),
+        ("implementation-advisor", implementation_input),
+    ):
+        require_terms(
+            body,
+            {
+                "orchestrator",
+                "spawn 전에",
+                "report_invocation_id",
+                "exact value",
+                "owner_report_invocation_id",
+                "parent_invocation_id",
+            },
+            f"{label} preallocated report identity input",
+            failures,
+        )
+    require_terms(
+        task_lifecycle,
+        {
+            "Advisor spawn 전",
+            "orchestrator",
+            "report-domain `report_invocation_id`",
+            "미리 할당",
+            "입력에 주입",
+            "입력에 없으면",
+            "할당한 뒤에만 spawn",
+            "owner_report_invocation_id",
+            "parent_invocation_id",
+        },
+        "task orchestrator advisor identity allocation",
         failures,
     )
 
@@ -3332,6 +4117,7 @@ def main() -> int:
     failures: list[str] = []
     validate_reports(failures)
     validate_cases(failures)
+    validate_wait_wakeup(failures)
     validate_agent_source_specs(failures)
     validate_documentation(failures)
     validate_addendum4_source_parity(failures)

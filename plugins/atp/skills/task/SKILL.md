@@ -149,6 +149,8 @@ requirements-advisor
 
 모든 advisor/worker invocation 을 만들 때 프로토콜 §2.5의 lifecycle 기록을 함께 초기화한다. 최소한 logical task, invocation identity, `attempt`, 시작 시각, host의 status/approval/termination/isolation capability와 clean-retry 상한을 `report.md` 또는 연결된 진단 artifact에 기록한다. lifecycle 상태는 host environment가 명시적으로 제공한 상태와 이벤트만 정규화한다.
 
+Advisor spawn 전 orchestrator는 해당 advisor의 report-domain `report_invocation_id`를 미리 할당해 advisor 입력에 주입한다. 입력에 없으면 orchestrator가 새 unique value를 할당한 뒤에만 spawn하며, advisor는 이 exact value를 자기 scheduling row의 `owner_report_invocation_id`와 nested worker payload의 `parent_invocation_id`로 사용한다. Environment invocation identity로 대체하거나 advisor가 report에서 current row를 추정하게 하지 않는다.
+
 - environment가 `queued` 또는 `running`을 보고하는 동안 ATP도 그 상태를 유지한다. wait timeout, 경과 시간, 동일 snapshot 반복, output/progress/tool event의 존재나 부재는 상태 전이·failure·retry/fallback 권한을 만들지 않는다.
 - `completed`는 result 계약 검증·취합, `failed`는 원인 보고 후 recovery 검토, `interrupted`는 partial write와 ownership 확인으로 연결한다. environment의 `approval_required`는 retry/fallback 승인으로 간주하지 않는다. observed state와 relay/continuation capability는 별도 축이므로 relay/control 미지원이어도 child는 `approval_required`로 보존한다. environment provenance·두 identity·concrete `source_ref`·concern/capability evidence·ledger를 반환하고 child는 `ended_at: null`, termination 생략으로 두며 mutation은 0건이다. relay 가능한 ancestor에 control을 반환하고 root까지 불가하면 report의 `Summary` / `Open Items` / `concerns` narrative에만 phase `blocked`를 남긴다. capability 복구 뒤 같은 environment invocation/identity를 continuation하며 `attempt`와 retry accounting은 그대로 유지한다. 후속 status API unavailable/error event가 실제 관측된 경우에만 `environment_state_unknown`으로 전이한다.
 - environment status API가 unavailable/error이거나 의미가 불명해 authoritative status를 얻을 수 없을 때만 `environment_state_unknown`으로 기록한다. 이를 stall/failure로 재분류하거나 자동 interrupt, retry, fallback의 근거로 사용하지 않는다.
@@ -164,6 +166,18 @@ requirements-advisor
 신규 abnormal producer의 `lifecycle_fallback_reason`은 첫 serialization(`failed|interrupted|late_completion`)부터 `cause=<failed|interrupted|late_completion>@<concrete source_ref>; disposition=<awaiting_user_decision|approved_clean_retry|phase_fallback|blocked|late_completion_quarantined>; rationale=<non-empty summary>`를 기록한다. failed/interrupted 중간 invocation도 retry 소진을 기다리지 않고 현재 recovery disposition을 쓰며, decision이 바뀌면 같은 row의 disposition을 갱신하고 provenance history는 phase ledger에 보존한다. `completed`는 reason null/생략 가능하고 nonterminal은 `ended_at: null`, termination 생략, reason null/생략이다. 이는 기존 string 필드의 producer form이며 report v2 optional lifecycle 필드 네 개를 늘리지 않는다.
 
 **verification 불변식**: code 변경이 있으면 verification advisor의 명시적 실패나 interruption도 skip 사유가 아니다. Tier B로 동일 통합 검증을 직접 실행하거나 요구되는 검증을 수행할 수 없어 `blocked`로 끝내며, 기존 L2 허용 규칙 밖의 `needs_user_verification`으로 대체하지 않는다.
+
+#### 5.3 환경 주도 wait/wakeup scheduling
+
+Advisor/worker를 호출한 뒤의 대기는 lifecycle 판정과 분리해 프로토콜 §2.5의 `await_invocations` 계약을 따른다. Orchestrator는 관심 environment invocation identity, `condition: any | all`, 그리고 정확히 `completed | failed | interrupted | approval_required | user_steering`인 `wake_on` 집합을 정한다. Environment가 관심 event 전까지 model turn을 suspend하고 내부 keepalive, event deduplication, completion coalescing, compact changed-invocation delta, steering과 await cancellation을 소유한다. Unchanged `running`이나 내부 keepalive는 root model wake와 semantic action을 만들지 않는다.
+
+Subscription 등록 전 `platform-adapters.md` §3.2의 필수 capability를 모두 `supported | unsupported | unknown`으로 판정한다. **전부 `supported`일 때만** `environment_subscription`을 등록한다. 하나라도 `unsupported | unknown`이면 부분 기능이나 시간 기반 반환, 반복 상태 조회로 보충하지 않고 다음을 정확히 수행한다.
+
+1. `.atp/work-session/<sid>/artifacts/wait-wakeup-events.jsonl`에 `wait_wakeup_capability_unavailable`을 정확히 1회 기록한다.
+2. Automatic wait/list/retry/interrupt/fallback을 각각 0건으로 유지한다. Child의 마지막 environment-authoritative lifecycle state, read-only result acceptance authority, write-capable write ownership을 그대로 보존한다. 이 gap은 lifecycle failure나 `environment_state_unknown`, `lifecycle_fallback_reason`을 만들지 않는다.
+3. Phase를 `blocked`로 반환하거나, 사용자가 명시적으로 선택한 event-only external continuation만 등록한다. External continuation은 non-empty continuation identity, 관심 event만 root를 재개하는 wake contract, 독립 cancellation contract를 모두 가져야 하며 시간 기반 또는 polling continuation은 허용하지 않는다.
+
+Scheduling ledger의 허용 event vocabulary는 정확히 `await_capability_checked | await_registered | wake_batch | wait_wakeup_capability_unavailable | external_continuation_selected | measurement` 여섯 개다. 각 행은 protocol §2.5 envelope을 따르며 orchestrator만 이 top-level ledger에 append한다. Scheduling metadata를 report schema v2 `Invocations[]`에 추가하지 않고, report에는 artifact link와 compact `Decisions` / `Concerns` / `Open Items` narrative만 남긴다. 명시적 `failed | interrupted`가 별도로 관측된 뒤의 사용자 승인형 recovery, completion race, retry identity, result acceptance, write ownership, late completion 규칙은 §5.2 그대로다.
 
 ### 6. 각 호출에 모델 override
 

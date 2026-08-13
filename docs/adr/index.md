@@ -28,3 +28,4 @@
 | [ADR-0018](./ADR-0018-research-falsification-corroboration-harvest.md) | v2.9.0 — research 불확실성 게이트 3종(반증 패스·단건 독립확증 single-source 플래그·수확 점검 1회 재분해, §4.8 적층) + add-on v2.2.0 graphify-out misplaced-output 방어·prior_lookup handoff + §8 research-lite 프로파일 | accepted | 2026-07-21 |
 | [ADR-0019](./ADR-0019-graph-artifact-scope-directory-layout.md) | v2.10.0 — `docs/graph/<scope>/` 산출물 레이아웃 정본 확정(규약-실물 드리프트 정정) + scope slug 명명 규칙(`/`→`-`, 깊이 1) + `source_file_base` 필수화 (add-on 2.3.0 동반) | accepted | 2026-07-30 |
 | [ADR-0020](./ADR-0020-environment-authoritative-subagent-lifecycle.md) | environment-authoritative subagent lifecycle — wait/progress 관측 추론 폐기, 명시적 host event 권위화 (ADR-0017 감지·관측 budget 부분만 supersede) | accepted | 2026-08-12 |
+| [ADR-0021](./ADR-0021-environment-owned-wait-wakeup-scheduling.md) | environment-owned wait/wakeup scheduling — timeout-free subscription만 formal 경로로 인정하고 capability gap은 no-polling blocked로 수렴 (ADR-0020 유지) | accepted | 2026-08-13 |

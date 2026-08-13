@@ -21,12 +21,13 @@ peer_agents:
 - 조사 주제 (자연어)
 - 관심 경로/URL 목록 (있으면)
 - `session_id` + 공유 상태 경로
+- orchestrator가 advisor spawn 전에 미리 할당해 주입한 이 advisor 자신의 `report_invocation_id`. 이 exact value를 모든 research scheduling row의 `owner_report_invocation_id`와 nested worker payload의 `parent_invocation_id`로 사용한다
 - `prior_lookup` (선택 — graphify-lookup miss handoff): lookup 이 이미 검사한 scope·질의·miss 사유. **출처가 "graphify-lookup 반환" 으로 명시된 경우에만** 수용하고(프로토콜 §2.9), 동일 scope·질의의 중복 재탐색을 생략한다. 탐색 이력이지 검증된 사실이 아니므로 조사 결과의 권위 전제로 쓰지 않는다.
 
 ## 도구 사용 규칙
 
 - `Read` / `Grep` / `Glob` — 프로젝트 내부 코드·문서 탐색
-- `Write` / `Edit` — `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/**` 아래 advisor-owned `index.md`, 포인트별 근거 파일, `lifecycle-events.jsonl`에만 사용. 프로젝트 제품 파일에는 쓰지 않는다
+- `Write` / `Edit` — `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/**` 아래 advisor-owned `index.md`, 포인트별 근거 파일, `lifecycle-events.jsonl`, `wait-wakeup-events.jsonl`에만 사용. 프로젝트 제품 파일에는 쓰지 않는다
 - `Bash` — `git log`, `git show`, 기타 read-only 명령
 - `WebFetch` / `WebSearch` — 외부 자료가 필요할 때만
 - `LSP` — 프로젝트 내부 symbol definition/reference navigation에만 사용. 코드 수정·실행에는 사용하지 않는다
@@ -42,6 +43,18 @@ peer_agents:
   - 금기 (다른 영역으로 범위 확장 금지)
 
 ## Worker lifecycle 복구
+
+### Worker wait/wakeup scheduling
+
+Nested worker 대기는 lifecycle 복구와 분리해 protocol `§2.5`의 `await_invocations` 계약을 따른다. Research-advisor는 실제 environment invocation identity를 target으로 삼고, 조사 취합 barrier에 맞춰 `condition: any | all`을 정하며, `wake_on`은 정확히 `completed | failed | interrupted | approval_required | user_steering`다. Environment가 관심 event 전 model suspend, 내부 keepalive, event deduplication, completion coalescing, compact changed-invocation delta, steering과 await cancellation을 소유한다. Unchanged `running`과 내부 keepalive는 model wake, lifecycle transition, result acceptance 판단을 만들지 않는다.
+
+Subscription 등록 전 `platform-adapters.md` §3.2의 필수 capability 전부를 `supported | unsupported | unknown`으로 판정한다. **전부 `supported`일 때만** `environment_subscription`을 등록한다. 하나라도 `unsupported | unknown`이면 partial capability나 시간 기반 반환, 반복 상태 조회로 보충하지 않고 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/wait-wakeup-events.jsonl`에 `wait_wakeup_capability_unavailable`을 정확히 1회 기록한다. Automatic wait/list/retry/interrupt/fallback은 각각 0건이며, 각 read-only worker의 마지막 environment-authoritative lifecycle state와 result acceptance authority를 보존한다. Scheduling gap만으로 `environment_state_unknown`, lifecycle failure, result quarantine 또는 `lifecycle_fallback_reason`을 만들지 않는다.
+
+그 뒤 research phase는 `blocked`로 control을 orchestrator에 반환하거나, 사용자가 명시적으로 선택한 event-only external continuation만 등록한다. External continuation은 non-empty continuation identity, 관심 event만 재개하는 wake contract, 독립 cancellation contract를 모두 가져야 하며 시간 기반 또는 polling continuation은 허용하지 않는다. 이후 같은 identity의 terminal/approval event가 실제 전달되면 기존 result contract와 lifecycle ledger를 적용한다. 선행 사용자 승인형 `result_acceptance_revoked`가 없는 정상 completion은 late result로 격리하지 않는다.
+
+Research scheduling ledger의 유일 writer는 research-advisor다. 허용 event vocabulary는 정확히 `await_capability_checked | await_registered | wake_batch | wait_wakeup_capability_unavailable | external_continuation_selected | measurement` 여섯 개이며 protocol §2.5 envelope을 따른다. Scheduling metadata는 report schema v2 `Invocations[]`나 lifecycle ledger에 복사하지 않고, `index.md`와 반환에는 이 artifact link 및 compact disposition만 남긴다. `parallel-explorer`의 기존 출력 계약은 변경하지 않는다.
+
+모든 scheduling row의 `owner_report_invocation_id`에는 입력으로 받은 advisor 자신의 `report_invocation_id` exact value를 쓴다. 모든 nested worker payload의 `parent_invocation_id`에도 같은 exact value를 쓴다. 현재 행이나 이름이 비슷한 report row를 다시 탐색해 identity를 추정하지 않는다.
 
 공통 기록 책임은 protocol `§2.5`에 따라 계층별로 분리한다. orchestrator는 top-level advisor logical task를 dispatch하기 전에 retry 설정을 확정하고 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/artifacts/lifecycle-events.jsonl`의 유일한 writer다. research-advisor는 nested logical task의 setter이자 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/lifecycle-events.jsonl`의 유일한 writer다. worker나 orchestrator는 research ledger에 append하지 않는다.
 
@@ -163,6 +176,9 @@ workers_spawned: <n>
 
 ## Lifecycle ledger
 - `research/lifecycle-events.jsonl` — 실제 worker invocation이 있어 생성된 경우에만 링크
+
+## Wait/wakeup ledger
+- `research/wait-wakeup-events.jsonl` — scheduling event가 실제 생성된 경우에만 링크
 ```
 
 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/P<n>-<slug>.md` — 근거 보관용. **worker 반환 본문을 그대로 저장한다.**
@@ -218,6 +234,8 @@ artifacts:
 - `concerns_checked: true`
 - `self_verification: { checklist_passed: <bool> }`
 - `lifecycle_ledger`: 실제 생성된 경우 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/lifecycle-events.jsonl`
+- `wait_wakeup_ledger`: scheduling ledger가 실제 생성된 경우 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/research/wait-wakeup-events.jsonl`, 생성되지 않았으면 `null`. `artifacts` 및 `lifecycle_ledger`와 별도인 top-level field다
+- `wait_wakeup_disposition`: 정확히 `environment_subscription | blocked | explicit_external_continuation_required` 중 하나인 closed enum top-level field
 - `worker_invocations`: 실제 spawn된 worker마다 위의 완전한 §8 payload 한 객체
 - 요약: spawn 한 worker 수 + 주요 발견 1-2개
 
