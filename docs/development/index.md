@@ -13,10 +13,11 @@
 - [platform-adapters.md](../../plugins/atp/docs/development/platform-adapters.md) — 호스트 capability tier 정의와 자가판정 절차. 호스트 고유 문법·슬러그는 에이전트가 자율 적용 (과거 3사 실측 데이터는 [ADR-0009](../adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록에 동결)
 - [search-tool-matrix.md](../../plugins/atp/docs/development/search-tool-matrix.md) — 탐색/검색 도구 선택 매트릭스 (LSP, graphify, Grep, Glob, Read, WebFetch 목적별 기준)
 - [codex-spark-routing.md](../../plugins/atp/docs/development/codex-spark-routing.md) — Codex host 전용 Spark 조건부 라우팅 appendix
-- [codex-lifecycle-routing.md](../../plugins/atp/docs/development/codex-lifecycle-routing.md) — Codex host 전용 subagent silent-start lifecycle 관측·종결·독립 재시도 appendix
+- [codex-lifecycle-routing.md](../../plugins/atp/docs/development/codex-lifecycle-routing.md) — Codex host 전용 environment-authoritative subagent lifecycle 상태·event·종결·독립 재시도 appendix
+- [환경 권위 subagent lifecycle 아키텍처](../architecture/environment-authoritative-subagent-lifecycle-design.md) — wait timeout·heartbeat 기반 추론을 폐기하고 host environment의 lifecycle event로 상태를 결정하는 implemented 설계와 검증 현황
 
 기여자용 문서 (이 디렉토리 — 번들 제외):
-- [release-checklist.md](./release-checklist.md) — **§0 = 언제 릴리즈를 시작하나** (user-facing feat 머지 = release 완결 의무, 진입 조건) / §1~§9 = bump 전제 사후 invariant 점검(문서 링크·TODO 마커·manifest·agent catalog·끊긴 §N 인용 동기화). `plugins/atp/` 번들을 건드리는 작업은 **§0 를 먼저** 본다(루트 `CLAUDE.md` "릴리스 — 배포 완결 의무" 가 docs-first 로 이 §0 를 가리킨다).
+- [release-checklist.md](./release-checklist.md) — **§0 = 언제 릴리즈를 시작하나** (user-facing feat 머지 = release 완결 의무, 진입 조건) / §1~§10 = bump 전제 사후 invariant 점검(문서 링크·TODO 마커·manifest·agent catalog·끊긴 §N 인용·environment-authoritative lifecycle 계약 동기화). `plugins/atp/` 번들을 건드리는 작업은 **§0 를 먼저** 본다(루트 `CLAUDE.md` "릴리스 — 배포 완결 의무" 가 docs-first 로 이 §0 를 가리킨다).
 - [requirements-analysis-methodology.md](./requirements-analysis-methodology.md) — 요구사항 분석 방법론 고찰 (RA 는 왜 실패하나·좋은 요구사항의 속성·구조적 gap-hunt·함정·수렴). §8 에서 `requirements-advisor` 로의 적용 렌즈와 조작화 갭(AC 게이트·우선순위·추적성) 정리.
 
 편집형(프로젝트 생성) 문서:

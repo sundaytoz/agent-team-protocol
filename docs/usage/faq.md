@@ -4,7 +4,7 @@ title: 문제 해결 / FAQ
 description: plugin 설치·init·사용 중 흔한 문제와 대응.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-07-20
+last_reviewed: 2026-08-12
 ---
 
 # 문제 해결 / FAQ
@@ -122,16 +122,32 @@ A. 통합 스크립트를 만들지 말고 `verification-strategies.md` (소비 
 
 ### Q. Advisor가 오류 없이 `running` 상태에서 첫 활동을 보이지 않는다.
 
-A. ATP는 이를 즉시 실패로 단정하거나 자동 재시도하지 않는다. 설정된 유한 observation budget 뒤에도 정상 API에서 output, 명시적 progress, tool start/result, terminal/blocked 상태를 하나도 관측하지 못했고 queueing·이미 시작된 장기 tool 같은 제외 상태도 없을 때 `suspected_silent_stall`로 보고한다. reasoning/token 내부 이벤트는 판정 신호가 아니다.
+A. ATP는 host environment가 정상 API로 명시한 상태와 terminal event만 lifecycle 권위로 사용한다. environment가 `running`을 반환하는 동안 ATP도 `running`으로 유지한다. wait timeout, 경과 시간, output/progress/tool event 또는 그 부재, heartbeat 부재, 동일 snapshot 반복은 lifecycle 전이·retry/fallback 권한을 만들지 않는다. 상태를 확인할 수 없으면 비종결 `environment_state_unknown`으로 남기며 failure로 추론하지 않는다.
 
-orchestrator가 현재 상태와 관측 한계를 보고하면 다음 중 하나를 선택한다.
+명시적 environment `failed`/`interrupted`/blocker 또는 사용자 취소가 발생해 orchestrator가 상태와 원인을 보고하면 다음 중 하나를 선택한다.
 
-1. 기존 invocation 종결 후 **clean retry** — 새 invocation ID로 독립 실행한다. 같은 thread에 follow-up을 보내는 것은 clean retry가 아니다.
-2. 다음 확인 조건이나 budget을 정해 더 기다린다.
+1. 기존 invocation 종결·격리 후 **clean retry** — 새 invocation ID로 독립 실행한다. 같은 thread에 follow-up을 보내는 것은 clean retry가 아니다.
+2. environment 상태를 유지하고 더 기다린다.
 3. phase에 허용된 fallback을 수행한다.
 4. 해당 phase 또는 세션을 blocked로 끝낸다.
 
-interrupt, retry, fallback은 사용자 승인 전에 실행되지 않는다. write-capable 호출은 기존 termination/isolation, ownership 회수, partial write를 확인하기 전 같은 scope를 재시도하지 않는다. 회수 뒤 늦게 완료된 기존 결과는 `late_completion`으로 격리하며 자동 merge하지 않는다. 특히 code 변경의 verification은 advisor 장애를 이유로 skip할 수 없고 Tier B 직접 검증 또는 blocked로 끝난다. 상세 의미는 [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md), Codex 도구 mapping은 [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md)를 참고한다.
+environment의 `approval_required`는 해당 승인 흐름으로 전달하지만 clean retry/fallback 승인으로 대신하지 않는다. interrupt, retry, fallback은 별도 사용자 승인 전에 실행되지 않는다. retry 승인 직전에 completion race를 다시 확인하며, 기존 invocation이 완료됐다면 retry를 취소하고 정상 결과 후보로 검토한다. 이 확인 전에는 결과 수용 권한이나 write ownership을 철회하지 않는다.
+
+명시적으로 관측된 `approval_required`는 relay/control capability가 없어도 그대로 유지한다. relay 가능한 상위 agent에는 control을 반환하고, root까지 relay할 수 없으면 phase 진행 불가만 report narrative에 `blocked`로 기록한다. 이는 child lifecycle terminal이 아니며 child는 `ended_at: null`, `termination` 생략 상태다. relay 불가를 이유로 `environment_state_unknown`이나 failure로 바꾸지 않는다. `environment_state_unknown`은 environment status 자체가 unavailable/error이거나 의미를 확인할 수 없을 때만 사용한다. capability가 복구되어 same identity continuation이 가능하면 attempt와 retry 수를 늘리지 않는다.
+
+read-only 호출에서는 old identity의 `result acceptance authority`를 명시적으로 철회한 뒤에만 새 identity를 시작한다. 이는 이후 도착한 old result를 ATP가 수용하지 않는 host-neutral 격리이며 environment terminal 상태를 추론하지 않는다. 같은 old identity의 철회 기록 뒤 도착한 결과만 `late_completion`으로 분류해 quarantine하며 자동 merge·취합·성공 판정 또는 ownership pause에 사용하지 않는다.
+
+write-capable 호출에서는 기존 termination/write isolation, ownership 회수, partial write를 확인하기 전 같은 scope를 재시도하지 않는다. ownership 회수 뒤 old result가 도착해도 late disk write가 없으면 quarantine-only다. 실제 late disk write가 확인된 경우에만 겹치는 scope와 dependency closure를 persisted `paused`로 만들며 독립 scope는 계속 `active`다. 따라서 `late_completion` 자체는 pause 조건이 아니다. 특히 code 변경의 verification은 advisor 장애를 이유로 skip할 수 없고 Tier B 직접 검증 또는 blocked로 끝난다.
+
+신규 producer의 abnormal `failed`/`interrupted`/`late_completion`에는 `lifecycle_fallback_reason`으로 concrete cause source, 현재 recovery disposition, rationale를 함께 기록한다. disposition은 `awaiting_user_decision`, `approved_clean_retry`, `phase_fallback`, `blocked`, `late_completion_quarantined` 다섯 가지다. 이는 retry 소진 뒤에만 쓰는 최종 사유가 아니다. 중간 invocation도 즉시 현재 disposition을 기록하고, 후속 명시적 결정에 맞춰 갱신한다. report schema는 계속 v2이고 lifecycle optional field도 기존 네 개뿐이다. 상세 의미는 [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md), Codex 도구 mapping은 [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md)를 참고한다.
+
+### Q. 카탈로그 조사에서 개별 신뢰도와 `source_confidence`를 어떻게 기록하는가?
+
+A. 이름 붙은 **모든 axis와 모든 item 각각**에 정확히 하나의 `확인됨 | 추정 | 미확인` marker를 기록한다. axis marker를 하위 item에 상속하거나 aggregate 값으로 대신할 수 없다. axis set 전체에는 별도 namespace인 `source_confidence: high | mixed | low`를 정확히 하나 둔다.
+
+aggregate는 전체 marker multiset에서 결정론적으로 계산한다. 전부 `확인됨`이면 `high`, `미확인`이 strict majority이면 `low`, 그 밖의 모든 조합은 `mixed`다. 따라서 전부 `추정`, 확인·추정 혼합, non-majority 미확인 포함은 모두 `mixed`다. 여러 axis set이 있는 artifact의 전체 aggregate도 모든 set의 marker를 합쳐 같은 규칙으로 계산한다.
+
+research worker와 advisor는 반환 전에 두 항목을 모두 self-check한다. 첫째, **마커 커버리지(marker coverage)**는 이름 붙은 axis/item 집합과 marker-bearing identity 집합이 같고 각 identity의 marker가 정확히 하나인지 검사한다. 둘째, **집계 도출(aggregate derivation)**은 실제 marker multiset에서 aggregate를 재계산해 emitted `source_confidence`와 일치하는지 검사한다. 누락 marker를 advisor가 추정해 채우거나 불일치 결과를 권위 전제로 승격하지 않는다.
 
 ---
 

@@ -9,7 +9,7 @@ ATP 세션은 **단일 오케스트레이터 + 도메인 어드바이저 + 필�
 **C1. 역할 정의 요약 (상세 §1)** — Orchestrator: 사용자와의 유일한 창구, **직접 작업 금지**(조사/설계/구현/검증/문서화 전부 advisor 위임), 첫 코드 변경 전 계획 가시화 의무. Advisor: 도메인 단일 책임자, 산출=파일+요약. Worker: 단일 책임·최소 컨텍스트, **다른 worker 호출 금지**.
 
 <!-- atp:core:item 2 -->
-**C2. 호출 모델 불변 (상세 §2)** — **Tier-3 advisor 만 `Agent` 툴 보유**(`research-advisor`/`implementation-advisor`). Worker 는 `Agent` 없음(**재귀 금지**). Advisor 호출당 worker **최대 6개** 동시 spawn(초과 시 배치 분할). **orchestrator 가 상위 advisor 여러 개 동시 호출 금지**(컨텍스트 오염), 독립 advisor 내부 worker 병렬은 허용. 명시적 오류 또는 첫 관측 가능 활동 없는 lifecycle 의심은 §2.5의 사용자 승인·독립 invocation·유한 종단 규칙을 적용한다.
+**C2. 호출 모델 불변 (상세 §2)** — **Tier-3 advisor 만 `Agent` 툴 보유**(`research-advisor`/`implementation-advisor`). Worker 는 `Agent` 없음(**재귀 금지**). Advisor 호출당 worker **최대 6개** 동시 spawn(초과 시 배치 분할). **orchestrator 가 상위 advisor 여러 개 동시 호출 금지**(컨텍스트 오염), 독립 advisor 내부 worker 병렬은 허용. Invocation lifecycle은 host environment가 명시한 상태·terminal event만 권위로 사용한다. timeout·경과 시간·progress/heartbeat 부재·동일 snapshot은 상태 전이 근거가 아니며, 명시적 failure/interruption 복구에는 §2.5의 사용자 승인·독립 invocation·ownership·유한 재시도 규칙을 적용한다.
 
 <!-- atp:core:item 3 -->
 **C3. 파괴적 조작 게이트 (압축형 — 전문·2단계 분리·실전 사례는 §6)** — 아래 6항목은 advisor/worker **직접 수행 금지**. **orchestrator 가 사용자 확인 후에만** 실행한다:
@@ -37,7 +37,7 @@ ATP 세션은 **단일 오케스트레이터 + 도메인 어드바이저 + 필�
 
 | 트리거 (작업 성격 / 이벤트) | 대상 §헤더 | 한줄 설명 | offset 힌트 |
 |---|---|---|---|
-| advisor 호출 분할 / 병렬 / open_questions / system-reminder / 호출실패·silent-start 회복 / dispatch 사실 주입 | `## 2.` | 호출 모델 전반 + lifecycle 회복(§2.5) | L88 |
+| advisor 호출 분할 / 병렬 / open_questions / system-reminder / environment lifecycle event·호출 실패 회복 / dispatch 사실 주입 | `## 2.` | 호출 모델 전반 + lifecycle 취합·회복(§2.5) | L88 |
 | 사용자 지적 수신 (지적식 발언 3단계 판단) | `### 2.3` | 지적 vs 단순질문 분류 + 후속 | L122 |
 | 결함 표면화 → 회귀 단계 판정 (backward) | `### 2.6` | 발원 단계 진단·전수 재검 | L269 |
 | 분할 트랙 설계 게이트 (forward phase-gate) | `### 2.7` | 결합 판정·plan-gate | L296 |
@@ -241,41 +241,42 @@ orchestrator 가 system-reminder 수신으로 인해 흐름이 끊어졌음을 (
 
 **배경**: 2026-05-07 세션(20260507-101342)에서 orchestrator 가 `AskUserQuestion` 툴 호출 준비 중 system-reminder 를 수신한 뒤 응답이 중단되어 사용자 재촉 발화를 유발했다. 이 사례가 §2.4 신설의 직접 계기다.
 
-### 2.5 advisor 호출 lifecycle 실패 처리
+### 2.5 advisor 호출 lifecycle 취합·복구
 
-advisor/worker 호출이 명시적 API 오류·timeout·rate limit 로 실패하거나, 명시적 오류 없이 실행 중인 채 첫 관측 가능 활동이 없는 경우 orchestrator 는 이 절의 공통 lifecycle 규칙을 적용한다. 호스트별 관측·종결·재호출 수단은 `platform-adapters.md`의 capability 계약과 해당 host appendix가 해석하며, 본 절은 특정 도구나 시간값을 정하지 않는다.
+advisor/worker invocation의 lifecycle 권위는 host environment가 정상 API로 명시한 상태와 terminal event다. 호스트별 조회·종결·재호출 수단은 `platform-adapters.md`의 capability 계약과 해당 host appendix가 해석하며, 본 절은 특정 도구나 시간값을 정하지 않는다.
 
-#### 관측 의미와 제외 조건
+#### 권위 상태와 비권위 관측
 
-**first observable activity**는 orchestrator가 정상 API로 실제 관측한 다음 중 하나다: agent output, 명시적 progress, tool start/result, terminal(completed/failed) 또는 explicit blocked 상태. reasoning·token count·호스트 내부 scheduler 이벤트처럼 정상 API에 노출되지 않거나 내부적인 신호는 공통 판정 조건이 아니다.
-
-다음은 silent-start stall이 아니다.
-
-- host가 queueing 또는 user/external-resource blocked를 명시한 경우: 해당 상태의 정상 대기·blocked 규칙을 따른다.
-- tool start나 progress가 이미 관측된 long-running 작업: silent-start 판정을 해제한다. 이후 정체는 별도 mid-execution 정책의 대상이다.
-- progress capability가 unknown이고 authoritative status도 재확인할 수 없는 경우: stall로 단정하지 않고 `progress_unobservable`로 보고한다.
-
-#### 상태 흐름과 판정
-
-정본 상태 흐름은 다음과 같다.
+공통 정규화 상태는 host가 실제로 제공하는 범위에서 다음과 같이 해석한다.
 
 ```text
-active
-  → suspected_silent_stall
-  → awaiting_user_decision
-  → terminating
-  → retrying | fallback | blocked
+spawn_requested
+  → accepted | queued | running | approval_required
+accepted | queued | running | approval_required
+  → running | approval_required | completed | failed | interrupted
+status unavailable/error
+  → environment_state_unknown
 ```
 
-`start_silence_budget`과 동일 증거를 재확인하는 `unchanged_check_budget`은 host/config가 정하는 **유한한 calibration 값**이다. 무상한 대기·polling은 금지한다. 시간 예산 소진은 wake-up 신호일 뿐 단독 실패 증거가 아니다. 예산 소진, observable activity 0건, authoritative status가 비종결, 제외 상태 0건을 함께 확인한 때에만 `suspected_silent_stall`로 전이한다. 새 event나 상태 변화만 판단 clock을 갱신하며 timeout 자체는 새 증거가 아니다.
+- `accepted` / `queued` / `running`: 비종결 상태다. 특히 environment가 `running`을 반환하는 동안 ATP도 `running`으로 유지한다.
+- `approval_required`: environment의 승인 흐름을 사용자에게 연결한다. 이 event 자체는 interrupt, clean retry 또는 phase fallback 승인이 아니다.
+- `completed` / `failed` / `interrupted`: environment가 명시한 terminal event다. `completed`는 반환 계약을 검증한 뒤 취합하고, `failed`는 원인을 기록하며, `interrupted`는 partial write와 ownership을 확인한다.
+- environment-native blocker는 출처와 host 의미를 보존한다. agent output의 업무상 `blocked` 문구와 environment 실행 상태를 혼동하지 않는다.
+- status API 부재·오류 또는 host가 해당 상태를 노출하지 않는 경우는 `environment_state_unknown`이다. 이는 failure나 terminal 상태가 아니며, 실패 추론·interrupt·retry·fallback 권한을 만들지 않는다.
 
-명시적 실패 또는 의심 상태에서 orchestrator는 다음 순서를 지킨다.
+`observed_lifecycle_state`와 approval relay/continuation capability는 별도 축이다. environment가 `approval_required`를 명시했다면 relay/control이 unsupported·unknown이어도 child state는 `approval_required`로 보존한다. `environment_state_unknown`은 environment status 자체가 unavailable/error/semantically unknown일 때만 생산한다. Relay/control 불가 child는 environment provenance·두 identity·concrete `source_ref`·concern/capability evidence·ledger를 보존하고 `ended_at: null`, termination 생략, reason null/생략으로 반환하며 mutation은 0건이다. relay 가능한 ancestor에 control을 반환하고 root까지 불가하면 report의 `Summary` / `Open Items` / `concerns` narrative에만 phase `blocked`를 남기며 child invocation은 nonterminal `approval_required`로 보존한다. capability가 복구돼 same environment identity continuation이 가능해지면 `attempt`와 retry accounting을 바꾸지 않고 이어가며, 후속 status API unavailable/error event가 실제 관측된 경우에만 `environment_state_unknown`으로 바꾼다.
 
-1. **사용자에게 보고**: 대상·현재 상태·관측된 활동·소진된 configured budget·capability 한계를 한 줄로 알린다.
-2. **옵션 제시**: 남은 budget과 phase criticality에 따라 (a) 기존 invocation 종결 후 clean retry, (b) 사용자가 정한 다음 조건까지 추가 대기, (c) 허용된 phase fallback, (d) 해당 phase/세션 blocked를 제시한다.
-3. **사용자 확인**: 응답 전에는 interrupt/cancel, retry invocation 생성, fallback 실행을 0건으로 유지한다. 이미 terminal이 된 사실을 기록하는 것은 실행 승인이 아니다.
+`wait` timeout, 경과 시간, progress/output/tool event 또는 그 부재, heartbeat 부재, 같은 snapshot 반복은 parent wake-up·UX·설명용 관측일 뿐 lifecycle 상태를 전이시키지 않는다. reasoning·token count·호스트 내부 scheduler 신호와 실행 중 output 문자열도 terminal 판정 근거가 아니다. progress가 없어도 environment의 `running`은 그대로 `running`이다.
 
-사용자가 retry를 승인하기 직전에 기존 invocation이 완료되면 결과를 정상 후보로 검토하고 retry를 취소한다.
+#### terminal event 이후 사용자 승인형 복구
+
+명시적 `failed` / `interrupted`, environment-native blocker 또는 사용자 취소가 복구 검토를 열 수 있다. orchestrator는 다음 순서를 지킨다.
+
+1. **사용자에게 보고**: invocation identity, environment가 명시한 상태·원인, partial write와 capability 한계를 알린다.
+2. **옵션 제시**: phase criticality에 따라 (a) 기존 invocation 종결·격리 후 clean retry, (b) environment 상태 유지·추가 대기, (c) 허용된 phase fallback, (d) 해당 phase/세션 blocked를 제시한다.
+3. **사용자 확인**: 응답 전에는 interrupt/cancel, retry invocation 생성, invocation authority 변경, fallback 실행을 0건으로 유지한다. environment 승인 event나 terminal 사실 기록은 이 mutation 승인을 대신하지 않는다.
+
+사용자가 retry를 승인하기 직전에 environment 상태를 다시 확인한다. 기존 invocation이 `completed`이면 retry를 취소하고 그 결과를 정상 후보로 검토한다. 상태를 확인할 수 없으면 `environment_state_unknown`으로 유지하며, 특히 write-capable scope는 termination/isolation 확인 없이 재호출하지 않는다.
 
 #### 실패의 기록 의무 (silent absorption 금지)
 
@@ -289,9 +290,9 @@ lifecycle 실패를 **사용자 보고도 기록도 없이 orchestrator 직접 �
 
 **clean retry의 정본은 실패 호출과 다른 새 invocation ID**다. 동일 thread/invocation에 추가 지시를 보내는 행위는 진단 또는 continuation일 뿐 clean retry가 아니며 `attempt`를 증가시키지 않는다. 승인 후 기존 invocation에는 새 작업을 보내지 않고 termination 또는 결과 격리를 확인한 다음 최소 권위 payload로 새 invocation을 만든다. payload에는 목표, 권위 자료·확정 계약, write scope, 보존할 partial, 필수 산출물과 검증/반환 형식을 포함하며 전체 대화 이력 상속을 요구하지 않는다.
 
-상태 확인과 clean retry에는 각각 유한 budget이 있어야 한다. retry마다 별도 사용자 승인을 받는다. clean retry도 같은 lifecycle failure로 끝나거나 budget이 소진되면 같은 선택지를 반복하지 않고 아래 phase 종단으로 수렴한다.
+clean retry 횟수는 유한한 안전 한도를 두며 retry마다 별도 사용자 승인을 받는다. wait timeout·경과 시간·progress 부재·동일 snapshot은 retry 한도를 소비하지도 phase 종단을 열지도 않는다. clean retry가 명시적 terminal failure로 끝나거나 승인된 retry 한도가 소진되면 같은 선택지를 반복하지 않고 아래 phase 종단으로 수렴한다.
 
-| phase criticality | budget 소진 후 허용 종단 | 금지 |
+| phase criticality | 명시적 실패 후 허용 종단 | 금지 |
 |---|---|---|
 | optional advisory | 사용자 승인 하 skip 또는 orchestrator의 기존 근거 요약; 사유·미수행 범위 기록 | 필수 산출물을 optional로 재분류 |
 | required judgment/artifact | Tier B 순차 self-check로 동일 계약 산출; 근거 부족 시 user decision 또는 blocked | 빈 산출물로 통과 |
@@ -300,11 +301,17 @@ lifecycle 실패를 **사용자 보고도 기록도 없이 orchestrator 직접 �
 | destructive/external action | 자동 fallback 없이 사용자 승인·복구 가능성이 확보될 때까지 blocked | lifecycle 장애를 근거로 직접 실행 |
 | closing documentation/retro | 필수 report 전제를 유지한 orchestrator self-check 또는 blocked | Summary/Invocations/Decisions·user_signals·종료조건 생략 |
 
-#### write ownership와 late completion
+#### invocation authority와 late completion
 
-write-capable 호출은 새 invocation 전에 termination 확인, 기존 ownership 회수, partial write 검사를 모두 거친다. `git status -s`, 공유 상태 artifact, ownership map·변경 로그에서 완료/불완전 범위를 분류하고 old owner의 회수 및 handoff 대상을 기록한다. termination 또는 isolation을 확인할 수 없고 write scope를 분리할 수도 없으면 같은 scope의 retry를 시작하지 않고 Tier B 직접 수행 가능 여부를 판단한 뒤 blocked로 수렴한다.
+`invocation authority`는 특정 invocation의 효과를 현재 logical task의 결과로 받아들일 ATP 권한이다. read-only invocation은 result acceptance authority를, write-capable invocation은 write ownership을 가진다. 전자는 future result의 취합·성공 판정 수용권이고 후자는 선언된 write scope의 변경 권한이다. 사용자 retry 승인과 completion race 재확인 전에는 result acceptance authority와 write ownership을 철회하지 않는다.
 
-ownership 회수 후 기존 invocation이 완료하면 `late_completion`으로 격리한다. 그 결과는 자동 merge·성공 판정·새 owner scope 수정에 사용하지 않는다. 늦은 disk write가 발견되면 새 owner를 일시 중지하고 diff/ownership 충돌을 중재한다. 비충돌 read-only artifact만 참고자료로 보존할 수 있다.
+read-only recovery는 host termination control이 있으면 먼저 사용한다. termination control이 없더라도 invocation이 read-only임을 확인할 수 있으면 ATP-local하게 old identity의 result acceptance authority를 철회할 수 있다. 이 result acceptance 격리는 old invocation의 future result를 quarantine할 뿐 environment terminal을 추론하지 않으며 write isolation을 대체하지 않는다. advisor는 old `report_invocation_id`/`environment_invocation_id`와 phase ledger의 11개 공통 필드, non-empty `scope`/`rationale`/`source_ref`를 가진 `result_acceptance_revoked` event를 기록한 뒤에만 새 identity를 spawn한다. 철회는 영구적이며 새 invocation은 별도 result acceptance authority를 가진다.
+
+write-capable 호출은 새 invocation 전에 termination 확인, 기존 `write_ownership` 회수, partial write 검사를 모두 거친다. `git status -s`, 공유 상태 artifact, ownership map·변경 로그에서 완료/불완전 범위를 분류하고 old owner의 회수 및 handoff 대상을 기록한다. ATP-local read-only result quarantine은 write isolation을 대체하지 않는다. termination 또는 isolation을 확인할 수 없고 write scope를 분리할 수도 없으면 같은 scope의 retry를 시작하지 않고 Tier B 직접 수행 가능 여부를 판단한 뒤 blocked로 수렴한다.
+
+environment `completed`는 권위 terminal event로 먼저 별도 기록한다. `late_completion`은 same old identity의 result acceptance authority 또는 write ownership이 먼저 명시적으로 철회/격리된 뒤 environment completed가 도착한 경우에만 기록한다. advisor가 뒤이어 기록하는 `late_completion` disposition에는 phase-ledger-only event-specific 필드 `authority_kind: result_acceptance|write_ownership`과 같은 identity의 선행 철회 ledger/ownership anchor를 가리키는 `authority_ref`를 둔다. 선행 authority record가 없거나 completion이 철회 전에 도착하면 정상 결과 후보로 검토하고 retry를 취소하며 신규 `late_completion`을 만들지 않는다.
+
+result_acceptance late_completion은 quarantine-only이며 자동 merge·취합·성공 판정과 ownership pause가 모두 0건이다. write ownership late_completion도 late disk write가 없으면 quarantine-only이고 ownership row나 새 owner를 mutate/pause하지 않는다. 회수 뒤 실제 late disk write가 확인된 경우에만 겹치는 affected scope와 dependency transitive closure를 persisted `paused`로 만들고 중재하며 독립 scope는 `active`를 유지한다.
 
 각 invocation의 종결·계보·phase fallback은 §8의 lifecycle optional 필드에 기록한다. 이는 모델 routing fallback과 별개의 축이며 §5.7 및 `model_choice.fallback_reason`의 의미를 변경하지 않는다.
 
@@ -571,11 +578,13 @@ design-advisor 는 AC(검증 포인트)를 작성한 **직후**, 각 AC 를 아�
 
 research-advisor 가 **열거형·카탈로그 산출**(2개 이상의 이름 붙은 항목을 축·카테고리로 나열하는 결과 — §4.3 의 집합 정의와 동일 기준)을 만들 때, 개별 항목의 정확성에 앞서 **카테고리 축 집합 자체가 빠진 축 없이 수렴했는지**를 점검한다. §4.3 이 design 시점에 *요구에 명시된* 집합의 전수성을 예방한다면, 본 절은 research 시점에 *요구에 아직 잡히지 않은 축까지* 의 완결성을 예방한다. 항목이 0인 축은 §2.6 의 사후 전수 재검으로도 발동되지 않으므로(결함 항목 자체가 없음), 본 절이 그 사각을 사전에서 메운다.
 
+**신뢰도 schema namespace**: 이름 붙은 모든 axis와 각 axis 아래의 이름 붙은 모든 item은 각각 item-level marker enum `확인됨 | 추정 | 미확인` 중 정확히 하나를 가진다. axis set마다 aggregate `source_confidence: high | mixed | low`는 item marker와 별도 namespace다. mapping은 전 항목 `확인됨` → `high`, 다수 `미확인` → `low`, 나머지 → `mixed` 순서다. 따라서 `추정`/`미확인` 혼재 → `mixed`는 `미확인`이 strict majority가 아닐 때만 성립한다. 여러 axis set을 가진 artifact의 aggregate는 모든 set의 marker multiset을 합쳐 같은 mapping으로 계산한다.
+
 **게이팅**: 열거형/카탈로그 산출일 때만 발동한다(§4.3 와 동일한 발동 조건). 라이브러리 API 조사·단건 사실 확인 같은 비열거 research 에는 걸지 않는다.
 
 **절차**:
 1. **독립 분류체계 ≥2개 교차참조(multi-modal sweep)**: 축을 단일 출처의 분류로 받지 않는다. 서로 독립적인 분류체계 둘 이상(예: 공식 문서의 모듈 분류 + 커뮤니티/생태계의 토픽 택소노미)으로 축을 각각 도출해 교차참조한다. **한쪽 체계에만 존재하는 축은 미완결 신호**로 보고 보강 조사한다. ("전수 열거했다" 는 주장은 쓰지 않는다 — 개방 집합에서 같은 과신을 재현하므로, 완전성의 *주장* 이 아니라 도출 *방법* 을 강제한다.)
-2. **축 집합 폐쇄-신뢰도 마커**: 축 *목록 자체* 에 기존 `source_confidence` 3-tier(`확인됨`/`추정`/`미확인`)를 부여해 "이 축 목록이 닫혔다고 주장하지 않음" 을 산출에 명시한다. 두 분류체계가 수렴하지 않은 축이 있으면 `mixed`/`low` 로 두고 `concerns` 에 미수렴 범위를 남긴다.
+2. **축 집합 폐쇄-신뢰도 마커**: 이름 붙은 모든 axis/item에 item-level marker enum `확인됨 | 추정 | 미확인` 중 정확히 하나를 부여하고, 별도 namespace인 aggregate `source_confidence` 값은 `high | mixed | low` 중 하나로 전체 marker multiset에서만 도출한다. mapping은 전 axis/item `확인됨` → aggregate `high`, 다수 `미확인` → `low`, 나머지 → `mixed`다. 즉 `추정`/`미확인` 혼재 → `mixed`는 `미확인`이 strict majority가 아닐 때만 성립한다. 반환 전 (a) marker-bearing identity 집합이 열거 identity 집합과 같고 각 marker가 1개인지 **marker coverage**, (b) 이 mapping으로 재계산한 값이 emitted aggregate와 같은지 **aggregate derivation**을 모두 self-check한다. advisor가 누락 marker나 aggregate를 추정·합성하지 않는다.
 3. **고위험 카탈로그**: 정본성이 높거나 누락 비용이 큰 카탈로그는 분류체계별 sweep 을 `parallel-explorer` 로 병렬 수행할 수 있다(권장, 강제 아님). 전담 worker 를 신설하지는 않는다.
 
 **맹점과 사후승격 경로**: 축을 놓친 모델은 같은 축을 다시 놓칠 수 있다. ≥2 독립 분류체계 교차참조가 이 맹점을 완화하지만 완전히 제거하지는 못한다. 동일 유형 축 누락이 사후에 **재발**하면 §9 확장 트리거 레지스트리의 사후 승격 원칙에 따라 축-sweep 전담 worker 승격을 검토한다(예측 선제작이 아니라 관측 후 격상).
@@ -834,9 +843,9 @@ user_request: |
     output: <n>
   # ── lifecycle 전용 optional 필드 (legacy v2 문서는 네 필드 없이도 유효) ──
   attempt: <n>                 # 동일 logical task의 독립 invocation 순번(1부터); same-invocation follow-up은 증가 금지
-  termination: completed | failed | interrupted | silent_stall | late_completion
+  termination: completed | failed | interrupted | late_completion
   retry_of: <report 내부 직전 invocation id | null>
-  lifecycle_fallback_reason: <retry 소진 후 phase fallback/blocked 사유 | null>
+  lifecycle_fallback_reason: <abnormal cause + current recovery disposition + rationale | null>
   # ── tier-3 advisor 전용 (tier-2 / orchestrator / worker 는 생략 가능) ──
   planned_workers: <n>         # worker spawn 계획 수 (ownership.md 기준)
   actual_workers: <n>          # 실제 spawn 된 worker 수 (0 = advisor 직접 실행)
@@ -903,9 +912,15 @@ user_signals:
 - 필드 의미 변경·제거는 `schema_version` 올림.
 - 기존 세션의 보고서는 소급 수정하지 않는다.
 
-`attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`은 v2에 추가된 optional lifecycle 필드다. `retry_of`는 host thread가 아니라 report 내부 invocation ID만 참조한다. 필드 부재는 legacy/unknown이며 유효하다. lifecycle fallback은 모델 선택의 `model_choice.fallback_reason`을 대신하거나 덮어쓰지 않는다.
+`attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`은 v2에 추가된 optional lifecycle 필드다. `retry_of`는 host thread가 아니라 report 내부 invocation ID만 참조한다. 필드 부재는 legacy/unknown이며 유효하다. lifecycle fallback은 모델 선택의 `model_choice.fallback_reason`을 대신하거나 덮어쓰지 않는다. 신규 producer의 `termination`은 environment가 명시한 terminal event(`completed` / `failed` / `interrupted`) 또는 같은 old identity의 result acceptance authority나 write ownership이 먼저 명시적으로 철회·격리된 뒤 environment `completed`와 별도 advisor disposition으로 기록된 `late_completion`만 기록한다. `authority_kind`, `authority_ref`, `result_acceptance_revoked`는 phase ledger에만 두며 report field로 추가하지 않는다. `environment_state_unknown`은 terminal 값이 아니므로 invocation을 failure로 닫는 데 사용하지 않는다.
 
-**비정상 종결의 기록 의무 (optional 의 예외)**: `completed` 가 아닌 종결(`failed` / `interrupted` / `silent_stall` / `late_completion`)에는 해당 invocation 의 `termination` 기록이 **의무**다. orchestrator 가 그 phase 를 직접 수행·skip·fallback 으로 흡수한 경우에도 같으며, 선택한 종단의 사유를 `lifecycle_fallback_reason` 에 남긴다(§2.5 silent absorption 금지). 즉 필드 부재가 유효한 범위는 **정상 완료와 legacy report** 에 한정되고, 비정상 종결을 무기록으로 남기는 것은 스키마 위반이다. 이 조항은 기존 v2 report 의 유효성을 바꾸지 않는다 — legacy 는 종결 정보가 `unknown` 이며 소급 기재 대상이 아니다(§8 진화 규칙·`retroactive` 라벨 규약).
+**비정상 종결의 기록 의무 (optional 의 예외)**: `completed` 가 아닌 종결(`failed` / `interrupted` / `late_completion`)에는 해당 invocation 의 `termination` 기록이 **의무**다. orchestrator 가 그 phase 를 직접 수행·skip·fallback 으로 흡수한 경우에도 같으며, 선택한 종단의 사유를 `lifecycle_fallback_reason` 에 남긴다(§2.5 silent absorption 금지). 즉 필드 부재가 유효한 범위는 **정상 완료와 legacy report** 에 한정되고, 비정상 종결을 무기록으로 남기는 것은 스키마 위반이다.
+
+신규 producer의 canonical reason은 `cause=<failed|interrupted|late_completion>@<concrete source_ref>; disposition=<awaiting_user_decision|approved_clean_retry|phase_fallback|blocked|late_completion_quarantined>; rationale=<non-empty current decision/scope summary>`다. failed/interrupted 중간 invocation도 retry exhaustion을 기다리지 않고 첫 serialization부터 non-null reason을 기록하며 late completion은 항상 `late_completion_quarantined`다. recovery decision이 바뀌면 같은 invocation row의 disposition을 현재 결정으로 갱신하고 결정 순서·provenance는 phase ledger에 보존한다. 이는 기존 string 필드의 producer form이며 report schema v2와 optional lifecycle 필드 네 개를 변경하지 않는다.
+
+정상 terminal `completed`의 `lifecycle_fallback_reason`은 null 또는 생략 가능하다. `running`/`approval_required`/`environment_state_unknown` 같은 non-terminal payload는 `ended_at: null`을 유지하고 `termination` key를 생략하며 `lifecycle_fallback_reason`도 null 또는 생략한다.
+
+과거 v2 report의 `termination: silent_stall`은 reader가 받아들여야 하는 legacy/historical enum으로만 남는다. 신규 producer는 이를 쓰지 않으며 timeout·경과 시간·progress/heartbeat 부재·동일 snapshot을 종결로 변환하지 않는다. 기존 v2 report의 필드 부재 또는 legacy enum은 각각 `unknown` 또는 역사적 기록으로 유효하고 소급 수정 대상이 아니다(§8 진화 규칙·`retroactive` 라벨 규약).
 
 > **v2 (ADR-0008)**: `model_choice.model` enum 제거, `tier`/`effort`/`resolved_model`/`capped`/`capped_from` 도입 + `dispatch_size` 라벨 `-batch` 화. 기존 v1 보고서는 소급 수정하지 않는다 — 과거 세션 디렉토리를 읽을 때 v1(`model`)·v2(`tier`) 혼재를 허용한다.
 

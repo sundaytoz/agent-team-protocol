@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "invocations": [
+    {
+      "id": "inv-environment-completed",
+      "layer": "advisor",
+      "name": "research-advisor",
+      "started_at": "2026-08-12T15:20:00+09:00",
+      "ended_at": "2026-08-12T15:21:00+09:00",
+      "attempt": 1,
+      "termination": "completed",
+      "retry_of": null,
+      "lifecycle_fallback_reason": null,
+      "model_choice": {
+        "fallback_reason": null
+      }
+    }
+  ]
+}

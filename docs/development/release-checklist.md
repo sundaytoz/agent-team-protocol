@@ -4,7 +4,7 @@ title: Release Checklist
 description: ATP 릴리즈 전 문서·매니페스트 동기화 점검 목록.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-07-20
+last_reviewed: 2026-08-13
 ---
 
 # Release Checklist
@@ -235,9 +235,9 @@ comm -23 \
 
 기대값: **출력 없음**(끊긴 §N 인용 0). 좌변은 `docs`·`plugins` 전체에서 인용된 정수 §N 집합, 우변은 protocol 본문 §헤더 번호 집합이며, 좌변에만 있는 번호(=인용됐으나 본문에 없는 §N)가 끊긴 인용이다. `--exclude='release-checklist.md'` 로 이 체크리스트 자신의 §N 산문(self-match)을 검사 대상에서 빼 자기매치를 차단한다(§4.6 실행 통과 판정 — 2026-06-18 레포에서 출력 0 으로 실증). 신규 섹션은 §14 다음 정수로만 추가하고 기존 번호를 재배열하지 않는다(코어 구획 C7 규칙).
 
-## 10. Subagent lifecycle recovery 계약
+## 10. Environment-authoritative subagent lifecycle 계약
 
-`agent-team-protocol.md` §2.5의 silent-start lifecycle 의미, host appendix 경계, report schema v2 호환성을 함께 변경할 때 적용한다. 한 문서만 갱신해 공통 의미와 실행 mapping이 drift한 상태로 릴리즈하지 않는다.
+`agent-team-protocol.md` §2.5의 environment-authoritative lifecycle 의미, host appendix 경계, report schema v2 호환성을 함께 변경할 때 적용한다. 한 문서만 갱신해 공통 의미와 실행 mapping이 drift한 상태로 릴리즈하지 않는다.
 
 ### (a) Lifecycle fixture와 schema v2 역호환
 
@@ -245,18 +245,31 @@ comm -23 \
 python3 tests/lifecycle-contract/validate.py
 ```
 
-기대값: `PASS: lifecycle contract fixtures and documentation invariants`, exit 0. 기존 lifecycle 필드가 없는 v2와 optional 4필드(`attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`)가 있는 v2가 모두 유효해야 한다. same-invocation follow-up은 `attempt`를 올리지 않고, 승인 전 interrupt/retry/fallback action은 0건이어야 한다. write scope ownership handoff와 `late_completion` 격리, verification의 Tier B 실행 또는 blocked 종단도 fixture로 확인한다.
+기대값: `PASS: environment-authoritative lifecycle contract and compatibility fixtures`, exit 0.
+
+- 권위 event vocabulary와 10개 authority case가 전수 존재해야 한다. environment의 `running`/`completed`/`failed`/`interrupted`/`approval_required`와 상태 미확정 `environment_state_unknown`의 의미를 검사한다.
+- `wait_timeout`, 경과 시간, progress/output/tool event 또는 그 부재, heartbeat 부재, 동일 snapshot은 상태 전이·retry/fallback 권한·retry budget 소비를 만들지 않아야 한다.
+- lifecycle 필드가 없는 legacy v2, 과거 `termination: silent_stall` v2, 신규 environment terminal v2가 모두 유효해야 한다. 신규 producer는 `silent_stall`을 생성하지 않고 optional 4필드(`attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`)만 additive하게 사용한다.
+- same-invocation follow-up attempt 불변, 승인 전 mutation 0건, completion race, termination/isolation, write ownership handoff, `late_completion` 격리, verification의 Tier B 실행 또는 blocked 종단을 확인한다.
+- 명시적으로 관측된 `approval_required`는 relay/control unavailable이어도 child lifecycle에서 보존돼야 한다. child는 `ended_at: null`, `termination` 생략이고 mutation·attempt/retry 증가는 0건이며, phase 진행 불가만 report narrative에 `blocked`로 기록한다. `environment_state_unknown`은 environment status unavailable/error/semantic unknown에서만 생산한다.
+- 이름 붙은 모든 research axis/item에 marker가 정확히 하나인지, aggregate `source_confidence`가 전체 marker multiset에서 `high|mixed|low` truth table로 재계산되는지, worker/advisor가 marker coverage와 aggregate derivation을 모두 self-check하는지 확인한다.
+- 신규 abnormal `failed|interrupted|late_completion` reason이 concrete cause source, non-empty rationale와 닫힌 disposition 5종(`awaiting_user_decision`, `approved_clean_retry`, `phase_fallback`, `blocked`, `late_completion_quarantined`) 중 현재 값을 가지는지 확인한다. 중간 invocation의 non-null reason을 retry exhaustion 뒤로 미루면 실패해야 한다.
 
 ### (b) 공통 정본 host-neutrality와 appendix 연결
 
-위 validator는 공통 §2.5에 Codex collaboration 도구명과 고정 시간값이 0건인지, `codex-lifecycle-routing.md`에는 필요한 Codex mapping과 calibration 지침이 있는지 함께 검사한다. 공통 정본의 숫자 budget은 configurable/calibration 의미만 허용하고 특정 초·polling 간격·context turn 수를 정책 상수로 두지 않는다.
+위 validator는 공통 §2.5에 Codex collaboration 도구명과 고정 시간값이 0건인지, `codex-lifecycle-routing.md`에는 실제 Codex snapshot/notification/control mapping과 미지원 event 한계가 있는지 함께 검사한다. active lifecycle 범위에는 `suspected_silent_stall`, `start_silence_budget`, `unchanged_check_budget` 또는 heartbeat deadline 기반 전이가 없어야 한다. 과거 ADR/changes와 schema v2 reader의 legacy `silent_stall` enum은 역사·호환 범위로만 허용한다.
 
-신규 host mapping을 추가하면 공통 §2.5가 아니라 해당 host appendix에 배치하고 `platform-adapters.md`에는 host-neutral capability만 추가한다. `model_choice.fallback_reason`과 §5.7은 모델 routing 전용이며 lifecycle 사유는 `lifecycle_fallback_reason`에 기록한다.
+신규 host mapping을 추가하면 공통 §2.5가 아니라 해당 host appendix에 배치하고 `platform-adapters.md`에는 host-neutral status/event provenance capability만 추가한다. environment가 노출하지 않는 event를 추정하지 않고 `environment_state_unknown`으로 낮춘다. `model_choice.fallback_reason`과 §5.7은 모델 routing 전용이며 lifecycle 사유는 `lifecycle_fallback_reason`에 기록한다.
 
-### (c) 링크·index·§N·릴리스 메타데이터 전수 확인
+### (c) Environment event direct probe
+
+별도 read-only subagent invocation을 실행해 environment가 반환한 새 invocation identity, `running` snapshot과 최종 `completed` notification/result를 기록한다. wait timeout이 발생하면 lifecycle 전이·interrupt·retry·fallback이 0건이었는지 확인하되, timeout을 인위적으로 만들지 않고 timeout 미발생 자체를 실패로 판정하지 않는다. environment가 제공하지 않는 approval/failure detail은 probe 결과로 합성하지 않는다.
+
+### (d) 링크·index·§N·릴리스 메타데이터 전수 확인
 
 - 신규 appendix는 `plugins/atp/docs/development/index.md`와 `docs/development/index.md` 양쪽에 등록한다.
 - 신규 ADR/changes는 각각 `docs/adr/index.md`, `docs/changes/index.md`에 등록한다.
 - §8의 끊긴 protocol 인용 검사를 재실행한다. 기존 §N을 재배열하지 않는다.
 - §4의 base manifest 4곳 version invariant를 확인하고 add-on version과 `.agents/plugins/marketplace.json`의 versionless 계약을 변경하지 않는다.
-- user-facing FAQ는 한국어/영어에서 승인 gate, clean retry identity, ownership/late completion, verification non-skip 의미가 동등한지 대조한다.
+- user-facing FAQ는 한국어/영어에서 승인 gate, relay 불가 `approval_required` 보존과 phase narrative blocked 분리, clean retry identity, abnormal current disposition, ownership/late completion, verification non-skip 의미가 동등한지 대조한다.
+- 카탈로그 confidence FAQ 한·영 모두에서 every axis/every item marker, `high|mixed|low` 결정 규칙, marker coverage와 aggregate derivation 두 self-check가 동등한지 대조한다.

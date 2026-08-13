@@ -145,20 +145,25 @@ requirements-advisor
 
 **병렬 호출**: 독립 advisor (예: `research-advisor` 내부 `parallel-explorer`) 는 병렬 실행이 기본. orchestrator 가 상위 advisor 여러 개를 동시 호출하는 것은 컨텍스트 오염 리스크로 기본 금지. 자세한 규약은 프로토콜 §2.
 
-#### 5.2 호출 lifecycle 관측과 유한 복구
+#### 5.2 환경 권위 호출 lifecycle과 유한 복구
 
-모든 advisor/worker invocation 을 만들 때 프로토콜 §2.5의 lifecycle 관측을 함께 초기화한다. 최소한 logical task, invocation identity, `attempt`, 시작 시각, host의 progress/status/termination/isolation capability, 설정된 start-silence·unchanged-check·clean-retry budget을 `report.md` 또는 연결된 진단 artifact에 기록한다. 값은 host/config calibration 대상이며 무상한 budget은 허용하지 않는다.
+모든 advisor/worker invocation 을 만들 때 프로토콜 §2.5의 lifecycle 기록을 함께 초기화한다. 최소한 logical task, invocation identity, `attempt`, 시작 시각, host의 status/approval/termination/isolation capability와 clean-retry 상한을 `report.md` 또는 연결된 진단 artifact에 기록한다. lifecycle 상태는 host environment가 명시적으로 제공한 상태와 이벤트만 정규화한다.
 
-- first observable activity는 orchestrator가 정상 API로 실제 관측한 output, explicit progress, tool start/result, terminal/blocked 상태만 인정한다. 내부 reasoning/token 이벤트는 판정 근거가 아니다.
-- queueing, explicit blocked 또는 이미 시작된 long-running tool이 관측되면 silent-start stall로 판정하지 않는다. progress capability가 unknown이고 authoritative status도 확인할 수 없으면 `silent_stall`로 단정하지 않고 `progress_unobservable`로 보고한다.
-- configured budget과 유한 status 재확인을 거쳐 `suspected_silent_stall`이면 즉시 `awaiting_user_decision`으로 전환해 사용자에게 관측 근거와 wait / 기존 invocation 종결 후 clean retry / phase fallback / blocked 옵션을 제시한다. **사용자 확인 전 interrupt, retry, fallback 실행은 0건이어야 한다.**
-- 사용자가 clean retry를 승인하면 기존 invocation의 termination 또는 안전한 isolation을 먼저 확인한 뒤 **새 invocation identity**로 호출한다. 같은 invocation에 보내는 follow-up은 진단/상태 확인일 뿐 clean retry가 아니며 `attempt`를 증가시키지 않는다.
-- retry 승인 직전에 기존 invocation이 완료되면 재시도를 취소하고 기존 결과를 정상 후보로 검토한다. termination/ownership 회수 뒤 도착한 결과는 `late_completion`으로 격리하고 자동 merge나 phase 성공 판정에 쓰지 않는다.
-- 상태 확인·clean retry budget이 소진되거나 clean retry도 같은 lifecycle failure로 끝나면 반복 polling/재호출을 멈추고 §2.5 phase criticality에 따라 skip, Tier B self-check/direct 수행, 사용자 결정 또는 blocked 중 하나로 종결한다. write-capable·destructive scope는 termination/isolation을 확인할 수 없으면 같은 scope를 재호출하지 않는다.
+- environment가 `queued` 또는 `running`을 보고하는 동안 ATP도 그 상태를 유지한다. wait timeout, 경과 시간, 동일 snapshot 반복, output/progress/tool event의 존재나 부재는 상태 전이·failure·retry/fallback 권한을 만들지 않는다.
+- `completed`는 result 계약 검증·취합, `failed`는 원인 보고 후 recovery 검토, `interrupted`는 partial write와 ownership 확인으로 연결한다. environment의 `approval_required`는 retry/fallback 승인으로 간주하지 않는다. observed state와 relay/continuation capability는 별도 축이므로 relay/control 미지원이어도 child는 `approval_required`로 보존한다. environment provenance·두 identity·concrete `source_ref`·concern/capability evidence·ledger를 반환하고 child는 `ended_at: null`, termination 생략으로 두며 mutation은 0건이다. relay 가능한 ancestor에 control을 반환하고 root까지 불가하면 report의 `Summary` / `Open Items` / `concerns` narrative에만 phase `blocked`를 남긴다. capability 복구 뒤 같은 environment invocation/identity를 continuation하며 `attempt`와 retry accounting은 그대로 유지한다. 후속 status API unavailable/error event가 실제 관측된 경우에만 `environment_state_unknown`으로 전이한다.
+- environment status API가 unavailable/error이거나 의미가 불명해 authoritative status를 얻을 수 없을 때만 `environment_state_unknown`으로 기록한다. 이를 stall/failure로 재분류하거나 자동 interrupt, retry, fallback의 근거로 사용하지 않는다.
+- 명시적 terminal failure, interruption, environment blocker 또는 사용자 취소가 recovery 검토를 열어도 **사용자 확인 전 interrupt, retry, fallback 실행은 0건이어야 한다.**
+- read-only invocation은 `result acceptance authority`를, write-capable invocation은 `write ownership`을 가진다. 사용자 retry 승인과 completion race 재확인 전에는 어느 authority도 철회하지 않는다.
+- 사용자가 clean retry를 승인하면 completion race를 먼저 재확인한다. 기존 invocation이 완료됐으면 재시도를 취소하고 기존 결과를 정상 후보로 검토하며 authority 철회와 `late_completion`을 만들지 않는다.
+- read-only recovery가 계속되면 host termination control을 먼저 사용한다. termination control이 없더라도 read-only 성질과 old identity를 확인할 수 있으면 11개 공통 ledger 필드와 `scope`/`rationale`/`source_ref`를 가진 advisor event `result_acceptance_revoked`로 future result acceptance만 ATP-local하게 격리한다. 이 event 뒤에만 **새 invocation identity**를 호출하며 environment terminal은 추론하지 않는다.
+- write-capable recovery는 termination/write isolation, partial write 분류, ownership 회수를 확인한 뒤에만 새 identity로 handoff한다. read-only result quarantine은 write isolation을 대체하지 않는다. 같은 invocation에 보내는 follow-up은 진단/상태 확인일 뿐 clean retry가 아니며 `attempt`를 증가시키지 않는다.
+- environment의 old `completed`는 권위 event로 별도 기록한다. 같은 old identity의 result acceptance authority 또는 write ownership이 먼저 철회·격리된 경우에만 `authority_kind`/`authority_ref`를 phase ledger에 둔 advisor `late_completion` disposition으로 격리한다. read-only와 write/no-disk late result는 quarantine-only이며 자동 merge·취합·성공 판정·ownership pause가 0건이다. 실제 late disk write만 affected scope와 dependency closure를 persisted `paused`로 만든다.
+- 승인된 clean retry가 명시적 terminal failure로 끝나고 retry 상한에 도달하면 반복 재호출을 멈추고 §2.5 phase criticality에 따라 skip, Tier B self-check/direct 수행, 사용자 결정 또는 blocked 중 하나로 종결한다. write-capable·destructive scope는 termination/isolation을 확인할 수 없으면 같은 scope를 재호출하지 않는다.
 
 `attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason`은 §8의 optional lifecycle 필드에 기록한다. lifecycle 복구 사유는 모델 라우팅용 `model_choice.fallback_reason`과 분리하며, lifecycle 장애를 이유로 §5.7 모델 선택 의미를 변경하지 않는다.
+신규 abnormal producer의 `lifecycle_fallback_reason`은 첫 serialization(`failed|interrupted|late_completion`)부터 `cause=<failed|interrupted|late_completion>@<concrete source_ref>; disposition=<awaiting_user_decision|approved_clean_retry|phase_fallback|blocked|late_completion_quarantined>; rationale=<non-empty summary>`를 기록한다. failed/interrupted 중간 invocation도 retry 소진을 기다리지 않고 현재 recovery disposition을 쓰며, decision이 바뀌면 같은 row의 disposition을 갱신하고 provenance history는 phase ledger에 보존한다. `completed`는 reason null/생략 가능하고 nonterminal은 `ended_at: null`, termination 생략, reason null/생략이다. 이는 기존 string 필드의 producer form이며 report v2 optional lifecycle 필드 네 개를 늘리지 않는다.
 
-**verification 불변식**: code 변경이 있으면 verification advisor 장애나 lifecycle budget 소진도 skip 사유가 아니다. Tier B로 동일 통합 검증을 직접 실행하거나 요구되는 검증을 수행할 수 없어 `blocked`로 끝내며, 기존 L2 허용 규칙 밖의 `needs_user_verification`으로 대체하지 않는다.
+**verification 불변식**: code 변경이 있으면 verification advisor의 명시적 실패나 interruption도 skip 사유가 아니다. Tier B로 동일 통합 검증을 직접 실행하거나 요구되는 검증을 수행할 수 없어 `blocked`로 끝내며, 기존 L2 허용 규칙 밖의 `needs_user_verification`으로 대체하지 않는다.
 
 ### 6. 각 호출에 모델 override
 

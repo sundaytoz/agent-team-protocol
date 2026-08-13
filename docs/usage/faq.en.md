@@ -4,7 +4,7 @@ title: Troubleshooting / FAQ (English)
 description: Common issues during plugin install, init, and daily use.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-07-20
+last_reviewed: 2026-08-12
 ---
 
 <p align="center">
@@ -127,16 +127,32 @@ A. Don't build an integrated script; register multiple strategies in `verificati
 
 ### Q. An advisor stays `running` without an error or any first activity.
 
-A. ATP does not immediately declare failure or retry automatically. It reports `suspected_silent_stall` only after the configured finite observation budget has elapsed, the normal API has exposed no output, explicit progress, tool start/result, or terminal/blocked state, and no exclusion such as queueing or an already-started long-running tool applies. Internal reasoning/token events are not classification signals.
+A. ATP treats only lifecycle states and terminal events explicitly reported by the host environment through its normal API as authoritative. While the environment reports `running`, ATP remains `running`. Wait timeouts, elapsed time, output/progress/tool events or their absence, missing heartbeats, and repeated identical snapshots do not cause a lifecycle transition or authorize retry/fallback. If status cannot be determined, ATP keeps the non-terminal state `environment_state_unknown` instead of inferring failure.
 
-After the orchestrator reports the state and observability limits, choose one of these options:
+After an explicit environment `failed`/`interrupted`/blocker event or user cancellation, the orchestrator reports the state and cause and offers these options:
 
-1. Terminate the old invocation and perform a **clean retry** with a new invocation ID. A follow-up on the same thread is not a clean retry.
-2. Wait until a user-selected next condition or extended budget.
+1. Terminate or isolate the old invocation and perform a **clean retry** with a new invocation ID. A follow-up on the same thread is not a clean retry.
+2. Preserve the environment state and continue waiting.
 3. Use the fallback allowed for that phase.
 4. End the phase or session as blocked.
 
-ATP does not interrupt, retry, or execute a fallback before user approval. For a write-capable call, it does not retry the same scope until termination/isolation, ownership revocation, and partial writes have been checked. An old result that arrives after ownership revocation is quarantined as `late_completion` and is never merged automatically. In particular, verification for a code change cannot be skipped because an advisor failed; it ends with Tier B direct verification or blocked. See [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md) for the common semantics and [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md) for the Codex tool mapping.
+The environment's `approval_required` event is propagated through its approval flow but does not itself approve a clean retry or fallback. ATP does not interrupt, retry, or execute a fallback before separate user approval. Immediately before an approved retry, it repeats the completion-race check. If the old invocation completed, ATP cancels the retry and reviews that result as a normal candidate. It does not revoke result acceptance authority or write ownership before this check.
+
+An explicitly observed `approval_required` remains `approval_required` even when relay/control capability is unavailable. Control is returned to an ancestor that can relay it; if no path through the root can relay it, only the phase's inability to proceed is recorded as `blocked` in the report narrative. That is not a child lifecycle terminal: the child keeps `ended_at: null` and omits `termination`. Relay unavailability does not turn it into `environment_state_unknown` or failure. `environment_state_unknown` is used only when environment status itself is unavailable, errors, or has unknown semantics. If capability returns and the environment supports same-identity continuation, attempt and retry counts do not change.
+
+For a read-only call, ATP starts a new identity only after explicitly revoking the old identity's `result acceptance authority`. This is host-neutral isolation of future result acceptance; it does not infer an environment terminal state. Only a result arriving after the same old identity's revocation record is classified as `late_completion`. ATP quarantines it and does not automatically merge, aggregate, use it for success, or pause ownership.
+
+For a write-capable call, ATP does not retry the same scope until termination/write isolation, ownership revocation, and partial writes have been checked. If an old result arrives after ownership revocation but made no late disk write, it is quarantine-only. Only a confirmed late disk write persistently pauses the overlapping scopes and their dependency closure; independent scopes remain `active`. Therefore `late_completion` alone does not cause a pause. In particular, verification for a code change cannot be skipped because an advisor failed; it ends with Tier B direct verification or blocked.
+
+For newly produced abnormal `failed`/`interrupted`/`late_completion` rows, `lifecycle_fallback_reason` records a concrete cause source, the current recovery disposition, and a rationale. The five dispositions are `awaiting_user_decision`, `approved_clean_retry`, `phase_fallback`, `blocked`, and `late_completion_quarantined`. This is not a final reason deferred until retries are exhausted. An intermediate invocation records its current disposition immediately and updates it after an explicit later decision. The report remains schema v2 with the same four optional lifecycle fields. See [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md) for the common semantics and [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md) for the Codex tool mapping.
+
+### Q. How should per-item confidence and `source_confidence` be recorded in catalog research?
+
+A. **Every named axis and every named item** has exactly one `confirmed | estimated | unverified` marker (`확인됨 | 추정 | 미확인` in the canonical Korean contract). An axis marker cannot be inherited by its child items or replaced with an aggregate value. The complete axis set has exactly one separate-namespace aggregate, `source_confidence: high | mixed | low`.
+
+The aggregate is derived deterministically from the complete marker multiset. It is `high` when every marker is confirmed, `low` when unverified markers are a strict majority, and `mixed` for every other combination. All-estimated, confirmed/estimated mixtures, and sets with non-majority unverified items are therefore `mixed`. For an artifact with multiple axis sets, its overall aggregate uses the same rule over the combined marker multiset.
+
+Before returning, both the research worker and advisor perform both self-checks. First, **marker coverage** verifies that the named axis/item identity set equals the marker-bearing identity set and that each identity has exactly one marker. Second, **aggregate derivation** recomputes the aggregate from the actual marker multiset and compares it with the emitted `source_confidence`. The advisor does not invent missing markers or promote a mismatched result to an authoritative premise.
 
 ---
 

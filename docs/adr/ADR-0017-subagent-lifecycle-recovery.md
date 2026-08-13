@@ -111,3 +111,5 @@ ownership 회수 후 기존 invocation이 완료하면 `late_completion`으로 �
 - [ADR-0009](./ADR-0009-bundle-runtime-platform-neutralization.md) — 번들 런타임 플랫폼 중립화
 - [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md) — 공통 lifecycle 정본
 - [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md) — Codex host appendix
+
+> **Partially superseded by [ADR-0020](./ADR-0020-environment-authoritative-subagent-lifecycle.md):** 결정 1·2의 감지 부분과 결정 4의 first-activity/unchanged observation budget 부분만 대체하며, 승인·clean retry identity·completion race·termination/isolation·ownership·late completion·verification non-skip·schema v2 additive 필드는 유지한다.
