@@ -9,7 +9,7 @@ ATP 세션은 **단일 오케스트레이터 + 도메인 어드바이저 + 필�
 **C1. 역할 정의 요약 (상세 §1)** — Orchestrator: 사용자와의 유일한 창구, **직접 작업 금지**(조사/설계/구현/검증/문서화 전부 advisor 위임), 첫 코드 변경 전 계획 가시화 의무. Advisor: 도메인 단일 책임자, 산출=파일+요약. Worker: 단일 책임·최소 컨텍스트, **다른 worker 호출 금지**.
 
 <!-- atp:core:item 2 -->
-**C2. 호출 모델 불변 (상세 §2)** — **Tier-3 advisor 만 `Agent` 툴 보유**(`research-advisor`/`implementation-advisor`). Worker 는 `Agent` 없음(**재귀 금지**). Advisor 호출당 worker **최대 6개** 동시 spawn(초과 시 배치 분할). **orchestrator 가 상위 advisor 여러 개 동시 호출 금지**(컨텍스트 오염), 독립 advisor 내부 worker 병렬은 허용. Invocation lifecycle은 host environment가 명시한 상태·terminal event만 권위로 사용한다. timeout·경과 시간·progress/heartbeat 부재·동일 snapshot은 상태 전이 근거가 아니며, 명시적 failure/interruption 복구에는 §2.5의 사용자 승인·독립 invocation·ownership·유한 재시도 규칙을 적용한다.
+**C2. 호출 모델 불변 (상세 §2)** — **Tier-3 advisor 만 `Agent` 툴 보유**(`research-advisor`/`implementation-advisor`). Worker 는 `Agent` 없음(**재귀 금지**). Advisor 호출당 worker **최대 6개** 동시 spawn(초과 시 배치 분할). **orchestrator 가 상위 advisor 여러 개 동시 호출 금지**(컨텍스트 오염), 독립 advisor 내부 worker 병렬은 허용. Invocation lifecycle은 host environment가 명시한 상태·terminal event만 권위로 사용한다. wait/wake는 §2.5의 필수 capability가 전부 supported인 environment subscription에서만 수행하며, unchanged running·internal keepalive는 root model을 깨우지 않는다. capability가 하나라도 unsupported/unknown이면 자동 대기·상태 열거·retry·interrupt·fallback을 0건으로 두고 authority/ownership을 보존한 채 blocked 또는 사용자가 명시 선택한 event-only external continuation으로만 수렴한다. 명시적 failure/interruption 복구에는 §2.5의 사용자 승인·독립 invocation·ownership·유한 재시도 규칙을 적용한다.
 
 <!-- atp:core:item 3 -->
 **C3. 파괴적 조작 게이트 (압축형 — 전문·2단계 분리·실전 사례는 §6)** — 아래 6항목은 advisor/worker **직접 수행 금지**. **orchestrator 가 사용자 확인 후에만** 실행한다:
@@ -266,7 +266,66 @@ status unavailable/error
 
 `observed_lifecycle_state`와 approval relay/continuation capability는 별도 축이다. environment가 `approval_required`를 명시했다면 relay/control이 unsupported·unknown이어도 child state는 `approval_required`로 보존한다. `environment_state_unknown`은 environment status 자체가 unavailable/error/semantically unknown일 때만 생산한다. Relay/control 불가 child는 environment provenance·두 identity·concrete `source_ref`·concern/capability evidence·ledger를 보존하고 `ended_at: null`, termination 생략, reason null/생략으로 반환하며 mutation은 0건이다. relay 가능한 ancestor에 control을 반환하고 root까지 불가하면 report의 `Summary` / `Open Items` / `concerns` narrative에만 phase `blocked`를 남기며 child invocation은 nonterminal `approval_required`로 보존한다. capability가 복구돼 same environment identity continuation이 가능해지면 `attempt`와 retry accounting을 바꾸지 않고 이어가며, 후속 status API unavailable/error event가 실제 관측된 경우에만 `environment_state_unknown`으로 바꾼다.
 
-`wait` timeout, 경과 시간, progress/output/tool event 또는 그 부재, heartbeat 부재, 같은 snapshot 반복은 parent wake-up·UX·설명용 관측일 뿐 lifecycle 상태를 전이시키지 않는다. reasoning·token count·호스트 내부 scheduler 신호와 실행 중 output 문자열도 terminal 판정 근거가 아니다. progress가 없어도 environment의 `running`은 그대로 `running`이다.
+경과 시간, progress/output/tool event 또는 그 부재, heartbeat 부재, 같은 snapshot 반복은 lifecycle 상태를 전이시키지 않는다. reasoning·token count·environment 내부 keepalive/scheduler 신호와 실행 중 output 문자열도 terminal 판정 근거가 아니다. progress가 없어도 environment의 `running`은 그대로 `running`이다.
+
+#### Environment-owned wait/wake scheduling
+
+Lifecycle correctness와 wait/wake scheduling은 별도 계약층이다. Lifecycle은 위 권위 상태를 정규화하고, scheduling은 root model을 언제 suspend/resume할지 정한다. Environment는 invocation identity와 실행 상태에 더해 subscription identity, terminal/approval/control event 관측, timeout-free suspend, 내부 keepalive/watchdog, wake scheduling, event coalescing·deduplication, user steering과 await cancellation 전달, changed-invocation compact delta 생성을 소유한다. ATP는 logical task·dependency/DAG, 관심 target과 `any|all` 조건, 결과 계약 검증·취합, approval relay 정책, 명시적 terminal failure 이후 사용자 승인형 recovery, completion race·retry identity·result acceptance·write ownership·late completion을 소유한다.
+
+정식 논리 호출은 다음과 같다.
+
+```text
+await_invocations({
+  targets,   // 중복 없는 environment invocation identity의 비어 있지 않은 집합
+  condition, // any | all
+  wake_on    // completed | failed | interrupted | approval_required | user_steering
+})
+```
+
+`wake_on`의 허용 기본 집합은 정확히 `completed | failed | interrupted | approval_required | user_steering`다. keepalive interval, scheduler/watchdog 정책과 coalescing window는 ATP 입력이 아니며 environment 내부 구현이다. 호출은 persistent `await_id`를 만들고 root model turn을 suspend한다. 관심 event, explicit await cancellation 또는 backend capability error 전에는 root model invocation을 만들지 않으며 root-visible timeout/keepalive event는 존재하지 않는다.
+
+- `condition: any`는 target 하나에서 관심 event가 생기면 resume dispatch 전에 queue에 들어온 다른 관심 event를 함께 한 batch로 전달한다.
+- `condition: all`은 각 target의 `completed | failed | interrupted`를 누적해 모두 terminal일 때 한 번 전달한다. `approval_required`, `user_steering`, explicit await cancellation은 barrier를 즉시 단락한다.
+- `failed`/`interrupted`가 전달돼도 recovery는 batch 반환 전 시작하지 않으며, 반환 뒤에도 기존 사용자 승인형 recovery만 연다.
+- await cancellation은 subscription만 취소한다. child cancellation은 별도 명시 control이고 environment가 실제 반환한 상태만 lifecycle에 반영한다.
+
+정식 반환은 `await_id`, 단일 resume identity인 `batch_id`, `wake_reason`, 변경된 invocation만 담은 ordered `deltas`, `control_delta`로 구성한다. `wake_reason`은 `condition_satisfied | approval_required | user_steering | await_cancelled | capability_error`의 닫힌 집합이다. 각 delta는 stable `event_id`, `environment_invocation_id`, changed normalized `state`, concrete `source_ref`, 원문 대신 사용할 nullable `detail_ref`를 포함한다. 전체 agent tree/snapshot은 반환하지 않는다. 같은 `event_id`는 정확히 한 batch에서만 전달하며, retry의 새 `environment_invocation_id`를 old event와 합치지 않는다. 여러 관심 event는 resume dispatch 전에 한 batch로 coalesce하되 approval, steering, cancellation을 지연하지 않는다. User steering은 suspend를 선점해 active turn에 control을 반환하고, 응답성·delivery·cancellation semantics는 environment가 소유한다.
+
+#### Wait/wake capability gate와 gap 수렴
+
+Subagent를 호출하는 주체는 subscription 등록 전에 `platform-adapters.md` §3.2의 필수 capability 전부를 `supported | unsupported | unknown`으로 판정한다. **전부 `supported`일 때만** `environment_subscription` mode를 활성화한다. 부분 capability를 조합해 model-waking polling scheduler를 합성하지 않는다.
+
+하나라도 `unsupported | unknown`이면 다음을 정확히 수행한다.
+
+1. `wait_wakeup_capability_unavailable`을 아래 phase-local ledger에 정확히 1회 기록한다. status backend unavailable/error가 실제 관측되지 않았다면 child lifecycle을 `environment_state_unknown`으로 바꾸지 않는다.
+2. 자동 await/timed wait, 상태 열거, retry, interrupt, phase fallback, synthetic terminal transition은 모두 0건이다.
+3. 마지막 environment-authoritative lifecycle state, read-only result acceptance authority, write-capable write ownership을 보존한다. capability gap 자체는 lifecycle failure나 `lifecycle_fallback_reason` producer가 아니다.
+4. phase narrative/Open Item을 `blocked`로 반환하거나, 사용자가 명시적으로 선택한 event-only external continuation으로만 이어간다. External continuation은 관심 environment event에서만 새 active turn을 열 수 있는 identity와 cancellation contract가 있어야 하며 timer/polling continuation은 허용하지 않는다.
+5. child가 이후 완료될 수 있으므로 completion race와 late completion 규칙을 그대로 적용한다. 별도의 명시적 `failed | interrupted`가 관측된 경우에만 아래 사용자 승인형 recovery를 연다.
+
+#### Phase-local wait/wakeup ledger
+
+Scheduling metadata는 report v2 `Invocations[]`에 새 field로 넣지 않고 JSONL artifact에 분리한다. Top-level orchestrator는 `.atp/work-session/<sid>/artifacts/wait-wakeup-events.jsonl`, research advisor는 `research/wait-wakeup-events.jsonl`, implementation advisor는 `implementation/wait-wakeup-events.jsonl`의 유일 writer다. Report에는 artifact link와 compact decision/concern/open-item narrative만 둔다.
+
+모든 row는 `recorded_at`, nullable `await_id`, `owner_report_invocation_id`, `event`, concrete `source_ref`, `details` envelope를 사용한다. 허용 event vocabulary는 정확히 다음 여섯 개다.
+
+```text
+await_capability_checked
+await_registered
+wake_batch
+wait_wakeup_capability_unavailable
+external_continuation_selected
+measurement
+```
+
+- `await_capability_checked`: 필수 capability 전체의 `supported | unsupported | unknown` 판정과 `profile_ref`.
+- `await_registered`: `targets`, `condition`, 정확한 `wake_on`, `mode: environment_subscription`, `capability_profile_ref`.
+- `wake_batch`: `batch_id`, `wake_reason`, compact `deltas`, `deduped_event_ids`.
+- `wait_wakeup_capability_unavailable`: `unavailable_capabilities`, `last_authoritative_states`, `preserved_authorities`, `preserved_write_ownership`, `phase_disposition: blocked | explicit_external_continuation_required`와 자동 wait/list/retry/interrupt/fallback count 각각 0.
+- `external_continuation_selected`: `selected_by_user_ref`, `continuation_identity`, `wake_event_contract_ref`, `cancellation_contract_ref`. event-only continuation이 아니면 기록하지 않는다.
+- `measurement`: `wait_calls`, `list_calls`, `spawn_calls`, `verifier_calls`, `root_model_resumes`, `semantic_recovery_actions`, `input_tokens`, `cached_input_tokens`, `output_tokens`, `latency_ms`, `steering_latency_ms`. 정상 API/로그로 알 수 없는 값은 `null`이며 0으로 합성하지 않는다.
+
+이 scheduling ledger는 lifecycle authority ledger를 대체하거나 report v2 optional lifecycle field 네 개를 늘리지 않는다.
 
 #### terminal event 이후 사용자 승인형 복구
 

@@ -301,6 +301,21 @@ placeholder 표기는 **`{...}` 로 통일**. `verification-strategies.md` / `se
 | 2026-06-25 | 20260625-161950 | **release: 2.2.2 → 2.3.0** (minor). `cc1f3a3`(2.2.2) 이후 머지된 번들 feat 가 manifest 미bump 로 `/plugin update` 미도달이던 것 해소 — dispatch §2.9 fact-injection(`4992ea5`) + opencode 번들 통합분(verification-strategies +86·platform-adapters §8 포인터·protocol 일부) + 식별자 grep 규율(`6517028`) + design-advisor. **재발 방지(레포 docs-first 동선 강화)**: 루트 `CLAUDE.md` "릴리스 — 배포 완결 의무" 신규 섹션 + `docs/index`(한·영) 빠른진입 release 동선 + `docs/development/index` §0 트리거 성격 노출 + release-checklist §0↔CLAUDE cross-ref. base manifest 4 bump | opencode 어댑터 본체(`adapters/opencode`)는 npm 별도(범위 밖). atp-graphify 2.1.0 무관. 번들·프로토콜 §N **0 변경**(동선은 레포 docs 한정 — 소비 프로젝트 미전파). `2.1.0`·`2.2.0` 에 이은 동일 미bump 이월 패턴 3회째 → docs-first 동선으로 구조적 차단 |
 | 2026-07-06 | 20260706-090617 | **release: 2.3.2 → 2.4.0** (minor). **feedback inbox 시스템 제거** — "feedback" 3갈래(① `protocol_feedback[]` 자기교정 ② inbox 카테고리 ③ memory `type:feedback`) 중 **②만 폐기**(채택 실적 0, 이름 3중 오버로딩 혼선). 카테고리 14→13. base+opencode 어댑터 미러 동시 편집(15 편집 + 템플릿 2 삭제 + manifest 참조 1줄). ①③·§4.3 과거사례(dated fact) 존치. base manifest 4 bump. ADR-0016 + changes 기록 | 경계보존 위해 orchestrator-direct(위임 시 존치 대상 오삭제 리스크). 어댑터 미러는 생성 산출물이나 사용자 지시로 동시 편집. §4.3 인용은 라이브 참조 아닌 회고 사실이라 유지 |
 | 2026-07-07 | 20260707-095025 | **release: 2.4.0 → 2.5.0** (minor). Codex 전용 `codex-spark-routing.md` appendix 추가 — Spark 는 `host_scope: codex-only` 문서에서만 구체화하고 공통 §5 는 host appendix 링크+fallback 규칙만 보강. `task/SKILL.md` §6 에 host 전용 optional route Read 규칙 추가. base manifest 4 bump + changes 기록 | ADR-0008 tier/effort/cap/report v2 유지. 새 schema field 0, Spark 미지원·미확인·실패 시 기존 tier 매핑 fallback. atp-graphify 변경 없음 |
+| 2026-08-13 | — | **release: 2.12.0 → 2.13.0** (minor). Lifecycle correctness와 wait/wakeup scheduling을 분리하고 timeout-free environment subscription만 formal 경로로 채택. 필수 capability gap은 unavailable 1회·automatic wait/list/recovery 0·authority/ownership 보존 뒤 blocked 또는 explicit event-only continuation으로 수렴. Deterministic scheduling fixture와 validator 추가 | ADR-0021. 독립 validator·report v2·정적 release gate PASS(L2 skipped: 외부 의존 없음). Current Codex formal adapter는 unsupported이며 runtime timed-wait probe와 longer/repeated timed wait fallback 없음 |
+
+### G-DESIGN-INVARIANT-1 — fallback 제안 전 최상위 불변식 모순 gate (P1) `release-pending`
+
+**문제**: 초기 wait/wakeup 설계가 current Codex 완화책으로 bounded timeout fallback을 제안했지만, 이는 사용자의 최상위 불변식 “관심 상태 변화가 없으면 root model 호출 0”과 정면 충돌했다. 사용자 교정 후 strict environment-subscription gate로 전수 재설계했다.
+**제안**: `design-advisor` 계획 gate에 invariant×option 대조를 추가한다. fallback·degradation 후보 각각이 명시적 최상위 불변식을 위반하면 후보에서 제거하고, 호스트 gap으로 분리한다.
+- 태그: [self] · P1 · 번들 · signal_source: negative · `structural_class: structural-latent`
+- docs_sync_target: `plugins/atp/agents/design-advisor.md` + `agent-team-protocol.md` 계획 gate
+
+### G-SOURCESPEC-GATE-1 — agent/skill 실행 계약은 documentation 전 source-spec dry-run (P1) `release-pending`
+
+**문제**: agent/skill 정의를 수정한 뒤 project 종료 gate에서 source-spec dry-run을 처음 수행해 mode scalar, Write allowlist, scheduling return, orchestrator-preallocated report identity 결함 C1∼C4를 늦게 발견했다. 수정 후 implementation→documentation→verification을 재실행했다.
+**제안**: agent/skill 실행 계약 변경 시 documentation 진입 전 source-spec dry-run을 필수화한다. 최소 검사 축은 requested/effective mode, tool/Write allowlist, 반환 schema, orchestrator-preallocated identity, closed vocabulary다.
+- 태그: [self] · P1 · 번들 · `release-pending`
+- docs_sync_target: `plugins/atp/skills/task/SKILL.md` project gate + `plugins/atp/agents/implementation-advisor.md`
 
 ### 향후 확장 규약
 

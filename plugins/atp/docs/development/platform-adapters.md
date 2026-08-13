@@ -4,7 +4,7 @@ title: Capability Tier 와 호스트 자가판정
 description: ATP 가 호스트 CLI 의 subagent capability 를 자가판정해 위임 토폴로지(Tier A / A-flat / B)를 결정하는 규칙. 호스트 고유 문법·모델 슬러그는 호스트 위에서 실행 중인 에이전트가 자율 적용한다.
 owner: template-maintainer
 stability: draft
-last_reviewed: 2026-08-12
+last_reviewed: 2026-08-13
 ---
 
 # Capability Tier 와 호스트 자가판정
@@ -103,6 +103,42 @@ Relay/continuation capability가 복구되어 host가 same environment identity 
 Host termination control과 ATP-local `result acceptance isolation`은 별도 capability다. 사용자 승인과 completion race 재확인 뒤 host termination을 먼저 시도하되, termination control이 unsupported라도 read-only 성질과 identity를 확인한 invocation은 `result_acceptance_revoked` ledger event로 future result 수용만 격리할 수 있다. 이 격리는 environment `failed`/`interrupted`를 합성하지 않는다. write-capable invocation의 `write_ownership`에는 적용할 수 없으며 termination/write isolation·partial write 분류를 대신하지 않는다.
 
 명시적 failed/interrupted/environment blocker 뒤의 clean retry 횟수에는 유한한 안전 한도를 둘 수 있다. 그러나 관측 시간·poll 횟수는 그 한도를 소비하지 않는다. capability가 unknown이어도 사용자 보고 → 옵션 → 확인 순서를 생략하지 않으며, 승인 전 interrupt/retry/fallback은 0건이다.
+
+### 3.2 Wait/wakeup scheduling capability profile
+
+Lifecycle capability와 별도로, subagent를 호출하는 주체는 protocol §2.5의 `await_invocations`를 등록하기 전에 다음 capability를 각각 `supported | unsupported | unknown`으로 판정한다. 이 profile은 host-neutral하며 모든 required capability가 `supported`인 경우에만 `adapter_enabled: true`, `mode: environment_subscription`이다.
+
+| capability identity | 판정 질문 |
+|---|---|
+| `timeout_free_suspend` | 관심 event 전에는 root model invocation 없이 persistent await를 유지하는가 |
+| `targeted_wait_any` | 지정한 target 집합 중 하나의 관심 event를 기다릴 수 있는가 |
+| `targeted_wait_all` | 지정한 target 집합 전부의 terminal 조건을 누적할 수 있는가 |
+| `terminal_event_subscription` | `completed | failed | interrupted`를 environment event로 구분해 구독하는가 |
+| `approval_event_subscription` | `approval_required`를 structured environment event로 구독하는가 |
+| `user_steering_preemption` | suspend 중 user steering이 wait를 선점해 control을 반환하는가 |
+| `await_cancellation` | persistent await identity를 별도로 취소할 수 있는가 |
+| `compact_changed_invocation_delta` | 전체 snapshot이 아니라 changed invocation delta만 전달하는가 |
+| `stable_event_identity` | 재전달을 식별할 stable event ID가 있는가 |
+| `environment_deduplication` | 동일 event ID를 한 batch에서만 전달하는가 |
+| `completion_coalescing` | resume dispatch 전 인접 관심 event를 한 compact batch로 취합하는가 |
+| `internal_keepalive_no_model_wake` | keepalive/watchdog을 environment 내부에서 처리하고 root를 깨우지 않는가 |
+
+**All-required gate**: 위 identity 하나라도 `unsupported | unknown`이면 `adapter_enabled: false`다. ATP는 부분 지원을 조합하거나, root-visible 시간 신호·반복 상태 조회·polling으로 빈 capability를 보충하지 않는다. `wait_wakeup_capability_unavailable`을 phase-local ledger에 정확히 1회 기록하고 automatic wait/list/retry/interrupt/fallback을 각각 0건으로 유지한다.
+
+Capability gap은 scheduling unavailable이지 lifecycle failure가 아니다. 실제 status API unavailable/error가 관측되지 않았다면 child의 마지막 authoritative state를 `environment_state_unknown`으로 바꾸지 않는다. Result acceptance authority와 write ownership도 보존한다. Phase는 `blocked` 또는 사용자가 명시 선택한 event-only external continuation으로만 수렴한다. External continuation에는 host-native 관심 event resume identity와 cancellation contract가 모두 있어야 하며 timer/polling continuation은 허용하지 않는다.
+
+Scheduling 기록은 lifecycle ledger와 분리된 phase-local `wait-wakeup-events.jsonl`에 둔다. Event vocabulary는 정확히 다음 여섯 개의 닫힌 집합이며, host adapter가 다른 event 이름이나 root-visible timeout/keepalive event를 추가하지 않는다.
+
+| scheduling event | 의미 |
+|---|---|
+| `await_capability_checked` | 필수 capability 12개 각각의 `supported | unsupported | unknown` 판정과 profile 근거를 기록한다 |
+| `await_registered` | all-required gate 통과 뒤 `targets`, `condition`, 정확한 `wake_on`, `mode: environment_subscription`, capability profile ref를 기록한다 |
+| `wake_batch` | 하나의 root resume를 식별하는 batch identity, wake reason, changed-invocation compact delta와 deduplicated event identity를 기록한다 |
+| `wait_wakeup_capability_unavailable` | 필수 capability 하나라도 미지원·불명일 때 정확히 1회 기록하고 preserved lifecycle state·authority·ownership, phase disposition, automatic action 0건을 보존한다 |
+| `external_continuation_selected` | 사용자가 명시 선택한 event-only continuation identity와 wake/cancellation contract가 모두 있을 때만 기록한다 |
+| `measurement` | 정상 API나 로그로 확인한 wait/list/spawn/verifier/root-resume, token, latency 측정만 기록하며 알 수 없는 값은 `null`로 둔다 |
+
+각 row의 envelope과 event별 closed details, adapter 논리 입출력, 정확한 wake set, compact delta·event ID·coalescing·steering/cancellation 불변식은 protocol §2.5가 정본이다. Scheduling metadata를 report v2 `Invocations[]`에 복사하지 않는다.
 
 ## 4. Tier A-flat 평탄화 규약 (재귀 금지 호스트의 토폴로지 해소)
 
@@ -209,7 +245,7 @@ ATP 모델 정책(프로토콜 §5)은 플랫폼 중립 tier(`small`/`medium`/`l
 host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮어쓰지 않는다. 해당 host 에서만 appendix 를 읽고, route 사용이 불가능하면 즉시 §6 의 기존 tier 매핑으로 fallback 한다.
 
 - Codex host: [codex-spark-routing.md](./codex-spark-routing.md) — Spark 를 저지연 code-worker route 후보로만 사용하고, 미지원/미확인/실패 시 기존 tier 매핑으로 fallback.
-- Codex host lifecycle: [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — §2.5의 environment state·terminal event·종결·독립 invocation·context 전달을 Codex collaboration 도구에 매핑. lifecycle fallback은 모델 route와 독립.
+- Codex host lifecycle/wait-wakeup: [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — §2.5의 environment state·terminal event·종결·독립 invocation을 매핑하고, timeout-free scheduling capability gap과 adapter gate를 판정. lifecycle fallback은 scheduling 및 모델 route와 독립.
 
 ## 8. 동결 이력 포인터
 
@@ -226,5 +262,6 @@ host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮�
 - [ ] Tier A / A-flat / B 정의가 capability 조건("spawn 가능한가" / "재귀 가능한가")만으로 기술되어 있는가?
 - [ ] 자가판정 절차(§3)에 안전 폴백(불확실 → Tier B / parent 상속)이 포함되어 있는가?
 - [ ] lifecycle capability(environment state·terminal/approval event·종결·identity·context·result acceptance isolation·write isolation)가 supported/unsupported/unknown으로 판정되고 `environment_state_unknown` 안전 폴백이 정의되어 있는가?
+- [ ] wait/wakeup 필수 capability 12개가 전부 `supported`일 때만 `environment_subscription`이 활성화되고, 하나라도 unsupported/unknown이면 unavailable 1회·자동 wait/list/recovery 0건으로 수렴하는가?
 - [ ] 동결 이력 포인터(§8 → ADR-0009 부록)가 존재하는가?
 - [ ] 게이트·report 스키마·검증규율의 tier 독립성("어느 tier 든 유지")이 명시되어 있는가?

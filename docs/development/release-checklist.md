@@ -237,9 +237,11 @@ comm -23 \
 
 ## 10. Environment-authoritative subagent lifecycle 계약
 
-`agent-team-protocol.md` §2.5의 environment-authoritative lifecycle 의미, host appendix 경계, report schema v2 호환성을 함께 변경할 때 적용한다. 한 문서만 갱신해 공통 의미와 실행 mapping이 drift한 상태로 릴리즈하지 않는다.
+이 gate는 lifecycle뿐 아니라 2.13.0의 wait/wakeup scheduling 계약도 함께 다룬다.
 
-### (a) Lifecycle fixture와 schema v2 역호환
+`agent-team-protocol.md` §2.5의 lifecycle correctness, timeout-free environment-owned wait/wakeup scheduling, host appendix 경계와 report schema v2 호환성을 함께 검사한다. 한 문서만 갱신하거나 bounded wait를 fallback으로 남겨 공통 의미와 실행 mapping이 drift한 상태로 릴리즈하지 않는다.
+
+### (a) Lifecycle + scheduling fixture와 schema v2 역호환
 
 ```bash
 python3 tests/lifecycle-contract/validate.py
@@ -254,16 +256,24 @@ python3 tests/lifecycle-contract/validate.py
 - 명시적으로 관측된 `approval_required`는 relay/control unavailable이어도 child lifecycle에서 보존돼야 한다. child는 `ended_at: null`, `termination` 생략이고 mutation·attempt/retry 증가는 0건이며, phase 진행 불가만 report narrative에 `blocked`로 기록한다. `environment_state_unknown`은 environment status unavailable/error/semantic unknown에서만 생산한다.
 - 이름 붙은 모든 research axis/item에 marker가 정확히 하나인지, aggregate `source_confidence`가 전체 marker multiset에서 `high|mixed|low` truth table로 재계산되는지, worker/advisor가 marker coverage와 aggregate derivation을 모두 self-check하는지 확인한다.
 - 신규 abnormal `failed|interrupted|late_completion` reason이 concrete cause source, non-empty rationale와 닫힌 disposition 5종(`awaiting_user_decision`, `approved_clean_retry`, `phase_fallback`, `blocked`, `late_completion_quarantined`) 중 현재 값을 가지는지 확인한다. 중간 invocation의 non-null reason을 retry exhaustion 뒤로 미루면 실패해야 한다.
+- `tests/lifecycle-contract/fixtures/wait-wakeup-cases.json`의 required capability, wake event와 ledger vocabulary가 closed set인지 검사한다. Formal mode에는 root-visible timeout event가 없어야 한다.
+- Unchanged `running`/internal keepalive N회에 lifecycle transition, root model resume, semantic action, retry/list가 모두 0이어야 한다.
+- Single completion은 wake 1회, 인접 completion 여러 개는 coalesced wake 1회, duplicate event는 delta/result acceptance 1회여야 한다.
+- `approval_required`와 user steering은 barrier를 단락하되 state/authority/ownership을 보존해야 한다. Explicit `failed|interrupted`만 기존 사용자 승인형 recovery를 열어야 한다.
+- Required capability 하나라도 `unsupported|unknown`이면 `wait_wakeup_capability_unavailable` 정확히 1회, automatic wait/list/retry/interrupt/fallback 각각 0, disposition은 blocked 또는 user-selected event-only external continuation이어야 한다.
+- Current Codex gated mode의 resume/wait/list 0은 workload completion이 아니라 unsupported adapter가 timed polling을 시작하지 않았다는 assertion으로 검사한다.
 
 ### (b) 공통 정본 host-neutrality와 appendix 연결
 
-위 validator는 공통 §2.5에 Codex collaboration 도구명과 고정 시간값이 0건인지, `codex-lifecycle-routing.md`에는 실제 Codex snapshot/notification/control mapping과 미지원 event 한계가 있는지 함께 검사한다. active lifecycle 범위에는 `suspected_silent_stall`, `start_silence_budget`, `unchanged_check_budget` 또는 heartbeat deadline 기반 전이가 없어야 한다. 과거 ADR/changes와 schema v2 reader의 legacy `silent_stall` enum은 역사·호환 범위로만 허용한다.
+위 validator는 공통 §2.5에 Codex collaboration 도구명과 고정 시간값이 0건인지, `codex-lifecycle-routing.md`에는 실제 Codex snapshot/notification/control mapping과 미지원 event 한계가 있는지 함께 검사한다. Active lifecycle 범위에는 `suspected_silent_stall`, observation budget 또는 heartbeat deadline 기반 전이가 없어야 한다. Active scheduling 범위에는 `wait_agent`, `timeout_ms`, longer/repeated wait recommendation과 timeout 뒤 automatic list가 없어야 한다. Codex appendix의 bounded-wait 언급은 `adapter_enabled: false`인 gap evidence로만 허용한다.
 
-신규 host mapping을 추가하면 공통 §2.5가 아니라 해당 host appendix에 배치하고 `platform-adapters.md`에는 host-neutral status/event provenance capability만 추가한다. environment가 노출하지 않는 event를 추정하지 않고 `environment_state_unknown`으로 낮춘다. `model_choice.fallback_reason`과 §5.7은 모델 routing 전용이며 lifecycle 사유는 `lifecycle_fallback_reason`에 기록한다.
+신규 host mapping을 추가하면 공통 §2.5가 아니라 해당 host appendix에 배치한다. `platform-adapters.md`에는 host-neutral lifecycle provenance와 wait/wakeup capability identity만 추가한다. 모든 required scheduling capability가 `supported`일 때만 adapter를 enable하며 partial support를 timed wait/polling으로 보충하지 않는다. Environment가 노출하지 않는 lifecycle event는 추정하지 않고 실제 status API unavailable/error/semantic unknown일 때만 `environment_state_unknown`으로 둔다. `model_choice.fallback_reason`과 §5.7은 모델 routing 전용이며 lifecycle 사유는 `lifecycle_fallback_reason`에 기록한다.
 
-### (c) Environment event direct probe
+### (c) Capability matrix와 제한된 probe
 
-별도 read-only subagent invocation을 실행해 environment가 반환한 새 invocation identity, `running` snapshot과 최종 `completed` notification/result를 기록한다. wait timeout이 발생하면 lifecycle 전이·interrupt·retry·fallback이 0건이었는지 확인하되, timeout을 인위적으로 만들지 않고 timeout 미발생 자체를 실패로 판정하지 않는다. environment가 제공하지 않는 approval/failure detail은 probe 결과로 합성하지 않는다.
+현재 tool schema와 host appendix의 capability identity를 양방향 대조한다. Timeout-free await identity, target wait-any/all, terminal/approval/steering/cancel subscription, compact delta, stable event ID, deduplication, coalescing과 internal keepalive no-model-wake 중 하나라도 `unsupported|unknown`이면 formal adapter는 disabled여야 한다.
+
+Unsupported host에서 timed wait를 실행해 scheduling을 probe하지 않는다. 특히 longer timeout, timeout 유도, 반복 wait/list는 검증 절차가 아니다. Historical JSONL과 작은 기존 probe는 evidence-only로 사용한다. 향후 host가 formal subscription을 제공할 때만 작은 read-only workload로 unchanged 무재개, completion batch 1회, steering/cancel control 반환과 compact delta를 확인하며, 수치 SLA가 계약에 없으면 latency를 `unknown`으로 둔다.
 
 ### (d) 링크·index·§N·릴리스 메타데이터 전수 확인
 
@@ -271,5 +281,8 @@ python3 tests/lifecycle-contract/validate.py
 - 신규 ADR/changes는 각각 `docs/adr/index.md`, `docs/changes/index.md`에 등록한다.
 - §8의 끊긴 protocol 인용 검사를 재실행한다. 기존 §N을 재배열하지 않는다.
 - §4의 base manifest 4곳 version invariant를 확인하고 add-on version과 `.agents/plugins/marketplace.json`의 versionless 계약을 변경하지 않는다.
-- user-facing FAQ는 한국어/영어에서 승인 gate, relay 불가 `approval_required` 보존과 phase narrative blocked 분리, clean retry identity, abnormal current disposition, ownership/late completion, verification non-skip 의미가 동등한지 대조한다.
+- 2.13.0 release에서는 base manifest 4곳이 모두 `2.13.0`, add-on은 기존 버전, `.agents/plugins/marketplace.json`은 versionless인지 확인한다.
+- user-facing FAQ는 한국어/영어에서 current host formal scheduling unsupported, longer/repeated timed wait fallback 없음, unavailable 1회와 zero auto action, child state/authority/ownership 보존, blocked/event-only external continuation, steering/cancel host ownership, report v2 의미가 동등한지 대조한다.
 - 카탈로그 confidence FAQ 한·영 모두에서 every axis/every item marker, `high|mixed|low` 결정 규칙, marker coverage와 aggregate derivation 두 self-check가 동등한지 대조한다.
+- ADR-0021과 2026-08-13 change가 각각 자기 index에 정확히 한 번 등록되고 architecture/change/ADR 사이 교차 링크가 유효한지 확인한다.
+- Verification이 pending인 동안 architecture/change 문서가 current Codex end-to-end event-driven wake나 전체 validator PASS를 주장하지 않는지 확인한다. 실제 GREEN 후에만 상태를 갱신한다.

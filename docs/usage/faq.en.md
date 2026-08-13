@@ -4,7 +4,7 @@ title: Troubleshooting / FAQ (English)
 description: Common issues during plugin install, init, and daily use.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-12
+last_reviewed: 2026-08-13
 ---
 
 <p align="center">
@@ -125,6 +125,16 @@ A. No. Remove the migration-writer mentions from the agent configuration generat
 
 A. Don't build an integrated script; register multiple strategies in `verification-strategies.md` (in the consuming project's `docs/development/`). `verification-advisor` runs only the ones matching the change scope, in sequence.
 
+### Q. Does ATP use a long timeout or repeated polling while waiting for subagents?
+
+A. No. In ATP 2.13.0, the only formal scheduling mode is a timeout-free subscription in which the environment suspends the root model until an event of interest occurs. Unchanged `running` and internal keepalives are not root-model wake reasons. The environment owns event-ID deduplication, completion coalescing, compact changed-invocation deltas, user steering, and cancellation delivery.
+
+The current Codex normal collaboration API provides a bounded global mailbox wait and some early return for final status and user steering, but it does not provide a timeout-free await identity, targeted wait-any/all, internal re-wait, event IDs/deduplication, compact deltas, or an await-cancellation handle, and some event guarantees are unspecified. The formal scheduling adapter is therefore `unsupported`. ATP does not fill that gap with a longer timeout or repeated wait/list polling.
+
+If any required capability is `unsupported|unknown`, ATP records `wait_wakeup_capability_unavailable` exactly once in the phase-local ledger and performs zero automatic waits, lists, retries, interrupts, or fallbacks. It preserves each child's last lifecycle state, read-only result acceptance authority, and write ownership. The phase returns control as blocked, or it may use an event-only external continuation only when the user explicitly selects one and it has an identity, an interest-event-only wake contract, and a cancellation contract. The current normal Codex API does not provide that external continuation either.
+
+User-steering and cancellation responsiveness are host responsibilities; ATP does not compensate with timers or polling. Scheduling records remain in a separate ledger, so the report schema stays at v2 with the same four optional lifecycle fields. This blocked convergence does not mean that current Codex has implemented end-to-end event-driven wake-up.
+
 ### Q. An advisor stays `running` without an error or any first activity.
 
 A. ATP treats only lifecycle states and terminal events explicitly reported by the host environment through its normal API as authoritative. While the environment reports `running`, ATP remains `running`. Wait timeouts, elapsed time, output/progress/tool events or their absence, missing heartbeats, and repeated identical snapshots do not cause a lifecycle transition or authorize retry/fallback. If status cannot be determined, ATP keeps the non-terminal state `environment_state_unknown` instead of inferring failure.
@@ -132,7 +142,7 @@ A. ATP treats only lifecycle states and terminal events explicitly reported by t
 After an explicit environment `failed`/`interrupted`/blocker event or user cancellation, the orchestrator reports the state and cause and offers these options:
 
 1. Terminate or isolate the old invocation and perform a **clean retry** with a new invocation ID. A follow-up on the same thread is not a clean retry.
-2. Preserve the environment state and continue waiting.
+2. Preserve the environment state. Do not start an automatic timed wait; wait for an event only through a host-supported, explicitly user-selected event-only external continuation.
 3. Use the fallback allowed for that phase.
 4. End the phase or session as blocked.
 

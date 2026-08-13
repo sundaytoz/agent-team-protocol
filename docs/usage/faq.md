@@ -4,7 +4,7 @@ title: 문제 해결 / FAQ
 description: plugin 설치·init·사용 중 흔한 문제와 대응.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-12
+last_reviewed: 2026-08-13
 ---
 
 # 문제 해결 / FAQ
@@ -120,6 +120,16 @@ A. 필요 없다. init 후 생성된 프로젝트의 에이전트 설정에서 m
 
 A. 통합 스크립트를 만들지 말고 `verification-strategies.md` (소비 프로젝트 `docs/development/`) 에 전략을 여러 개 등록한다. `verification-advisor` 가 변경 scope 에 매칭되는 것만 순차 실행한다.
 
+### Q. ATP가 subagent 완료를 기다릴 때 긴 timeout이나 반복 polling을 사용하는가?
+
+A. 사용하지 않는다. ATP 2.13.0의 formal scheduling은 environment가 관심 event까지 root model을 suspend하는 timeout-free subscription만 인정한다. Unchanged `running`과 internal keepalive는 root model wake 사유가 아니며, environment가 event ID 기반 deduplication, completion coalescing, compact changed-invocation delta, user steering과 cancellation 전달을 소유한다.
+
+현재 Codex normal collaboration API는 bounded global mailbox wait와 일부 final-status/user-steering 조기 반환은 제공하지만, timeout-free await identity, target별 wait-any/all, internal rewait, event ID/deduplication, compact delta와 await cancellation handle을 제공하지 않거나 일부 event를 보장하지 않는다. 따라서 formal scheduling adapter는 `unsupported`다. ATP는 timeout을 더 길게 설정하거나 반복 wait/list polling으로 이 gap을 메우지 않는다.
+
+필수 capability 하나라도 `unsupported|unknown`이면 ATP는 `wait_wakeup_capability_unavailable`을 phase-local ledger에 정확히 한 번 기록하고 automatic wait/list/retry/interrupt/fallback을 각각 0건으로 둔다. Child의 마지막 lifecycle state, read-only result acceptance authority와 write ownership은 보존한다. Phase는 blocked로 control을 반환하거나, 사용자가 명시적으로 선택하고 identity·관심-event wake·cancellation 계약을 모두 갖춘 event-only external continuation만 사용할 수 있다. 현재 normal Codex API에는 그 external continuation도 없다.
+
+User steering과 cancellation 응답성은 host 책임이다. ATP는 timer나 polling으로 보상하지 않는다. Scheduling 기록은 별도 ledger에 두므로 report schema는 계속 v2이고 optional lifecycle field도 기존 네 개다. 이 blocked 수렴은 current Codex에서 end-to-end event-driven wake가 구현됐다는 뜻이 아니다.
+
 ### Q. Advisor가 오류 없이 `running` 상태에서 첫 활동을 보이지 않는다.
 
 A. ATP는 host environment가 정상 API로 명시한 상태와 terminal event만 lifecycle 권위로 사용한다. environment가 `running`을 반환하는 동안 ATP도 `running`으로 유지한다. wait timeout, 경과 시간, output/progress/tool event 또는 그 부재, heartbeat 부재, 동일 snapshot 반복은 lifecycle 전이·retry/fallback 권한을 만들지 않는다. 상태를 확인할 수 없으면 비종결 `environment_state_unknown`으로 남기며 failure로 추론하지 않는다.
@@ -127,7 +137,7 @@ A. ATP는 host environment가 정상 API로 명시한 상태와 terminal event�
 명시적 environment `failed`/`interrupted`/blocker 또는 사용자 취소가 발생해 orchestrator가 상태와 원인을 보고하면 다음 중 하나를 선택한다.
 
 1. 기존 invocation 종결·격리 후 **clean retry** — 새 invocation ID로 독립 실행한다. 같은 thread에 follow-up을 보내는 것은 clean retry가 아니다.
-2. environment 상태를 유지하고 더 기다린다.
+2. environment 상태를 유지한다. 자동 timed wait는 시작하지 않으며, host가 지원하고 사용자가 명시 선택한 event-only external continuation이 있을 때만 그 event를 기다린다.
 3. phase에 허용된 fallback을 수행한다.
 4. 해당 phase 또는 세션을 blocked로 끝낸다.
 
