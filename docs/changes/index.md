@@ -4,7 +4,7 @@ title: Changes 카테고리 인덱스
 description: 실제 구현 변경 이력(changelog). 런타임 동작·설치 경로·외부 인터페이스가 바뀐 경우.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-07-20
+last_reviewed: 2026-08-12
 ---
 
 # Changes — 런타임 동작 변경 이력
@@ -29,6 +29,7 @@ last_reviewed: 2026-07-20
 | [2026-07-21-research-falsification-gates.md](./2026-07-21-research-falsification-gates.md) | research 불확실성 게이트 3종(반증·단건 독립확증·수확 점검) + graphify-out 방어·prior_lookup — 2.8.0→2.9.0, add-on 2.1.0→2.2.0 | 2026-07-21 |
 | [2026-07-30-graphify-skill-restructure-adaptation.md](./2026-07-30-graphify-skill-restructure-adaptation.md) | 상류 graphify 스킬 구조 재편 대응 15건(P0 거짓 안내 5건 포함) + `docs/graph/<scope>/` 정본화·전량 재생성 — 2.9.0→2.10.0, add-on 2.2.0→2.3.0 | 2026-07-30 |
 | [2026-08-04-lifecycle-record-duty-and-worker-return-contract.md](./2026-08-04-lifecycle-record-duty-and-worker-return-contract.md) | 비정상 종결 기록 의무(silent absorption 금지) + 회고 산출 sink 명문화 + research worker 반환 규격화로 취합 tail 축소 — 2.10.0→2.11.0 | 2026-08-04 |
+| [2026-08-12-environment-authoritative-subagent-lifecycle.md](./2026-08-12-environment-authoritative-subagent-lifecycle.md) | wait/progress 관측 추론 제거와 명시적 host environment lifecycle event 권위화 — validator/direct probe/release 정적 gate PASS, base 2.12.0 | 2026-08-12 |
 
 ## 관련 카테고리
 

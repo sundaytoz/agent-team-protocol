@@ -4,7 +4,7 @@ title: Capability Tier 와 호스트 자가판정
 description: ATP 가 호스트 CLI 의 subagent capability 를 자가판정해 위임 토폴로지(Tier A / A-flat / B)를 결정하는 규칙. 호스트 고유 문법·모델 슬러그는 호스트 위에서 실행 중인 에이전트가 자율 적용한다.
 owner: template-maintainer
 stability: draft
-last_reviewed: 2026-07-20
+last_reviewed: 2026-08-12
 ---
 
 # Capability Tier 와 호스트 자가판정
@@ -76,19 +76,33 @@ orchestrator(메인 에이전트)는 ATP task 진입 시 자기 호스트의 cap
 
 ### 3.1 Invocation lifecycle capability profile
 
-위임 topology 판정과 별도로, subagent를 호출하는 주체는 프로토콜 §2.5를 실행하기 전에 다음 capability를 `supported | unsupported | unknown`으로 자가판정한다. 플랫폼 이름이나 구체 도구가 아니라 실제 노출되는 의미를 기준으로 한다.
+위임 topology 판정과 별도로, subagent를 호출하는 주체는 프로토콜 §2.5를 실행하기 전에 다음 capability를 `supported | unsupported | unknown`으로 자가판정한다. 플랫폼 이름이나 추정이 아니라 environment가 정상 API로 실제 노출하는 의미를 기준으로 한다.
 
 | capability | 판정 질문 | `unsupported` / `unknown` 안전 폴백 |
 |---|---|---|
-| observable output/progress | output, explicit progress, tool start/result 중 하나를 정상 API로 관측 가능한가 | 내부 이벤트를 추정하지 않고 `progress_unobservable`로 사용자 보고 |
-| authoritative status | accepted/running/queued/blocked/terminal을 권위 있게 재확인 가능한가 | 시간 경과만으로 silent stall 확정 금지 |
-| termination control | 실행 중 invocation에 종결 요청을 보낼 수 있는가 | read-only는 결과 수용권 격리; write scope는 isolation 확인 전 retry 금지 |
+| authoritative non-terminal state | accepted/queued/running을 environment state로 확인 가능한가 | 얻은 상태만 보존하고 미노출 상태는 `environment_state_unknown` |
+| authoritative terminal event | completed/failed/interrupted를 서로 구분한 environment event로 받을 수 있는가 | 미지원 terminal 종류를 output·시간·silence로 합성하지 않고 `environment_state_unknown` |
+| approval event | `approval_required`를 environment event로 받을 수 있는가 | 승인 필요 여부를 추정하지 않는다. host가 제공하는 별도 승인 흐름만 따른다 |
+| approval relay capability | 관측된 `approval_required`를 parent/user에게 relay할 수 있는가 | 미지원이어도 관측된 state는 `approval_required`로 보존; concern·ledger를 반환하고 phase narrative만 blocked |
+| approval continuation capability | 사용자 결정 후 같은 environment identity를 continuation할 수 있는가 | interrupt/retry/fallback·authority mutation 0; child `ended_at: null`, termination 생략 |
+| native blocker provenance | environment 실행 blocker와 agent output의 업무상 `blocked`를 구분 가능한가 | 두 의미를 합치지 않고 출처 불명 상태를 `environment_state_unknown`으로 유지 |
+| output/progress UX | output, explicit progress, tool start/result를 정상 API로 관측 가능한가 | 진행 설명을 생략할 수 있으나 lifecycle 상태에는 영향 없음 |
+| termination control | 실행 중 invocation에 host-native 종결 요청을 보낼 수 있는가 | 지원 시 사용자 승인·completion race 뒤 먼저 사용; 반환 event만 terminal로 기록 |
 | termination confirmation | 종결 또는 더 이상 write하지 않음을 확인 가능한가 | 동일 write scope handoff 금지; scope 분리, Tier B 직접 수행, user decision 또는 blocked |
 | invocation identity | 새 실행과 기존 실행의 identity 차이를 확인 가능한가 | clean retry로 세지 않으며 Tier B 또는 blocked |
 | context control | 새 invocation에 최소 권위 payload만 전달 가능한가 | 명시 payload로 권위 계약을 재진술하고 불필요한 이력 의존을 최소화 |
+| result acceptance isolation | 확인된 read-only invocation의 old identity가 보낸 future result를 ATP-local하게 격리 가능한가 | 새 read-only retry를 만들지 않고 Tier B, user decision 또는 blocked |
 | write isolation/ownership | old/new invocation의 write scope를 분리하고 ownership을 회수 가능한가 | 같은 scope 동시 실행 금지 |
 
-`start_silence_budget`, `unchanged_check_budget`, retry budget과 관측 간격은 host/config calibration 대상이며 모두 유한해야 한다. 공통 프로토콜은 숫자를 정하지 않는다. event-driven 관측을 우선하고, 상태 확인 timeout은 wake-up 신호로만 취급한다. capability가 unknown이어도 사용자 보고 → 옵션 → 확인 순서는 생략하지 않는다.
+Environment가 `running`을 반환하면 ATP도 `running`을 유지한다. wait timeout, 경과 시간, progress/heartbeat 부재, 동일 snapshot 반복은 wake-up 또는 UX 관측일 뿐 상태 전이·retry·fallback 권한이 아니다. 상태 API 부재·오류도 `environment_state_unknown`이며 terminal failure가 아니다.
+
+Approval event observation과 relay/continuation capability는 별도 축이다. 명시적 `approval_required`를 relay 미지원 때문에 `environment_state_unknown`으로 낮추지 않는다. `environment_state_unknown`은 environment status 자체가 unavailable/error/semantically unknown일 때만 쓴다.
+
+Relay/continuation capability가 복구되어 host가 same environment identity continuation을 제공하면 `attempt`와 retry accounting을 바꾸지 않는다. 이후 status API unavailable/error event가 실제 발생한 경우에만 그 새 관측을 `environment_state_unknown`으로 기록한다.
+
+Host termination control과 ATP-local `result acceptance isolation`은 별도 capability다. 사용자 승인과 completion race 재확인 뒤 host termination을 먼저 시도하되, termination control이 unsupported라도 read-only 성질과 identity를 확인한 invocation은 `result_acceptance_revoked` ledger event로 future result 수용만 격리할 수 있다. 이 격리는 environment `failed`/`interrupted`를 합성하지 않는다. write-capable invocation의 `write_ownership`에는 적용할 수 없으며 termination/write isolation·partial write 분류를 대신하지 않는다.
+
+명시적 failed/interrupted/environment blocker 뒤의 clean retry 횟수에는 유한한 안전 한도를 둘 수 있다. 그러나 관측 시간·poll 횟수는 그 한도를 소비하지 않는다. capability가 unknown이어도 사용자 보고 → 옵션 → 확인 순서를 생략하지 않으며, 승인 전 interrupt/retry/fallback은 0건이다.
 
 ## 4. Tier A-flat 평탄화 규약 (재귀 금지 호스트의 토폴로지 해소)
 
@@ -195,7 +209,7 @@ ATP 모델 정책(프로토콜 §5)은 플랫폼 중립 tier(`small`/`medium`/`l
 host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮어쓰지 않는다. 해당 host 에서만 appendix 를 읽고, route 사용이 불가능하면 즉시 §6 의 기존 tier 매핑으로 fallback 한다.
 
 - Codex host: [codex-spark-routing.md](./codex-spark-routing.md) — Spark 를 저지연 code-worker route 후보로만 사용하고, 미지원/미확인/실패 시 기존 tier 매핑으로 fallback.
-- Codex host lifecycle: [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — §2.5의 관측·종결·독립 invocation·context 전달을 Codex collaboration 도구에 매핑. lifecycle fallback은 모델 route와 독립.
+- Codex host lifecycle: [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — §2.5의 environment state·terminal event·종결·독립 invocation·context 전달을 Codex collaboration 도구에 매핑. lifecycle fallback은 모델 route와 독립.
 
 ## 8. 동결 이력 포인터
 
@@ -211,6 +225,6 @@ host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮�
 - [ ] 본 문서의 활성 규칙에 특정 타 벤더 플랫폼명·모델 슬러그가 열거되어 있지 않은가? (허용 잔존: §0 배경 1줄, §6 자사 정본 슬러그)
 - [ ] Tier A / A-flat / B 정의가 capability 조건("spawn 가능한가" / "재귀 가능한가")만으로 기술되어 있는가?
 - [ ] 자가판정 절차(§3)에 안전 폴백(불확실 → Tier B / parent 상속)이 포함되어 있는가?
-- [ ] lifecycle capability(관측·상태·종결·identity·context·write isolation)가 supported/unsupported/unknown으로 판정되고 unknown 안전 폴백이 정의되어 있는가?
+- [ ] lifecycle capability(environment state·terminal/approval event·종결·identity·context·result acceptance isolation·write isolation)가 supported/unsupported/unknown으로 판정되고 `environment_state_unknown` 안전 폴백이 정의되어 있는가?
 - [ ] 동결 이력 포인터(§8 → ADR-0009 부록)가 존재하는가?
 - [ ] 게이트·report 스키마·검증규율의 tier 독립성("어느 tier 든 유지")이 명시되어 있는가?

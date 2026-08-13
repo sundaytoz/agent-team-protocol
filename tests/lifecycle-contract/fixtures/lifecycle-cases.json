@@ -1,52 +1,124 @@
 {
-  "observable_activity": ["output", "explicit_progress", "tool_start", "tool_result", "terminal_or_blocked"],
+  "authoritative_events": [
+    "accepted",
+    "queued",
+    "running",
+    "approval_required",
+    "completed",
+    "failed",
+    "interrupted",
+    "blocked",
+    "environment_state_unknown"
+  ],
+  "non_authoritative_observations": [
+    "wait_timeout",
+    "progress",
+    "output",
+    "tool_start",
+    "tool_result",
+    "same_snapshot",
+    "no_progress"
+  ],
   "cases": [
     {
-      "name": "first_activity_before_budget",
-      "signals": ["output"],
-      "state": "active",
-      "actions_before_approval": []
+      "name": "timeouts_do_not_change_running",
+      "events": ["accepted", "running"],
+      "observations": ["wait_timeout", "wait_timeout"],
+      "expected_state": "running",
+      "actions_before_approval": [],
+      "retry_or_fallback": false
     },
     {
-      "name": "long_running_tool_started",
-      "signals": ["tool_start"],
-      "state": "active",
-      "actions_before_approval": []
+      "name": "no_progress_then_completed",
+      "events": ["accepted", "running", "completed"],
+      "observations": ["no_progress", "wait_timeout", "no_progress"],
+      "expected_state_path": ["accepted", "running", "completed"],
+      "result_disposition": "validate_and_collect",
+      "actions_before_approval": [],
+      "retry_or_fallback": false
     },
     {
-      "name": "queued",
-      "signals": ["queueing"],
-      "state": "active",
-      "actions_before_approval": []
+      "name": "progress_does_not_grant_liveness",
+      "events": ["accepted", "running", "failed"],
+      "observations": ["progress", "output", "tool_start", "tool_result"],
+      "expected_state_path": ["accepted", "running", "failed"],
+      "recovery_trigger": "explicit_environment_failed",
+      "actions_before_approval": [],
+      "retry_or_fallback": false
     },
     {
-      "name": "explicit_blocked",
-      "signals": ["terminal_or_blocked"],
-      "state": "blocked",
-      "actions_before_approval": []
+      "name": "same_snapshot_is_no_transition",
+      "events": ["accepted", "running"],
+      "observations": ["same_snapshot", "same_snapshot", "same_snapshot"],
+      "expected_state": "running",
+      "transition_count_from_observations": 0,
+      "actions_before_approval": [],
+      "retry_or_fallback": false
     },
     {
-      "name": "terminal",
-      "signals": ["terminal_or_blocked"],
-      "state": "completed",
-      "actions_before_approval": []
+      "name": "explicit_failed_opens_recovery",
+      "events": ["accepted", "running", "failed"],
+      "observations": [],
+      "expected_state": "failed",
+      "recovery_review": "open",
+      "actions_before_approval": [],
+      "retry_or_fallback": false
     },
     {
-      "name": "no_activity_budget_elapsed",
-      "signals": [],
-      "authoritative_status": "running",
-      "observability": "known",
-      "state_path": ["active", "suspected_silent_stall", "awaiting_user_decision"],
-      "actions_before_approval": []
+      "name": "approval_is_propagated",
+      "events": ["accepted", "running", "approval_required"],
+      "observations": [],
+      "expected_state": "approval_required",
+      "approval_flow": "propagate_to_user",
+      "approval_grants_retry_or_fallback": false,
+      "actions_before_approval": [],
+      "retry_or_fallback": false
     },
     {
-      "name": "unknown_observability",
-      "signals": [],
-      "authoritative_status": "unknown",
-      "observability": "unknown",
-      "state": "progress_unobservable",
-      "actions_before_approval": []
+      "name": "interrupted_checks_ownership",
+      "events": ["accepted", "running", "interrupted"],
+      "observations": [],
+      "write_capable": true,
+      "expected_state": "interrupted",
+      "actions": ["inspect_partial_write", "confirm_ownership_recovery"],
+      "spawn_before_ownership_recovery": false,
+      "actions_before_approval": [],
+      "retry_or_fallback": false
     },
+    {
+      "name": "unknown_is_not_failure",
+      "events": ["environment_state_unknown"],
+      "observations": ["wait_timeout", "no_progress"],
+      "expected_state": "environment_state_unknown",
+      "terminal": false,
+      "actions_before_approval": [],
+      "retry_or_fallback": false
+    },
+    {
+      "name": "late_completion_is_quarantined",
+      "events": ["interrupted", "completed"],
+      "observations": [],
+      "ownership_revoked_before_completion": true,
+      "termination": "late_completion",
+      "actions": ["quarantine_old_result"],
+      "auto_merge": false,
+      "counts_as_success": false,
+      "actions_before_approval": [],
+      "retry_or_fallback": false
+    },
+    {
+      "name": "verification_is_not_skipped",
+      "events": ["accepted", "running", "failed"],
+      "observations": [],
+      "phase": "mandatory_verification",
+      "expected_state": "failed",
+      "allowed_terminal_actions": ["tier_b_execute", "blocked"],
+      "skip_allowed": false,
+      "actions_before_approval": [],
+      "retry_or_fallback": false
+    }
+  ],
+  "safety_cases": [
     {
       "name": "same_invocation_followup",
       "old_invocation_id": "inv-1",
@@ -61,7 +133,6 @@
       "old_invocation_id": "inv-1",
       "new_invocation_id": "inv-2",
       "retry_of": "inv-1",
-      "state_path": ["awaiting_user_decision", "terminating", "retrying"],
       "actions": ["confirm_termination", "spawn_new_invocation"],
       "clean_retry": true
     },
@@ -71,7 +142,12 @@
       "old_invocation_id": "inv-write-1",
       "new_invocation_id": "inv-write-2",
       "retry_of": "inv-write-1",
-      "actions": ["confirm_termination", "inspect_partial_write", "revoke_ownership", "spawn_new_invocation"],
+      "actions": [
+        "confirm_termination",
+        "inspect_partial_write",
+        "revoke_ownership",
+        "spawn_new_invocation"
+      ],
       "clean_retry": true
     },
     {
@@ -82,21 +158,970 @@
       "auto_merge": false
     },
     {
-      "name": "late_old_completion",
-      "old_completion": "after_ownership_revoke",
-      "termination": "late_completion",
-      "actions": ["quarantine_old_result"],
-      "auto_merge": false,
-      "counts_as_success": false
-    },
-    {
       "name": "write_scope_isolation_unknown",
       "approved": true,
       "write_scope": "same",
       "termination_confirmed": false,
       "isolation_confirmed": false,
-      "state": "blocked",
+      "expected_state": "blocked",
       "actions": []
+    }
+  ],
+  "authority_isolation_cases": [
+    {
+      "name": "read_only_completion_before_acceptance_revocation",
+      "write_capable": false,
+      "sequence": [
+        "interrupted",
+        "retry_approved",
+        "completion_race_rechecked",
+        "completed"
+      ],
+      "ledger": [
+        {
+          "recorded_at": "2026-08-12T15:20:00+09:00",
+          "logical_task": "research:p1",
+          "report_invocation_id": "inv-read-race-1",
+          "environment_invocation_id": "env-read-race-1",
+          "attempt": 1,
+          "event": "interrupted",
+          "provenance": "environment",
+          "source_ref": "environment:event:read-race-interrupted",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0
+        },
+        {
+          "recorded_at": "2026-08-12T15:20:01+09:00",
+          "logical_task": "research:p1",
+          "report_invocation_id": "inv-read-race-1",
+          "environment_invocation_id": "env-read-race-1",
+          "attempt": 1,
+          "event": "retry_approved",
+          "provenance": "user",
+          "source_ref": "user-message:read-race-retry",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["research:p1"],
+          "rationale": "retry after explicit interruption"
+        },
+        {
+          "recorded_at": "2026-08-12T15:20:02+09:00",
+          "logical_task": "research:p1",
+          "report_invocation_id": "inv-read-race-1",
+          "environment_invocation_id": "env-read-race-1",
+          "attempt": 1,
+          "event": "completed",
+          "provenance": "environment",
+          "source_ref": "environment:event:read-race-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0
+        }
+      ],
+      "expected": {
+        "result_disposition": "normal_candidate",
+        "retry_spawns": 0,
+        "result_acceptance_revocations": 0,
+        "late_completion_dispositions": 0
+      }
+    },
+    {
+      "name": "read_only_late_completion_after_acceptance_revocation",
+      "write_capable": false,
+      "sequence": [
+        "interrupted",
+        "retry_approved",
+        "completion_race_rechecked",
+        "result_acceptance_revoked",
+        "new_identity_issued",
+        "completed",
+        "late_completion"
+      ],
+      "ledger": [
+        {
+          "recorded_at": "2026-08-12T15:21:00+09:00",
+          "logical_task": "research:p2",
+          "report_invocation_id": "inv-read-late-1",
+          "environment_invocation_id": "env-read-late-1",
+          "attempt": 1,
+          "event": "interrupted",
+          "provenance": "environment",
+          "source_ref": "environment:event:read-late-interrupted",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0
+        },
+        {
+          "recorded_at": "2026-08-12T15:21:01+09:00",
+          "logical_task": "research:p2",
+          "report_invocation_id": "inv-read-late-1",
+          "environment_invocation_id": "env-read-late-1",
+          "attempt": 1,
+          "event": "retry_approved",
+          "provenance": "user",
+          "source_ref": "user-message:read-late-retry",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["research:p2"],
+          "rationale": "retry after explicit interruption"
+        },
+        {
+          "recorded_at": "2026-08-12T15:21:02+09:00",
+          "logical_task": "research:p2",
+          "report_invocation_id": "inv-read-late-1",
+          "environment_invocation_id": "env-read-late-1",
+          "attempt": 1,
+          "event": "result_acceptance_revoked",
+          "provenance": "advisor",
+          "source_ref": "ledger:read-late-result-acceptance-revoked",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["research:p2"],
+          "rationale": "approved read-only result isolation"
+        },
+        {
+          "recorded_at": "2026-08-12T15:21:03+09:00",
+          "logical_task": "research:p2",
+          "report_invocation_id": "inv-read-late-2",
+          "environment_invocation_id": "env-read-late-2",
+          "attempt": 2,
+          "event": "accepted",
+          "provenance": "environment",
+          "source_ref": "environment:event:read-late-retry-accepted",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 1
+        },
+        {
+          "recorded_at": "2026-08-12T15:21:04+09:00",
+          "logical_task": "research:p2",
+          "report_invocation_id": "inv-read-late-1",
+          "environment_invocation_id": "env-read-late-1",
+          "attempt": 1,
+          "event": "completed",
+          "provenance": "environment",
+          "source_ref": "environment:event:read-late-old-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 1
+        },
+        {
+          "recorded_at": "2026-08-12T15:21:05+09:00",
+          "logical_task": "research:p2",
+          "report_invocation_id": "inv-read-late-1",
+          "environment_invocation_id": "env-read-late-1",
+          "attempt": 1,
+          "event": "late_completion",
+          "provenance": "advisor",
+          "source_ref": "environment:event:read-late-old-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 1,
+          "scope": ["research:p2"],
+          "rationale": "old result arrived after acceptance revocation",
+          "authority_kind": "result_acceptance",
+          "authority_ref": "ledger:read-late-result-acceptance-revoked"
+        }
+      ],
+      "expected": {
+        "result_disposition": "quarantine_only",
+        "retry_spawns": 1,
+        "auto_merge": false,
+        "counts_as_success": false,
+        "ownership_pause_scopes": [],
+        "ownership_mutations_after_late_completion": 0
+      }
+    },
+    {
+      "name": "write_late_completion_without_disk_write",
+      "write_capable": true,
+      "sequence": [
+        "interrupted",
+        "retry_approved",
+        "completion_race_rechecked",
+        "ownership_pending",
+        "new_identity_issued",
+        "ownership_active",
+        "completed",
+        "late_completion"
+      ],
+      "ledger": [
+        {
+          "recorded_at": "2026-08-12T15:22:00+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-safe-1",
+          "environment_invocation_id": "env-write-safe-1",
+          "attempt": 1,
+          "event": "interrupted",
+          "provenance": "environment",
+          "source_ref": "environment:event:write-safe-interrupted",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 0
+        },
+        {
+          "recorded_at": "2026-08-12T15:22:01+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-safe-1",
+          "environment_invocation_id": "env-write-safe-1",
+          "attempt": 1,
+          "event": "retry_approved",
+          "provenance": "user",
+          "source_ref": "user-message:write-safe-retry",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["scope-a"],
+          "rationale": "retry after explicit interruption"
+        },
+        {
+          "recorded_at": "2026-08-12T15:22:02+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-safe-1",
+          "environment_invocation_id": "env-write-safe-1",
+          "attempt": 1,
+          "event": "ownership_pending",
+          "provenance": "advisor",
+          "source_ref": "ownership:scope-a:pending-handoff",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["scope-a"],
+          "rationale": "old write ownership isolated"
+        },
+        {
+          "recorded_at": "2026-08-12T15:22:03+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-safe-2",
+          "environment_invocation_id": "env-write-safe-2",
+          "attempt": 2,
+          "event": "accepted",
+          "provenance": "environment",
+          "source_ref": "environment:event:write-safe-retry-accepted",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1
+        },
+        {
+          "recorded_at": "2026-08-12T15:22:04+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-safe-2",
+          "environment_invocation_id": "env-write-safe-2",
+          "attempt": 2,
+          "event": "ownership_active",
+          "provenance": "advisor",
+          "source_ref": "ownership:scope-a:active-new-owner",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1,
+          "scope": ["scope-a"],
+          "rationale": "new write owner identity issued"
+        },
+        {
+          "recorded_at": "2026-08-12T15:22:05+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-safe-1",
+          "environment_invocation_id": "env-write-safe-1",
+          "attempt": 1,
+          "event": "completed",
+          "provenance": "environment",
+          "source_ref": "environment:event:write-safe-old-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1
+        },
+        {
+          "recorded_at": "2026-08-12T15:22:06+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-safe-1",
+          "environment_invocation_id": "env-write-safe-1",
+          "attempt": 1,
+          "event": "late_completion",
+          "provenance": "advisor",
+          "source_ref": "environment:event:write-safe-old-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1,
+          "scope": ["scope-a"],
+          "rationale": "old result arrived without a late disk write",
+          "authority_kind": "write_ownership",
+          "authority_ref": "ownership:scope-a:pending-handoff"
+        }
+      ],
+      "disk_writes_after_revocation": [],
+      "expected": {
+        "result_disposition": "quarantine_only",
+        "auto_merge": false,
+        "counts_as_success": false,
+        "ownership_pause_scopes": [],
+        "ownership_mutations_after_late_completion": 0
+      }
+    },
+    {
+      "name": "write_late_disk_write_pauses_dependency_closure",
+      "write_capable": true,
+      "sequence": [
+        "interrupted",
+        "retry_approved",
+        "completion_race_rechecked",
+        "ownership_pending",
+        "new_identity_issued",
+        "ownership_active",
+        "completed",
+        "late_completion",
+        "late_disk_write_detected",
+        "ownership_paused"
+      ],
+      "ledger": [
+        {
+          "recorded_at": "2026-08-12T15:23:00+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-1",
+          "environment_invocation_id": "env-write-late-1",
+          "attempt": 1,
+          "event": "interrupted",
+          "provenance": "environment",
+          "source_ref": "environment:event:write-late-interrupted",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 0
+        },
+        {
+          "recorded_at": "2026-08-12T15:23:01+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-1",
+          "environment_invocation_id": "env-write-late-1",
+          "attempt": 1,
+          "event": "retry_approved",
+          "provenance": "user",
+          "source_ref": "user-message:write-late-retry",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["scope-a"],
+          "rationale": "retry after explicit interruption"
+        },
+        {
+          "recorded_at": "2026-08-12T15:23:02+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-1",
+          "environment_invocation_id": "env-write-late-1",
+          "attempt": 1,
+          "event": "ownership_pending",
+          "provenance": "advisor",
+          "source_ref": "ownership:scope-a:pending-handoff",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["scope-a"],
+          "rationale": "old write ownership isolated"
+        },
+        {
+          "recorded_at": "2026-08-12T15:23:03+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-2",
+          "environment_invocation_id": "env-write-late-2",
+          "attempt": 2,
+          "event": "accepted",
+          "provenance": "environment",
+          "source_ref": "environment:event:write-late-retry-accepted",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1
+        },
+        {
+          "recorded_at": "2026-08-12T15:23:04+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-2",
+          "environment_invocation_id": "env-write-late-2",
+          "attempt": 2,
+          "event": "ownership_active",
+          "provenance": "advisor",
+          "source_ref": "ownership:scope-a:active-new-owner",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1,
+          "scope": ["scope-a"],
+          "rationale": "new write owner identity issued"
+        },
+        {
+          "recorded_at": "2026-08-12T15:23:05+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-1",
+          "environment_invocation_id": "env-write-late-1",
+          "attempt": 1,
+          "event": "completed",
+          "provenance": "environment",
+          "source_ref": "environment:event:write-late-old-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1
+        },
+        {
+          "recorded_at": "2026-08-12T15:23:06+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-1",
+          "environment_invocation_id": "env-write-late-1",
+          "attempt": 1,
+          "event": "late_completion",
+          "provenance": "advisor",
+          "source_ref": "environment:event:write-late-old-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1,
+          "scope": ["scope-a"],
+          "rationale": "old result arrived after write ownership isolation",
+          "authority_kind": "write_ownership",
+          "authority_ref": "ownership:scope-a:pending-handoff"
+        },
+        {
+          "recorded_at": "2026-08-12T15:23:07+09:00",
+          "logical_task": "implementation:scope-a",
+          "report_invocation_id": "inv-write-late-1",
+          "environment_invocation_id": "env-write-late-1",
+          "attempt": 1,
+          "event": "ownership_paused",
+          "provenance": "advisor",
+          "source_ref": "diff:late-write-scope-a",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:implementation-clean-retry",
+          "retries_spawned": 1,
+          "scope": ["scope-a", "scope-b", "scope-c"],
+          "rationale": "persist affected dependency closure after late disk write"
+        }
+      ],
+      "disk_writes_after_revocation": ["src/a.py"],
+      "ownership_graph": [
+        {"scope_id": "scope-a", "dependencies": []},
+        {"scope_id": "scope-b", "dependencies": ["scope-a"]},
+        {"scope_id": "scope-c", "dependencies": ["scope-b"]},
+        {"scope_id": "scope-d", "dependencies": []}
+      ],
+      "expected": {
+        "result_disposition": "quarantine_and_mediate_disk_write",
+        "auto_merge": false,
+        "counts_as_success": false,
+        "persisted_paused_scopes": ["scope-a", "scope-b", "scope-c"],
+        "active_scopes": ["scope-d"]
+      }
+    },
+    {
+      "name": "late_completion_without_prior_authority_revocation_is_invalid",
+      "write_capable": false,
+      "sequence": ["completed"],
+      "ledger": [
+        {
+          "recorded_at": "2026-08-12T15:24:00+09:00",
+          "logical_task": "research:p-invalid",
+          "report_invocation_id": "inv-unrelated",
+          "environment_invocation_id": "env-unrelated",
+          "attempt": 1,
+          "event": "result_acceptance_revoked",
+          "provenance": "advisor",
+          "source_ref": "ledger:unrelated-result-acceptance-revoked",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["research:unrelated"],
+          "rationale": "unrelated approved isolation"
+        },
+        {
+          "recorded_at": "2026-08-12T15:24:01+09:00",
+          "logical_task": "research:p-invalid",
+          "report_invocation_id": "inv-read-invalid-1",
+          "environment_invocation_id": "env-read-invalid-1",
+          "attempt": 1,
+          "event": "completed",
+          "provenance": "environment",
+          "source_ref": "environment:event:read-invalid-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0
+        }
+      ],
+      "candidate_late_completions": [
+        {
+          "recorded_at": "2026-08-12T15:24:02+09:00",
+          "logical_task": "research:p-invalid",
+          "report_invocation_id": "inv-read-invalid-1",
+          "environment_invocation_id": "env-read-invalid-1",
+          "attempt": 1,
+          "event": "late_completion",
+          "provenance": "advisor",
+          "source_ref": "environment:event:read-invalid-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["research:p-invalid"],
+          "rationale": "candidate missing an authority reference",
+          "authority_kind": "result_acceptance"
+        },
+        {
+          "recorded_at": "2026-08-12T15:24:03+09:00",
+          "logical_task": "research:p-invalid",
+          "report_invocation_id": "inv-read-invalid-1",
+          "environment_invocation_id": "env-read-invalid-1",
+          "attempt": 1,
+          "event": "late_completion",
+          "provenance": "advisor",
+          "source_ref": "environment:event:read-invalid-completed",
+          "clean_retry_limit": 1,
+          "clean_retry_limit_source": "phase-policy:research-clean-retry",
+          "retries_spawned": 0,
+          "scope": ["research:p-invalid"],
+          "rationale": "candidate points to another invocation authority",
+          "authority_kind": "result_acceptance",
+          "authority_ref": "ledger:unrelated-result-acceptance-revoked"
+        }
+      ],
+      "expected": {
+        "result_disposition": "normal_candidate_or_identity_error",
+        "accepted_late_completions": 0,
+        "rejection_reasons": [
+          "missing_authority_ref",
+          "authority_identity_mismatch"
+        ]
+      }
+    }
+  ],
+  "approval_capability_cases": [
+    {
+      "name": "observed_approval_relay_supported",
+      "status_observation": {
+        "result": "available",
+        "state": "approval_required",
+        "provenance": "environment",
+        "source_ref": "environment:event:approval-supported"
+      },
+      "approval_relay_capability": "supported",
+      "approval_continuation_capability": "supported",
+      "report_invocation_id": "inv-approval-supported-1",
+      "environment_invocation_id": "env-approval-supported-1",
+      "continuation_environment_invocation_id": "env-approval-supported-1",
+      "worker_payload": {
+        "ended_at": null,
+        "output_digest": "approval_required; relayed to user",
+        "concerns": [],
+        "lifecycle_fallback_reason": null
+      },
+      "ledger_path": "research/lifecycle-events.jsonl",
+      "attempt_before": 1,
+      "attempt_after": 1,
+      "retries_spawned_before": 0,
+      "retries_spawned_after": 0,
+      "expected_state": "approval_required",
+      "approval_events_synthesized": 0,
+      "mutations": {
+        "interrupt_or_cancel": 0,
+        "retry_or_fallback": 0,
+        "authority_or_ownership": 0
+      },
+      "valid": true
+    },
+    {
+      "name": "observed_approval_relay_unavailable",
+      "status_observation": {
+        "result": "available",
+        "state": "approval_required",
+        "provenance": "environment",
+        "source_ref": "environment:event:approval-unavailable"
+      },
+      "approval_relay_capability": "unavailable",
+      "approval_continuation_capability": "unavailable",
+      "report_invocation_id": "inv-approval-unavailable-1",
+      "environment_invocation_id": "env-approval-unavailable-1",
+      "worker_payload": {
+        "ended_at": null,
+        "output_digest": "approval_required; relay/control unavailable",
+        "concerns": [
+          "approval relay/control unavailable; capability_ref=host-profile:nested-approval; logical_task=research:approval-case"
+        ],
+        "lifecycle_fallback_reason": null
+      },
+      "ledger_path": "research/lifecycle-events.jsonl",
+      "attempt_before": 1,
+      "attempt_after": 1,
+      "retries_spawned_before": 0,
+      "retries_spawned_after": 0,
+      "phase_control_disposition": "blocked",
+      "phase_control_sink": ["Summary", "Open Items", "concerns"],
+      "expected_state": "approval_required",
+      "approval_events_synthesized": 0,
+      "mutations": {
+        "interrupt_or_cancel": 0,
+        "retry_or_fallback": 0,
+        "authority_or_ownership": 0
+      },
+      "valid": true
+    },
+    {
+      "name": "status_unavailable_is_unknown",
+      "status_observation": {
+        "result": "unavailable",
+        "state": null,
+        "provenance": "advisor",
+        "source_ref": "host-profile:status-api-unavailable"
+      },
+      "approval_relay_capability": "supported",
+      "approval_continuation_capability": "supported",
+      "report_invocation_id": "inv-status-unavailable-1",
+      "environment_invocation_id": null,
+      "worker_payload": {
+        "ended_at": null,
+        "output_digest": "environment status unavailable",
+        "concerns": ["environment status unavailable"],
+        "lifecycle_fallback_reason": null
+      },
+      "ledger_path": "research/lifecycle-events.jsonl",
+      "attempt_before": 1,
+      "attempt_after": 1,
+      "retries_spawned_before": 0,
+      "retries_spawned_after": 0,
+      "expected_state": "environment_state_unknown",
+      "approval_events_synthesized": 0,
+      "mutations": {
+        "interrupt_or_cancel": 0,
+        "retry_or_fallback": 0,
+        "authority_or_ownership": 0
+      },
+      "valid": true
+    },
+    {
+      "name": "status_error_is_unknown",
+      "status_observation": {
+        "result": "error",
+        "state": null,
+        "provenance": "advisor",
+        "source_ref": "environment:status-error:approval-case"
+      },
+      "approval_relay_capability": "unknown",
+      "approval_continuation_capability": "unknown",
+      "report_invocation_id": "inv-status-error-1",
+      "environment_invocation_id": "env-status-error-1",
+      "worker_payload": {
+        "ended_at": null,
+        "output_digest": "environment status error",
+        "concerns": ["environment status error"],
+        "lifecycle_fallback_reason": null
+      },
+      "ledger_path": "implementation/lifecycle-events.jsonl",
+      "attempt_before": 1,
+      "attempt_after": 1,
+      "retries_spawned_before": 0,
+      "retries_spawned_after": 0,
+      "expected_state": "environment_state_unknown",
+      "approval_events_synthesized": 0,
+      "mutations": {
+        "interrupt_or_cancel": 0,
+        "retry_or_fallback": 0,
+        "authority_or_ownership": 0
+      },
+      "valid": true
+    },
+    {
+      "name": "observed_approval_downgraded_to_unknown_is_invalid",
+      "status_observation": {
+        "result": "available",
+        "state": "approval_required",
+        "provenance": "environment",
+        "source_ref": "environment:event:approval-invalid-downgrade"
+      },
+      "approval_relay_capability": "unavailable",
+      "approval_continuation_capability": "unavailable",
+      "report_invocation_id": "inv-approval-invalid-1",
+      "environment_invocation_id": "env-approval-invalid-1",
+      "worker_payload": {
+        "ended_at": null,
+        "output_digest": "approval state incorrectly downgraded",
+        "concerns": ["approval relay/control unavailable"],
+        "lifecycle_fallback_reason": null
+      },
+      "ledger_path": "research/lifecycle-events.jsonl",
+      "attempt_before": 1,
+      "attempt_after": 1,
+      "retries_spawned_before": 0,
+      "retries_spawned_after": 0,
+      "expected_state": "environment_state_unknown",
+      "approval_events_synthesized": 0,
+      "mutations": {
+        "interrupt_or_cancel": 0,
+        "retry_or_fallback": 0,
+        "authority_or_ownership": 0
+      },
+      "valid": false,
+      "rejection_reason": "observed_approval_state_must_be_preserved"
+    }
+  ],
+  "confidence_derivation_cases": [
+    {
+      "name": "all_confirmed_is_high",
+      "axis_sets": [
+        {
+          "name": "runtime",
+          "marker": "확인됨",
+          "items": [
+            {"name": "event-source", "marker": "확인됨"},
+            {"name": "status-mapping", "marker": "확인됨"}
+          ],
+          "source_confidence": "high"
+        }
+      ],
+      "source_confidence": "high",
+      "valid": true
+    },
+    {
+      "name": "all_estimated_is_mixed",
+      "axis_sets": [
+        {
+          "name": "catalog",
+          "marker": "추정",
+          "items": [
+            {"name": "entry-a", "marker": "추정"},
+            {"name": "entry-b", "marker": "추정"}
+          ],
+          "source_confidence": "mixed"
+        }
+      ],
+      "source_confidence": "mixed",
+      "valid": true
+    },
+    {
+      "name": "nonmajority_unverified_is_mixed",
+      "axis_sets": [
+        {
+          "name": "adapter",
+          "marker": "확인됨",
+          "items": [
+            {"name": "relay", "marker": "추정"},
+            {"name": "continuation", "marker": "미확인"}
+          ],
+          "source_confidence": "mixed"
+        }
+      ],
+      "source_confidence": "mixed",
+      "valid": true
+    },
+    {
+      "name": "strict_majority_unverified_is_low",
+      "axis_sets": [
+        {
+          "name": "host-capability",
+          "marker": "미확인",
+          "items": [
+            {"name": "status", "marker": "미확인"},
+            {"name": "approval", "marker": "미확인"},
+            {"name": "termination", "marker": "확인됨"}
+          ],
+          "source_confidence": "low"
+        }
+      ],
+      "source_confidence": "low",
+      "valid": true
+    },
+    {
+      "name": "multiple_axis_sets_derive_artifact_aggregate",
+      "axis_sets": [
+        {
+          "name": "local-source",
+          "marker": "확인됨",
+          "items": [{"name": "contract", "marker": "확인됨"}],
+          "source_confidence": "high"
+        },
+        {
+          "name": "external-source",
+          "marker": "추정",
+          "items": [{"name": "host-detail", "marker": "미확인"}],
+          "source_confidence": "mixed"
+        }
+      ],
+      "source_confidence": "mixed",
+      "valid": true
+    },
+    {
+      "name": "missing_marker_is_invalid",
+      "axis_sets": [
+        {
+          "name": "missing",
+          "marker": "확인됨",
+          "items": [{"name": "unmarked"}],
+          "source_confidence": "high"
+        }
+      ],
+      "source_confidence": "high",
+      "valid": false,
+      "rejection_reason": "marker_coverage_mismatch"
+    },
+    {
+      "name": "duplicate_identity_is_invalid",
+      "axis_sets": [
+        {
+          "name": "duplicates",
+          "marker": "확인됨",
+          "items": [
+            {"name": "same-item", "marker": "확인됨"},
+            {"name": "same-item", "marker": "확인됨"}
+          ],
+          "source_confidence": "high"
+        }
+      ],
+      "source_confidence": "high",
+      "valid": false,
+      "rejection_reason": "duplicate_axis_item_identity"
+    },
+    {
+      "name": "duplicate_marker_is_invalid",
+      "axis_sets": [
+        {
+          "name": "duplicate-marker",
+          "marker": "확인됨",
+          "items": [
+            {"name": "item", "marker": ["확인됨", "추정"]}
+          ],
+          "source_confidence": "mixed"
+        }
+      ],
+      "source_confidence": "mixed",
+      "valid": false,
+      "rejection_reason": "marker_must_be_exactly_one"
+    },
+    {
+      "name": "item_aggregate_namespace_is_invalid",
+      "axis_sets": [
+        {
+          "name": "namespace-item",
+          "marker": "high",
+          "items": [{"name": "item", "marker": "확인됨"}],
+          "source_confidence": "high"
+        }
+      ],
+      "source_confidence": "high",
+      "valid": false,
+      "rejection_reason": "item_marker_namespace_invalid"
+    },
+    {
+      "name": "aggregate_item_namespace_is_invalid",
+      "axis_sets": [
+        {
+          "name": "namespace-aggregate",
+          "marker": "확인됨",
+          "items": [{"name": "item", "marker": "확인됨"}],
+          "source_confidence": "확인됨"
+        }
+      ],
+      "source_confidence": "확인됨",
+      "valid": false,
+      "rejection_reason": "aggregate_namespace_invalid"
+    },
+    {
+      "name": "aggregate_mismatch_is_invalid",
+      "axis_sets": [
+        {
+          "name": "mismatch",
+          "marker": "확인됨",
+          "items": [{"name": "item", "marker": "추정"}],
+          "source_confidence": "high"
+        }
+      ],
+      "source_confidence": "high",
+      "valid": false,
+      "rejection_reason": "aggregate_derivation_mismatch"
+    }
+  ],
+  "lifecycle_reason_cases": [
+    {
+      "name": "failed_awaiting_user",
+      "termination": "failed",
+      "lifecycle_fallback_reason": "cause=failed@environment:event:failed-awaiting-user; disposition=awaiting_user_decision; rationale=awaiting explicit user recovery choice",
+      "retry_exhausted": false,
+      "expected_disposition": "awaiting_user_decision",
+      "valid": true
+    },
+    {
+      "name": "interrupted_approved_retry",
+      "termination": "interrupted",
+      "lifecycle_fallback_reason": "cause=interrupted@environment:event:interrupted-approved-retry; disposition=approved_clean_retry; rationale=user approved clean retry after completion-race recheck",
+      "retry_exhausted": false,
+      "expected_disposition": "approved_clean_retry",
+      "valid": true
+    },
+    {
+      "name": "failed_phase_fallback",
+      "termination": "failed",
+      "lifecycle_fallback_reason": "cause=failed@environment:event:failed-tier-b; disposition=phase_fallback; rationale=Tier B direct verification selected for mandatory verification",
+      "retry_exhausted": true,
+      "expected_disposition": "phase_fallback",
+      "valid": true
+    },
+    {
+      "name": "interrupted_blocked",
+      "termination": "interrupted",
+      "lifecycle_fallback_reason": "cause=interrupted@environment:event:interrupted-write-owner; disposition=blocked; rationale=write isolation cannot be confirmed for the owned scope",
+      "retry_exhausted": true,
+      "expected_disposition": "blocked",
+      "valid": true
+    },
+    {
+      "name": "late_completion_reason",
+      "termination": "late_completion",
+      "lifecycle_fallback_reason": "cause=late_completion@environment:event:old-completed; disposition=late_completion_quarantined; rationale=authority_ref=ledger:read-late-result-acceptance-revoked; old result quarantined with auto success disabled",
+      "retry_exhausted": false,
+      "authority_ref": "ledger:read-late-result-acceptance-revoked",
+      "auto_merge": false,
+      "counts_as_success": false,
+      "expected_disposition": "late_completion_quarantined",
+      "valid": true
+    },
+    {
+      "name": "completed_reason_null",
+      "termination": "completed",
+      "lifecycle_fallback_reason": null,
+      "valid": true
+    },
+    {
+      "name": "approval_nonterminal_reason_null",
+      "observed_state": "approval_required",
+      "ended_at": null,
+      "lifecycle_fallback_reason": null,
+      "valid": true
+    },
+    {
+      "name": "abnormal_reason_missing_is_invalid",
+      "termination": "failed",
+      "lifecycle_fallback_reason": null,
+      "retry_exhausted": false,
+      "valid": false,
+      "rejection_reason": "abnormal_reason_required"
+    },
+    {
+      "name": "unknown_disposition_is_invalid",
+      "termination": "interrupted",
+      "lifecycle_fallback_reason": "cause=interrupted@environment:event:interrupted-invalid; disposition=retry_later; rationale=unknown recovery disposition",
+      "retry_exhausted": false,
+      "valid": false,
+      "rejection_reason": "disposition_enum_invalid"
+    },
+    {
+      "name": "empty_rationale_is_invalid",
+      "termination": "failed",
+      "lifecycle_fallback_reason": "cause=failed@environment:event:failed-empty-rationale; disposition=blocked; rationale=",
+      "retry_exhausted": true,
+      "valid": false,
+      "rejection_reason": "rationale_required"
+    },
+    {
+      "name": "late_completion_wrong_disposition_is_invalid",
+      "termination": "late_completion",
+      "lifecycle_fallback_reason": "cause=late_completion@environment:event:old-completed-invalid; disposition=phase_fallback; rationale=late result cannot enter fallback",
+      "retry_exhausted": false,
+      "authority_ref": "ledger:old-authority-revoked",
+      "auto_merge": false,
+      "counts_as_success": false,
+      "valid": false,
+      "rejection_reason": "late_completion_requires_quarantine_disposition"
     }
   ],
   "retry_exhausted": {

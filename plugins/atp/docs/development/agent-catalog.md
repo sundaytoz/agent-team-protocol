@@ -42,7 +42,7 @@ Advisor 가 내부적으로 Worker 를 최대 6개까지 동시 spawn 한다. Ag
 
 | 에이전트 | Worker | 도구 |
 |---|---|---|
-| `research-advisor` | `parallel-explorer` | Read, Grep, Glob, Bash, WebFetch, WebSearch, Agent, LSP |
+| `research-advisor` | `parallel-explorer` | Read, Grep, Glob, Write, Edit, Bash, WebFetch, WebSearch, Agent, LSP |
 | `implementation-advisor` | `code-writer`, `migration-writer` | Read, Grep, Glob, Write, Edit, Bash, Agent, LSP |
 
 ## base atp — Worker (재귀 금지 — Agent 툴 없음)
