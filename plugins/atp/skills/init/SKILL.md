@@ -1,7 +1,6 @@
 ---
 name: init
 description: atp 플러그인을 소비 프로젝트에 초기화. docs 골격·편집형 검증전략·호스트 지침파일 안내 블록을 멱등 생성. 플러그인 설치 후 프로젝트에서 한 번 실행.
-disable-model-invocation: true
 ---
 
 # /atp:init

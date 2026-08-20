@@ -178,6 +178,77 @@
       }
     ]
   },
+  "execution_mode_cases": [
+    {
+      "name": "formal_subscription_preserves_existing_mode",
+      "request_intent": "general_task",
+      "capability_profile_ref": "hypothetical-all-supported",
+      "formal_adapter_enabled": true,
+      "host_managed_subagent_orchestration": "supported",
+      "selected_mode": "environment_subscription",
+      "ledger_events": ["await_capability_checked"],
+      "spawn_allowed_after_preflight": true
+    },
+    {
+      "name": "host_managed_profile_allows_spawn",
+      "request_intent": "general_task",
+      "host_scope": "host-specific-appendix",
+      "capability_profile_ref": "host-appendix#current-orchestration-capability",
+      "formal_adapter_enabled": false,
+      "manual_wait_polling_supported": false,
+      "host_managed_subagent_orchestration": "supported",
+      "selected_mode": "host_managed_subagent_orchestration",
+      "ledger_events": ["await_capability_checked"],
+      "spawn_allowed_after_preflight": true,
+      "managed_collection": {
+        "waits_for_all_requested_results": true,
+        "manual_wait_calls": 0,
+        "list_calls": 0,
+        "interrupt_calls": 0,
+        "automatic_retry_calls": 0
+      }
+    },
+    {
+      "name": "general_task_without_safe_join_auto_tier_b",
+      "request_intent": "general_task",
+      "formal_adapter_enabled": false,
+      "host_managed_subagent_orchestration": "unsupported",
+      "selected_mode": "tier_b_sequential",
+      "spawn_allowed_after_preflight": false,
+      "ux": {
+        "phase_disposition": "continue",
+        "tier_b_auto_entered": true,
+        "mode_disclosed": true,
+        "claimed_advisor_result": false
+      }
+    },
+    {
+      "name": "explicit_subagent_without_safe_join_blocks",
+      "request_intent": "explicit_subagent_required",
+      "formal_adapter_enabled": false,
+      "host_managed_subagent_orchestration": "unsupported",
+      "selected_mode": "blocked_explicit_independence",
+      "spawn_allowed_after_preflight": false,
+      "ux": {
+        "phase_disposition": "blocked",
+        "tier_b_offered_as_explicit_conversion": true,
+        "claimed_advisor_result": false,
+        "options": ["supported_host", "explicit_tier_b_conversion", "cancel"]
+      }
+    },
+    {
+      "name": "non_codex_recursive_limit_keeps_tier_a_flat",
+      "request_intent": "general_task",
+      "host_scope": "non_codex",
+      "spawn_supported": true,
+      "recursive_spawn_supported": false,
+      "formal_adapter_enabled": true,
+      "host_managed_subagent_orchestration": "unknown",
+      "selected_topology": "tier_a_flat",
+      "selected_mode": "environment_subscription",
+      "spawn_allowed_after_preflight": true
+    }
+  ],
   "recovery_preservation_cases": [
     {
       "name": "explicit_failed_waits_for_user",
@@ -221,6 +292,19 @@
         "authority_revocations": 0,
         "late_completion_dispositions": 0,
         "result_disposition": "normal_candidate"
+      }
+    },
+    {
+      "name": "approved_completion_race_allows_one_authoritative_list",
+      "lifecycle_case_ref": "completion_before_retry_approval",
+      "existing_environment_invocation_id": "env-existing-read",
+      "user_approval_ref": "user-message:retry-approved",
+      "purpose": "completion_race_recheck",
+      "expected": {
+        "list_calls": 1,
+        "polling_calls": 0,
+        "automatic": false,
+        "new_invocations_before_query": 0
       }
     },
     {

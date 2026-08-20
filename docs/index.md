@@ -4,7 +4,7 @@ title: Agent Team Protocol 문서 인덱스
 description: 레포 문서의 docs-first 진입점.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-10
+last_reviewed: 2026-08-20
 ---
 
 <p align="center">
@@ -25,6 +25,7 @@ last_reviewed: 2026-06-10
 | Architecture | 레포 구조와 런타임 산출물 경계를 확인하는 기여자 | [docs/architecture/index.md](./architecture/index.md) |
 | ADR | 되돌리기 어려운 기술·운영 결정을 추적하는 유지보수자 | [docs/adr/index.md](./adr/index.md) |
 | Changes | 실제 구현 변경 이력(런타임 동작·설치 경로 변화)을 확인하는 유지보수자 | [docs/changes/index.md](./changes/index.md) |
+| Backlog | 레포 범위 밖 upstream 변경과 선행 capability가 필요한 후속 제안을 검토하는 유지보수자 | [docs/backlog/index.md](./backlog/index.md) |
 
 ## 경계
 
@@ -38,10 +39,12 @@ graphify 기능은 옵트인 add-on 이다. 설치·운영·그래프 갱신 규
 
 - 설치와 초기화: [docs/usage/setup-checklist.md](./usage/setup-checklist.md)
 - 문제 해결: [docs/usage/faq.md](./usage/faq.md)
+- 현재 확인된 제한: [docs/usage/known-issues.md](./usage/known-issues.md)
 - 팀 운영 프로토콜: [plugins/atp/docs/development/agent-team-protocol.md](../plugins/atp/docs/development/agent-team-protocol.md)
 - 에이전트 카탈로그: [plugins/atp/docs/development/agent-catalog.md](../plugins/atp/docs/development/agent-catalog.md)
 - 파일 맵: [docs/architecture/file-map.md](./architecture/file-map.md)
 - 세션 산출물 `.atp/work-session/` (플러그인 기본=추적 / 이 레포는 opt-out): [docs/architecture/file-map.md#3-런타임-디렉토리](./architecture/file-map.md#3-런타임-디렉토리)
 - 결정 이력: [docs/adr/index.md](./adr/index.md)
+- 외부·후속 제안: [docs/backlog/index.md](./backlog/index.md)
 - 코드 지식 그래프: [docs/graph/index.md](./graph/index.md)
 - 릴리스·배포 트리거 (`plugins/atp/` 번들 변경 시 필수): [docs/development/release-checklist.md](./development/release-checklist.md) — **§0 (배포 완결 의무) 먼저**

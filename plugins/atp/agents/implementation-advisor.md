@@ -104,13 +104,13 @@ disjoint namespace_key는 병렬 가능하고 같은 namespace_key 또는 예약
 
 ## Worker lifecycle 복구와 ownership handoff
 
-### Worker wait/wakeup scheduling
+### Worker result collection scheduling
 
-Nested worker 대기는 lifecycle 복구와 분리해 protocol `§2.5`의 `await_invocations` 계약을 따른다. Implementation-advisor는 실제 environment invocation identity를 target으로 삼고 ownership/DAG barrier에 맞춰 `condition: any | all`을 정하며, `wake_on`은 정확히 `completed | failed | interrupted | approval_required | user_steering`다. Environment가 관심 event 전 model suspend, 내부 keepalive, event deduplication, completion coalescing, compact changed-invocation delta, steering과 await cancellation을 소유한다. Unchanged `running`과 내부 keepalive는 model wake, lifecycle transition, ownership mutation을 만들지 않는다.
+Nested worker 결과 수집은 lifecycle 복구와 분리해 protocol `§2.5`의 negotiated scheduling 계약을 따른다. Host-specific agent 기능을 사용하기 전에 적용 가능한 host orchestration skill을 선택하고 전체 지침을 읽는다. `environment_subscription`이면 실제 environment invocation identity와 ownership/DAG barrier에 맞춘 `await_invocations`의 `condition: any | all`, 정확한 `wake_on`을 사용한다. `host_managed_subagent_orchestration`이면 선택한 host orchestration skill의 all-results barrier를 사용하고 formal subscription으로 표현하지 않는다.
 
-Subscription 등록 전 `platform-adapters.md` §3.2의 필수 capability 전부를 `supported | unsupported | unknown`으로 판정한다. **전부 `supported`일 때만** `environment_subscription`을 등록한다. 하나라도 `unsupported | unknown`이면 partial capability나 시간 기반 반환, 반복 상태 조회로 보충하지 않고 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/implementation/wait-wakeup-events.jsonl`에 `wait_wakeup_capability_unavailable`을 정확히 1회 기록한다. Automatic wait/list/retry/interrupt/fallback은 각각 0건이며, 각 worker의 마지막 environment-authoritative lifecycle state와 `implementation/ownership.md`의 write ownership을 보존한다. Scheduling gap만으로 `environment_state_unknown`, lifecycle failure, ownership handoff/revocation 또는 `lifecycle_fallback_reason`을 만들지 않는다.
+Subscription 등록 전 `platform-adapters.md` §3.2~§3.3을 재확인한다. Formal capability 전부가 supported일 때만 `environment_subscription`을 등록한다. Formal gap이 있어도 배포된 capability profile이 managed orchestration을 supported로 판정하면 worker spawn과 `implementation/ownership.md`의 write ownership을 정상 유지하고, generic polling을 만들지 않는다.
 
-그 뒤 implementation phase는 `blocked`로 control을 orchestrator에 반환하거나, 사용자가 명시적으로 선택한 event-only external continuation만 등록한다. External continuation은 non-empty continuation identity, 관심 event만 재개하는 wake contract, 독립 cancellation contract를 모두 가져야 하며 시간 기반 또는 polling continuation은 허용하지 않는다. 이후 같은 identity의 terminal/approval event나 disk write가 실제 전달되면 기존 completion race, ownership handoff와 아래 late-completion 규칙을 적용한다. Scheduling gap 뒤 전달된 정상 completion은 선행 ownership 회수 anchor가 없는 한 late completion이 아니며, 실제 late disk write가 확인된 경우에만 affected scope와 dependency closure를 persisted `paused`로 만든다.
+선택된 managed orchestration이 runtime에서 명시적 unavailable/error/interruption으로 바뀌면 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/implementation/wait-wakeup-events.jsonl`에 `wait_wakeup_capability_unavailable`을 phase당 정확히 1회 기록하고 각 worker의 마지막 environment-authoritative state와 write ownership을 보존한 채 `blocked`로 control을 orchestrator에 반환한다. 자동 retry/interrupt/fallback이나 Tier B 전환은 만들지 않는다. 이후 같은 identity의 terminal/approval event나 disk write가 실제 전달되면 기존 completion race, ownership handoff와 아래 late-completion 규칙을 적용한다.
 
 Implementation scheduling ledger의 유일 writer는 implementation-advisor다. 허용 event vocabulary는 정확히 `await_capability_checked | await_registered | wake_batch | wait_wakeup_capability_unavailable | external_continuation_selected | measurement` 여섯 개이며 protocol §2.5 envelope을 따른다. Scheduling metadata는 report schema v2 `Invocations[]`, lifecycle ledger 또는 ownership row에 복사하지 않고, `implementation/report.md`와 반환에는 이 artifact link 및 compact disposition만 남긴다.
 
@@ -275,7 +275,7 @@ Orchestrator 에게 반환할 요약에 다음 필드를 포함한다:
 - `implementation/lifecycle-events.jsonl`은 반환의 세 번째 artifact 객체로 추가하지 않고 위 두 파일에서 링크한다
 - `lifecycle_ledger`: `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/implementation/lifecycle-events.jsonl`
 - `wait_wakeup_ledger`: scheduling ledger가 실제 생성된 경우 `${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/implementation/wait-wakeup-events.jsonl`, 생성되지 않았으면 `null`. 정확히 두 객체인 `artifacts` 및 `lifecycle_ledger`와 별도인 top-level field다
-- `wait_wakeup_disposition`: 정확히 `environment_subscription | blocked | explicit_external_continuation_required` 중 하나인 closed enum top-level field
+- `wait_wakeup_disposition`: 정확히 `environment_subscription | host_managed_subagent_orchestration | blocked | explicit_external_continuation_required` 중 하나인 closed enum top-level field
 - `worker_invocations`: 실제 spawn된 worker마다 위의 완전한 §8 payload 한 객체. `artifacts` 두 객체와 별도 collection이다
 - `concerns_checked: true`
 - `self_verification: { checklist_passed: <bool> }`

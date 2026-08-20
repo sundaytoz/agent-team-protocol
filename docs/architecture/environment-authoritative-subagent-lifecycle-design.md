@@ -1,27 +1,31 @@
 ---
 kind: architecture
-title: 환경 권위 subagent lifecycle과 wait/wakeup scheduling 설계
+title: 환경 권위 subagent lifecycle과 host-managed orchestration 설계
 status: implemented
 implementation_status: implemented
-verification_status: verified
-date: 2026-08-13
+verification_status: l1-verified-l2-pending
+date: 2026-08-19
 owner: template-maintainer
 stability: living
-relates_to: [ADR-0017, ADR-0020, ADR-0021]
+relates_to: [ADR-0017, ADR-0020, ADR-0021, ADR-0022, ADR-0023, ADR-0024]
 supersedes_draft: codex-lifecycle-evidence-epoch-design.md
 ---
 
-# 환경 권위 subagent lifecycle과 wait/wakeup scheduling 설계
+# 환경 권위 subagent lifecycle과 host-managed orchestration 설계
 
 ## 문서 상태
 
-이 문서는 두 개의 독립 계약층을 다룬다. 2026-08-12의 **lifecycle correctness** 구현은 [ADR-0020](../adr/ADR-0020-environment-authoritative-subagent-lifecycle.md)이 정본이고 검증까지 완료됐다. 2026-08-13의 **wait/wakeup token-efficiency** 구현은 [ADR-0021](../adr/ADR-0021-environment-owned-wait-wakeup-scheduling.md)이 정본이며, timeout-free environment subscription과 capability-gap 수렴을 runtime contract, adapter/appendix, task skill, advisor, fixture와 validator에 반영했다. ADR-0021은 ADR-0020을 supersede하지 않는다.
+이 문서는 lifecycle correctness와 orchestration scheduling, 두 개의 독립 계약층을 다룬다. [ADR-0020](../adr/ADR-0020-environment-authoritative-subagent-lifecycle.md)은 lifecycle 권위, [ADR-0021](../adr/ADR-0021-environment-owned-wait-wakeup-scheduling.md)은 formal timeout-free subscription, [ADR-0022](../adr/ADR-0022-pre-spawn-wait-wakeup-capability-gate.md)는 pre-spawn ordering을 결정했다. [ADR-0024](../adr/ADR-0024-host-managed-subagent-orchestration.md)는 ADR-0023의 model-driven bounded-wait 재진입을 supersede하고 product-managed all-results barrier와 release-time capability evidence를 채택했다. 이 결정들은 ADR-0020의 lifecycle 권위를 유지한다.
 
-전체 문서의 현재 상태는 **implemented and verified**다. 2026-08-13 독립 verification-advisor가 `python3 tests/lifecycle-contract/validate.py`에서 exit 0과 정확한 문구 `PASS: environment-authoritative lifecycle contract and compatibility fixtures`를 확인했다. 이 검증에는 unchanged/keepalive zero-action, completion batching, approval/steering/dedup, explicit recovery, capability-gap 수렴과 legacy/current report schema v2 compatibility가 포함된다. JSON parse, diff, relative links, category index, protocol §N, agent catalog, manifest/version과 active no-timeout scan도 모두 PASS했다. L2는 외부 의존이 없어 skipped다.
+전체 문서의 현재 상태는 **implemented, deterministic L1 verified, isolated maintainer smoke capability rejected**다. `python3 tests/lifecycle-contract/validate.py`는 environment-authoritative lifecycle, formal/managed mode negotiation, approval/steering/dedup, explicit recovery와 legacy/current report schema v2 compatibility를 통과했다. Checked-in managed fixture 3종은 future supported implementation의 skill-first, all-results terminal barrier, manual wait/list/interrupt 0과 completion serialization 순서를 검사한다.
 
-이 verified 상태는 ATP contract와 deterministic fixture의 판정이다. 현재 Codex host는 여전히 formal subscription을 지원하지 않으므로 end-to-end environment-driven wake는 **unsupported**다. Disabled adapter에서 timed-wait probe를 실행하는 것은 금지된 검증 경로라 runtime probe를 수행하지 않았고, bounded wait는 계속 gap evidence로만 남는다.
+2026-08-18 strict preflight 초안은 Codex CLI 0.147.0 격리 환경에서 collaboration call 0과 unavailable event 1을 확인했지만, formal scheduling 최적화 부재를 team 실행 불가로 오해했다. ADR-0023은 이 초안을 교정했다. Historical 관측 JSONL의 spawn 1, wait 13, list 2, timeout 11은 짧은 wait/list 반복의 비용 반증 자료로 보존한다.
 
-최종 source-spec dry-run은 처음 네 execution-spec gap(C1~C4)을 검출했다. C1은 current Codex의 요청 mode와 실제 mode를 분리하지 않은 점, C2는 research advisor의 mandatory scheduling ledger가 Write/Edit allowlist에 없던 점, C3은 두 advisor의 scheduling ledger/disposition 반환 계약이 불완전했던 점, C4는 scheduling row owner에 쓸 advisor report identity를 spawn 전에 할당·주입하지 않은 점이었다. 수정 후 prompt-injected source-spec simulation을 재실행해 네 항목과 current-host blocked path, hypothetical all-supported path, approval/failure/race/late completion 계약이 모두 PASS했다. 이 dry-run은 agent spawn이나 wait/list/status API를 호출하지 않았고 stale installed cache를 2.13.0 smoke evidence로 취급하지 않았다.
+Current Codex 제품은 managed subagent workflow를 제공하지만 CLI 0.147.0 smoke에서 ATP의 full all-results correctness contract를 충족하지 못했다. 2.15.0은 formal adapter와 manual polling을 모두 unsupported로 유지하고 tested CLI의 `host_managed_subagent_orchestration`을 `unsupported`, team execution을 disabled로 판정한다. Deterministic runtime fixture는 future supported implementation이 충족해야 할 계약이며 capability evidence를 대신하지 않는다.
+
+2026-08-19 기존 실제 세션은 wait가 nonterminal update를 반환한 뒤 모델이 재대기하지 않아 terminal 전에 report completion을 기록했다. 새 isolated smoke도 product-managed 경로가 delayed/staggered terminal을 보장하지 않음을 확인했다. 2.15.0은 첫 collaboration action 전에 Codex 전용 skill을 읽고, unsupported profile이면 spawn이나 manual polling 대신 blocked/user-decision으로 수렴한다.
+
+Source-spec 검증은 requested/effective mode 분리, advisor scheduling ledger, 반환 disposition, preallocated report identity를 유지한다. ADR-0024 이후에는 formal mode 보존, Codex host-managed mode, general Tier B, explicit independence blocker와 non-Codex Tier A-flat 불변을 함께 검사한다.
 
 이 설계는 폐기된 `codex-lifecycle-evidence-epoch-design.md` 초안을 대체한다. 시간, wait 횟수, progress/heartbeat 유무로 ATP가 subagent의 생존 상태를 추론하지 않고, host environment가 제공하는 lifecycle 상태와 이벤트를 권위 정보로 사용한다.
 
@@ -29,13 +33,13 @@ supersedes_draft: codex-lifecycle-evidence-epoch-design.md
 
 Subagent lifecycle과 wait/wakeup scheduling은 서로 다른 계약층이며 둘 다 environment 권위를 침범하지 않는다.
 
-- environment는 invocation identity와 실행 상태뿐 아니라 timeout-free suspend, 관심 event 구독, internal keepalive, wake scheduling, deduplication, coalescing, compact delta, steering/cancellation 전달을 소유한다.
+- Formal mode의 environment는 invocation identity와 실행 상태뿐 아니라 timeout-free suspend, 관심 event 구독, internal keepalive, wake scheduling, deduplication, coalescing, compact delta, steering/cancellation 전달을 소유한다. Managed mode에서는 host가 spawn, routing, all-results wait와 terminal delivery를 소유한다.
 - ATP는 task/DAG, 관심 invocation과 `any|all` 조건, 결과 계약 검증·취합, approval relay 정책, 명시적 failure 뒤 retry/fallback 판단, result acceptance authority, write ownership과 late completion 격리를 소유한다.
-- `wait` timeout은 lifecycle event가 아니지만 root model을 깨워 큰 context를 다시 입력시키므로 정식 scheduling 수단도 아니다. ATP 2.13.0은 timed wait를 길게 하거나 반복하는 fallback을 사용하지 않는다.
+- `wait` timeout은 lifecycle event가 아니다. Formal scheduling 수단이나 managed correctness primitive로 승격하지 않으며 ATP orchestrator는 manual wait/list polling loop를 만들지 않는다.
 - progress/heartbeat는 사용자 경험과 작업 설명을 위한 선택 신호다. correctness 또는 liveness 판정 입력으로 사용하지 않는다.
 - environment가 `running`을 보고하는 동안 ATP는 시간이 얼마나 지났든 `running`으로 취급한다.
 - environment가 상태를 제공하지 못하면 `environment_state_unknown`으로 표현한다. 이를 stall이나 failure로 바꾸어 추론하지 않는다.
-- host의 formal wait/wakeup capability가 하나라도 `unsupported|unknown`이면 `wait_wakeup_capability_unavailable`을 phase-local ledger에 정확히 한 번 기록하고 automatic wait/list/retry/interrupt/fallback을 모두 0건으로 둔다. Child state·result acceptance authority·write ownership을 보존한 채 phase를 blocked로 반환하거나, 사용자가 명시 선택한 event-only external continuation만 허용한다.
+- Formal capability가 불완전해도 release-verified host-managed orchestration이 있으면 team execution을 유지한다. Formal/managed orchestration이 모두 없을 때만 일반 작업은 Tier B, 실제 독립성 요구는 blocker/options로 수렴한다. Runtime capability error가 관측되면 자동 전환하지 않고 기존 child state·authority·ownership을 보존한다.
 
 ## 배경과 반증 근거
 
@@ -105,10 +109,10 @@ ATP 2.12.0 source와 설치 cache의 지정 9개 lifecycle/runtime 파일은 변
 | mode | root model resume | wait/subscription call | list call | 결과 |
 |---|---:|---:|---:|---|
 | historical short polling | 5 | timed wait 5 | 3 | 비용 baseline 전용 |
-| current Codex capability-gated ATP | 0 | 0 | 0 | unavailable 1회 뒤 blocked |
+| current tested Codex CLI ATP | release smoke에서 일부 terminal만 전달 | ATP manual wait 0 | 0 | full barrier unsupported, team execution disabled |
 | logical environment subscription | 1 | logical await 1 | 0 | completion 두 개를 compact batch 하나로 전달 |
 
-Current Codex 행의 `0`은 workload가 자동 완료됐다는 뜻이 아니다. Unsupported host에서 model-waking wait를 시작하지 않았다는 contract assertion이며, phase는 blocked다. End-to-end completion과 실제 token 절감은 host가 formal subscription을 구현한 뒤에만 측정할 수 있다.
+Current Codex 행은 formal subscription의 event schema나 full all-results correctness를 주장하지 않는다. ATP의 manual wait/list polling은 제거하며 tested CLI team execution은 disabled다. App/IDE와 정확한 scheduler 내부 wake/token 절감은 empirical evidence가 없으므로 `unknown`이다.
 
 ## 책임 경계
 
@@ -139,16 +143,16 @@ Environment는 persistent `await_id`를 만들고 관심 event 전까지 root mo
 
 필수 capability는 `timeout_free_suspend`, targeted wait-any/all, terminal/approval subscription, steering preemption, await cancellation, compact delta, stable event identity, environment deduplication, completion coalescing, internal keepalive no-model-wake다. 하나라도 `unsupported|unknown`이면 formal adapter는 비활성이다.
 
-## Capability gap의 엄격한 수렴
+## Execution mode 협상과 capability gap 수렴
 
-Formal gate 실패 시 ATP는 다음 외 행동을 하지 않는다.
+첫 child spawn 전 formal capability와 배포된 host-managed profile을 별도 판정한다.
 
-1. `wait_wakeup_capability_unavailable`을 해당 phase의 `wait-wakeup-events.jsonl`에 정확히 한 번 기록한다.
-2. Automatic wait, list/status polling, retry, interrupt, phase fallback, synthetic terminal transition을 각각 0건으로 유지한다.
-3. 각 child의 마지막 environment-authoritative state, result acceptance authority와 write ownership을 그대로 보존한다. Scheduling gap은 `environment_state_unknown`이나 `lifecycle_fallback_reason`의 원인이 아니다.
-4. Phase narrative/Open Item을 blocked로 반환하거나, 사용자가 명시적으로 선택한 event-only external continuation만 등록한다. 이 continuation에는 identity, 관심 event에서만 resume하는 계약, cancellation 계약이 모두 있어야 하며 timer/polling은 금지한다.
+1. Formal capability 12개가 모두 supported면 `environment_subscription`을 사용한다.
+2. Formal adapter가 불완전해도 managed orchestration이 supported면 `host_managed_subagent_orchestration`으로 child identity·authority·ownership과 spawn을 정상 생성한다.
+3. 두 orchestration mode가 모두 없고 일반 작업이면 `tier_b_sequential`을 적용한다.
+4. 두 mode가 모두 없고 실제 독립 child가 필수면 `blocked_explicit_independence`로 선택지를 제공한다.
 
-Child가 뒤늦게 완료되면 선행 authority 철회가 없는 한 정상 completion 후보로 검토한다. 별도의 명시적 failure/interruption과 사용자 승인형 recovery가 authority를 먼저 철회한 경우에만 기존 late-completion quarantine 규칙을 적용한다.
+Managed mode는 ATP manual wait/list polling, synthetic terminal, automatic retry/interrupt/fallback과 authority mutation을 만들지 않는다. Spawn 뒤 capability가 실제 unavailable/error가 되면 child의 마지막 state, result acceptance authority와 write ownership을 보존하고 blocked/user-decision 경로를 사용한다. Child가 뒤늦게 완료되면 선행 authority 철회가 없는 한 정상 completion 후보로 검토한다.
 
 ## 권위 상태 모델
 
@@ -337,10 +341,10 @@ ADR-0020은 ADR-0017 전체를 폐기하지 않는다. 위 감지/관측 부분�
 2. ATP 개념 상태로의 매핑은 명시적 environment 신호에만 근거한다.
 3. 지원하지 않는 상태는 추정하지 않고 `environment_state_unknown`으로 둔다.
 4. progress 전달 capability와 lifecycle status capability를 분리한다.
-5. Wait/wakeup 필수 capability를 각각 `supported|unsupported|unknown`으로 판정하고 all-required gate 결과를 기록한다.
-6. Formal mode에서는 timeout-free subscription만 사용한다. Bounded wait, 긴 wait, timeout 후 재대기와 polling은 formal 또는 fallback adapter가 아니다.
+5. Wait/wakeup 필수 capability를 각각 `supported|unsupported|unknown`으로 판정하고 formal all-required gate 결과와 `host_managed_subagent_orchestration`, `manual_wait_polling_supported`를 별도 기록한다.
+6. Formal mode에서는 timeout-free subscription만 사용한다. Managed mode는 적용 가능한 host orchestration skill의 all-results barrier를 사용하고 generic polling을 추가하지 않는다.
 7. Environment deadline/watchdog가 있으면 설정·취소·terminal 의미를 host appendix에 기록하되 keepalive/watchdog를 root wake나 lifecycle transition으로 노출하지 않는다.
-8. Capability gap은 scheduling unavailable로만 표현하고 lifecycle state, authority와 ownership을 바꾸지 않는다.
+8. Execution mode는 첫 child spawn 전에 판정한다. Formal/managed mode가 모두 없을 때만 child identity·authority·ownership을 만들지 않으며, managed runtime gap은 기존 값을 보존한다.
 
 Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control만 매핑한다. 특정 버전에서 제공하지 않거나 공개 계약이 보장하지 않는 event는 제공되는 것처럼 가정하지 않는다.
 
@@ -348,14 +352,14 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 
 | capability | 판정 | 의미 |
 |---|---|---|
-| 최대 1시간 bounded global mailbox wait | supported, ineligible | timeout이 root를 깨우며 target filter/await identity가 없어 formal adapter로 사용하지 않음 |
-| completed final-status와 user steering 조기 반환 | supported subset | 단독으로 all-required gate를 충족하지 않음 |
+| product-managed spawn, follow-up routing, all-results wait | supported | 공식 app/CLI/IDE 계약과 release maintainer CLI smoke로 team execution 판정 |
+| ATP manual wait/list polling | unsupported | correctness primitive로 사용하지 않음 |
 | timeout-free suspend, internal rewait, targeted wait-any/all | unsupported | formal subscription 불가 |
 | await cancellation handle, compact delta, stable event ID, native dedup | unsupported | identity·payload 계약 불충족 |
 | approval subscription, failure/interruption detail, coalescing | unknown | 공개 API가 structured guarantee를 제공하지 않음 |
 | scheduler/watchdog registration | unsupported | event-only resume와 health/cancel 계약 없음 |
 
-따라서 current Codex profile은 `adapter_enabled: false`다. ATP는 `wait_agent`를 길게 호출하거나 반복하지 않으며 `wait_wakeup_capability_unavailable` 1회 뒤 blocked로 수렴한다. User steering과 child cancellation의 전달은 host 소유지만, 현 bounded-wait의 steering 조기 반환을 formal subscription 지원으로 승격하지 않는다. 현재 정상 collaboration API에는 event-only external continuation도 없다.
+따라서 tested Codex CLI profile은 `formal_adapter_enabled: false`, `manual_wait_polling_supported: false`, `host_managed_subagent_orchestration: unsupported`, `team_execution_enabled: false`다. ATP는 첫 collaboration action 전에 Codex orchestration skill을 전문 로드하고 unsupported이면 explicit blocked/user-decision 경로를 사용한다. App/IDE는 `unknown`이다. 적용 surface/version과 공식·경험적 근거는 Codex appendix와 release evidence manifest에 한정한다.
 
 ## 구현 파일 영향 맵
 
@@ -363,20 +367,25 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 |---|---|
 | `docs/adr/ADR-0020-environment-authoritative-subagent-lifecycle.md`, `docs/adr/index.md` | ADR-0017의 감지/관측 부분만 부분 supersede하고 새 권위 경계를 기록 |
 | `docs/adr/ADR-0021-environment-owned-wait-wakeup-scheduling.md`, `docs/adr/index.md` | timeout-free environment subscription만 formal scheduling으로 인정하고 strict capability-gap 수렴을 결정 |
+| `docs/adr/ADR-0022-pre-spawn-wait-wakeup-capability-gate.md`, `docs/adr/index.md` | current Codex capability 판정을 첫 child spawn 전 preflight로 이동한 이력을 기록. zero-child/blocked 수렴은 ADR-0023이 부분 supersede |
+| `docs/adr/ADR-0023-host-native-cooperative-execution.md`, `docs/adr/index.md` | formal scheduling과 team execution을 분리하고 ADR-0021/0022의 zero-child 결정을 부분 supersede |
+| `docs/adr/ADR-0024-host-managed-subagent-orchestration.md`, `docs/adr/index.md` | ADR-0023의 bounded-wait correctness를 supersede하고 managed all-results barrier를 결정 |
 | `plugins/atp/docs/development/agent-team-protocol.md` §2.5 | environment-authoritative lifecycle 위에 `await_invocations`, no-timeout/no-polling gate와 phase-local ledger를 정의 |
-| `plugins/atp/docs/development/platform-adapters.md` | lifecycle provenance와 별도로 wait/wakeup 필수 capability 및 all-required gate를 정의 |
-| `plugins/atp/docs/development/codex-lifecycle-routing.md` | Codex lifecycle mapping과 `adapter_enabled: false`, current host gap을 기록 |
+| `plugins/atp/docs/development/platform-adapters.md` | formal capability와 host-managed profile을 별도 판정하고 네 execution mode를 협상 |
+| `plugins/atp/docs/development/codex-lifecycle-routing.md` | Codex lifecycle mapping, formal adapter false와 release-verified managed team profile을 기록 |
+| `plugins/atp/skills/codex-team/SKILL.md` | 첫 collaboration action 전 전문 로드와 no-polling all-results barrier를 실행화 |
 | `plugins/atp/skills/task/SKILL.md` | terminal event 기반 취합·복구와 top-level scheduling capability gate를 실행화 |
 | `plugins/atp/agents/research-advisor.md` | 기존 lifecycle/result acceptance 계약과 nested read-only worker scheduling gate를 연결 |
 | `plugins/atp/agents/parallel-explorer.md` | 모든 axis/item marker와 결정론적 aggregate 및 두 self-check를 반환 계약으로 연결 |
 | `plugins/atp/agents/implementation-advisor.md` | 기존 lifecycle/write ownership 계약과 nested write-capable worker scheduling gate를 연결 |
 | `tests/lifecycle-contract/fixtures/lifecycle-cases.json` | timeout 비전이, progress 비권위, explicit terminal event, approval capability 직교성, confidence derivation, abnormal recovery disposition과 authority isolation case를 반영 |
 | `tests/lifecycle-contract/fixtures/report-v2-environment.json` | 신규 producer의 명시적 environment terminal fixture를 추가 |
-| `tests/lifecycle-contract/fixtures/wait-wakeup-cases.json` | logical subscription, current Codex gated-off, historical baseline, recovery/report-v2 보존 trace를 추가 |
+| `tests/lifecycle-contract/fixtures/wait-wakeup-cases.json` | logical subscription, host-managed mode, Tier B, non-Codex topology 불변을 추가 |
 | `tests/lifecycle-contract/validate.py` | 기존 lifecycle/authority/report-v2 검증과 scheduling closed-set, dedup/coalescing, zero-auto-action gate를 함께 검사 |
+| `tests/runtime-behavior/validate_codex_session.py` | 실제 Codex JSONL의 skill-first spawn, all-results terminal barrier, manual wait/list 0과 completion ordering을 검사 |
 | `docs/usage/faq.md`, `docs/usage/faq.en.md` | environment 권위와 보존 safety 의미를 동등하게 설명 |
-| `docs/changes/2026-08-12-environment-authoritative-subagent-lifecycle.md`, `docs/changes/2026-08-13-environment-driven-subagent-wakeup.md` | lifecycle 2.12.0과 scheduling 2.13.0 구현·검증 이력을 분리 기록 |
-| manifest/version/release metadata | base 2.13.0 ×4, add-on 2.3.0 ×2, `.agents` versionless 독립 검증 PASS |
+| `docs/changes/2026-08-19-codex-managed-subagent-orchestration.md` | managed orchestration 2.15.0 변경을 기록 |
+| manifest/version/release metadata | base 2.15.0 ×4, add-on 2.3.0 ×2, `.agents` versionless 유지 |
 
 ## 테스트 설계와 acceptance criteria
 
@@ -392,10 +401,13 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 | duplicate event | 같은 event ID 두 번 | batch/delta/result acceptance 각각 1 |
 | explicit failed/interrupted | 권위 terminal event | 기존 사용자 승인형 recovery만 열림 |
 | completion race/late completion | old/new identity와 authority anchor | 철회 전 completion은 정상 후보, 철회 뒤 old result만 quarantine |
-| required capability unsupported/unknown | formal gate 실패 | unavailable 1회, wait/list/retry/interrupt/fallback 0, blocked 또는 event-only external continuation |
+| formal capability unsupported/unknown + managed orchestration supported | formal gate 실패, managed 가능 | `host_managed_subagent_orchestration`, spawn/result collection 유지, manual wait/list 0 |
+| formal/managed mode 모두 없음, general task | safe orchestration 없음 | `tier_b_sequential` |
+| formal/managed mode 모두 없음, explicit subagent request | 실제 독립 child가 필수 | `blocked_explicit_independence`, 지원 host/Tier B 명시 전환/취소 |
+| non-Codex recursion 제한 | scheduling과 독립인 topology 제약 | 기존 Tier A-flat 유지 |
 | report reader compatibility | legacy/silent-stall/environment v2 | schema v2와 optional lifecycle field 네 개 유지 |
 
-정식 event vocabulary에는 root-visible timeout event가 없다. Fixture와 validator는 logical subscription의 correctness와 current-host blocked 수렴을 함께 확인하며, current Codex에서 end-to-end wake가 구현됐다고 오인하지 않는다.
+정식 event vocabulary에는 root-visible timeout event가 없다. Fixture와 validator는 logical subscription의 correctness와 current-host managed 실행을 함께 확인하며, product-managed workflow를 formal subscription event schema로 오인하지 않는다.
 
 ### 동적 event sequence
 
@@ -469,7 +481,9 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 9. approval state/capability 직교성, confidence full coverage/aggregate mapping, abnormal current disposition이 deterministic fixture로 검증된다.
 10. `python3 tests/lifecycle-contract/validate.py`가 event-authoritative fixture와 기존 안전 fixture를 모두 통과한다.
 11. Scheduling fixture가 unchanged/keepalive 무재개, single/coalesced wake, approval/steering, duplicate dedup, failure recovery, race/late completion, capability gap 수렴과 report v2 호환을 모두 통과한다.
-12. Current Codex는 formal adapter unsupported로 판정되고 timed fallback을 0건으로 유지하며, 이 blocked 결과를 end-to-end event-driven success로 보고하지 않는다.
+12. Current Codex CLI는 formal adapter/manual polling/host-managed full contract unsupported를 기록하고, 공식 제품 설명과 CLI empirical evidence를 분리한다.
+13. Maintainer smoke 3종이 모두 requested/spawn/terminal/collected 일치, manual wait/list/정상 interrupt 0과 last-terminal 이후 completion을 만족할 때만 profile을 supported로 승격한다.
+14. Non-Codex formal subscription과 Tier A-flat fixture가 기존 mode/topology를 유지한다.
 
 ## 구현·검증 진행 상태
 
@@ -482,12 +496,16 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 7. [x] `python3 tests/lifecycle-contract/validate.py`의 최종 GREEN을 확인했다.
 8. [x] 별도 read-only subagent direct probe로 새 invocation identity, environment `running`, 최종 `completed`와 결과 취합을 확인했다. wait timeout은 발생하지 않았으며 이를 실패로 보지 않았다.
 9. [x] release checklist와 manifest/version metadata를 완료하고 링크·§N·버전 invariant를 검증했다.
-10. [x] timeout-free `await_invocations`, all-required capability gate, unavailable 1회와 zero automatic action 계약을 runtime/skill/advisor에 구현했다.
+10. [x] timeout-free `await_invocations` formal gate와 host-managed mode를 runtime/skill/advisor에 구현했다.
 11. [x] scheduling fixture와 validator, current Codex capability matrix, report-v2 분리 ledger를 구현했다.
 12. [x] base manifest 4곳을 2.13.0으로 동기화했다.
 13. [x] verification-advisor가 전체 lifecycle+scheduling validator와 release checklist §10을 독립 실행해 PASS했다.
 14. [x] 신규 change 문서와 이 문서의 verification 상태를 실제 결과에 맞게 갱신했다.
 15. [x] Source-spec dry-run이 C1~C4를 검출했고, requested/effective mode·research write allowlist·scheduling return fields·preallocated report identity 보정 뒤 재실행 PASS했다.
+16. [x] Execution mode 협상을 first advisor spawn 전에 두고 general 자동 Tier B와 explicit independence blocker를 분리했다.
+17. [x] Historical 결함과 host-managed Codex JSONL을 검사하는 runtime behavioral validator를 추가했다.
+18. [x] Checked-in managed fixture 3종으로 skill-first, spawn 1/1/2, manual wait/list/interrupt 0과 all-results barrier를 검증했다.
+19. [x] 격리된 Codex CLI maintainer smoke 3종을 실행했고 terminal-only만 통과해 capability를 unsupported로 판정했다. Evidence manifest를 보존한다.
 
 ## 완료 체크리스트
 
@@ -501,10 +519,12 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 - [x] lifecycle contract validator 최종 GREEN
 - [x] release metadata와 release checklist 최종 검증
 - [x] lifecycle correctness와 wait/wakeup token-efficiency 계약 분리
-- [x] timeout-free host contract와 current Codex unsupported gap 문서화
-- [x] strict no-polling/no-timeout capability-gap 수렴 구현
+- [x] timeout-free formal contract와 current Codex managed orchestration mapping 문서화
+- [x] ATP manual wait/list polling 제거와 no-lifecycle-mutation 수렴 구현
 - [x] scheduling fixture와 historical/current/logical comparison 구현
 - [x] 2.13.0 독립 validator·정적 release gate 최종 GREEN(L2 skipped: 외부 의존 없음)
+- [x] 2.14.0 adaptive execution-mode contract와 runtime validator 구현
+- [x] Isolated 2.15.0 managed maintainer smoke 3종 실행 — 1/3 통과, capability unsupported
 
 ## 대안과 기각 이유
 
@@ -512,8 +532,8 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 - **필수 heartbeat contract**: host가 progress delivery를 보장하지 않고 agent가 정상 작업 중 메시지를 보내지 않을 수 있어 correctness 신호가 될 수 없다.
 - **고정 deadline 뒤 자동 interrupt**: environment의 정상 `running`을 ATP가 덮어쓰며 write-capable task에서 중복 실행 위험을 만든다.
 - **동일 snapshot status check 횟수 제한**: UI 소음을 줄일 수는 있으나 lifecycle 판정 근거가 되지 않는다. UI throttling이 필요하면 별도 UX 정책으로 다룬다.
-- **가장 긴 단일 timed wait**: timeout 빈도를 낮출 뿐 언젠가 root를 재개하고 target/identity/dedup/coalescing/compact-delta 계약을 제공하지 못하므로 formal path와 fallback 모두에서 기각했다.
-- **유한 polling fallback**: 무한 반복은 막지만 관심 event 없이도 model을 깨우는 목표 위반이며, child authority를 보존한 blocked 수렴보다 정확하지 않아 기각했다.
+- **가장 긴 단일 timed wait를 correctness primitive로 사용**: nonterminal 반환 뒤 모델이 다시 기다려야 하므로 formal/managed 경로 모두에서 기각했다.
+- **상태 list polling fallback**: 관심 event 없이 model을 깨우고 lifecycle 추론 압력을 만들므로 native mode에서도 기각했다.
 - **현행 유지**: timeout 기반 관측 반복과 정상 실행 오탐 가능성을 그대로 남긴다.
 
 ## Rollback
@@ -524,8 +544,12 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 
 - [ADR-0020: environment-authoritative subagent lifecycle](../adr/ADR-0020-environment-authoritative-subagent-lifecycle.md)
 - [ADR-0021: environment-owned wait/wakeup scheduling](../adr/ADR-0021-environment-owned-wait-wakeup-scheduling.md)
+- [ADR-0022: pre-spawn wait/wakeup capability gate](../adr/ADR-0022-pre-spawn-wait-wakeup-capability-gate.md)
+- [ADR-0023: host-native cooperative execution](../adr/ADR-0023-host-native-cooperative-execution.md)
+- [ADR-0024: host-managed subagent orchestration](../adr/ADR-0024-host-managed-subagent-orchestration.md)
 - [환경 권위 lifecycle 변경 기록](../changes/2026-08-12-environment-authoritative-subagent-lifecycle.md)
 - [환경 주도 subagent wakeup 변경 기록](../changes/2026-08-13-environment-driven-subagent-wakeup.md)
+- [2.15.0 Codex managed orchestration 변경 기록](../changes/2026-08-19-codex-managed-subagent-orchestration.md)
 - [ADR-0017: subagent lifecycle recovery](../adr/ADR-0017-subagent-lifecycle-recovery.md)
 - [subagent lifecycle recovery 변경 기록](../changes/2026-07-20-subagent-lifecycle-recovery.md)
 - [Codex lifecycle routing appendix](../../plugins/atp/docs/development/codex-lifecycle-routing.md)

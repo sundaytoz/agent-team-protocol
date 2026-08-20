@@ -9,7 +9,7 @@ ATP 세션은 **단일 오케스트레이터 + 도메인 어드바이저 + 필�
 **C1. 역할 정의 요약 (상세 §1)** — Orchestrator: 사용자와의 유일한 창구, **직접 작업 금지**(조사/설계/구현/검증/문서화 전부 advisor 위임), 첫 코드 변경 전 계획 가시화 의무. Advisor: 도메인 단일 책임자, 산출=파일+요약. Worker: 단일 책임·최소 컨텍스트, **다른 worker 호출 금지**.
 
 <!-- atp:core:item 2 -->
-**C2. 호출 모델 불변 (상세 §2)** — **Tier-3 advisor 만 `Agent` 툴 보유**(`research-advisor`/`implementation-advisor`). Worker 는 `Agent` 없음(**재귀 금지**). Advisor 호출당 worker **최대 6개** 동시 spawn(초과 시 배치 분할). **orchestrator 가 상위 advisor 여러 개 동시 호출 금지**(컨텍스트 오염), 독립 advisor 내부 worker 병렬은 허용. Invocation lifecycle은 host environment가 명시한 상태·terminal event만 권위로 사용한다. wait/wake는 §2.5의 필수 capability가 전부 supported인 environment subscription에서만 수행하며, unchanged running·internal keepalive는 root model을 깨우지 않는다. capability가 하나라도 unsupported/unknown이면 자동 대기·상태 열거·retry·interrupt·fallback을 0건으로 두고 authority/ownership을 보존한 채 blocked 또는 사용자가 명시 선택한 event-only external continuation으로만 수렴한다. 명시적 failure/interruption 복구에는 §2.5의 사용자 승인·독립 invocation·ownership·유한 재시도 규칙을 적용한다.
+**C2. 호출 모델 불변 (상세 §2)** — **Tier-3 advisor 만 `Agent` 툴 보유**(`research-advisor`/`implementation-advisor`). Worker 는 `Agent` 없음(**재귀 금지**). Advisor 호출당 worker **최대 6개** 동시 spawn(초과 시 배치 분할). **orchestrator 가 상위 advisor 여러 개 동시 호출 금지**(컨텍스트 오염), 독립 advisor 내부 worker 병렬은 허용. Invocation lifecycle은 host environment가 명시한 상태·terminal event만 권위로 사용한다. Host-specific agent 기능 전 적용 가능한 orchestration skill의 전체 지침을 읽고, 첫 advisor spawn 전 §2.5 execution mode preflight에서 formal `environment_subscription`, `host_managed_subagent_orchestration`, `tier_b_sequential`, `blocked_explicit_independence` 중 하나를 선택한다. Formal capability 부족만으로 child spawn을 차단하지 않으며 검증된 host-managed all-results barrier가 있으면 팀 topology를 유지한다. 일반 작업에서 두 orchestration mode가 모두 없으면 Tier B를 투명하게 자동 적용하고, 실제 subagent 필수 요청에서만 blocker와 명시 전환 선택지를 제공한다. Nonterminal update·unchanged running·internal keepalive는 lifecycle 전이·retry·fallback 권한을 만들지 않는다. 명시적 failure/interruption 복구에는 §2.5의 사용자 승인·독립 invocation·ownership·유한 재시도 규칙을 적용한다.
 
 <!-- atp:core:item 3 -->
 **C3. 파괴적 조작 게이트 (압축형 — 전문·2단계 분리·실전 사례는 §6)** — 아래 6항목은 advisor/worker **직접 수행 금지**. **orchestrator 가 사용자 확인 후에만** 실행한다:
@@ -268,11 +268,24 @@ status unavailable/error
 
 경과 시간, progress/output/tool event 또는 그 부재, heartbeat 부재, 같은 snapshot 반복은 lifecycle 상태를 전이시키지 않는다. reasoning·token count·environment 내부 keepalive/scheduler 신호와 실행 중 output 문자열도 terminal 판정 근거가 아니다. progress가 없어도 environment의 `running`은 그대로 `running`이다.
 
-#### Environment-owned wait/wake scheduling
+#### Negotiated result collection and wait/wake scheduling
 
-Lifecycle correctness와 wait/wake scheduling은 별도 계약층이다. Lifecycle은 위 권위 상태를 정규화하고, scheduling은 root model을 언제 suspend/resume할지 정한다. Environment는 invocation identity와 실행 상태에 더해 subscription identity, terminal/approval/control event 관측, timeout-free suspend, 내부 keepalive/watchdog, wake scheduling, event coalescing·deduplication, user steering과 await cancellation 전달, changed-invocation compact delta 생성을 소유한다. ATP는 logical task·dependency/DAG, 관심 target과 `any|all` 조건, 결과 계약 검증·취합, approval relay 정책, 명시적 terminal failure 이후 사용자 승인형 recovery, completion race·retry identity·result acceptance·write ownership·late completion을 소유한다.
+Lifecycle correctness와 wait/wake scheduling은 별도 계약층이다. Lifecycle은 위 권위 상태를 정규화하고, scheduling은 root model을 언제 suspend/resume할지 정한다. ATP는 logical task·dependency/DAG, 결과 계약 검증·취합, approval relay 정책, 명시적 terminal failure 이후 사용자 승인형 recovery, completion race·retry identity·result acceptance·write ownership·late completion을 소유한다.
 
-정식 논리 호출은 다음과 같다.
+Formal mode에서 environment는 subscription identity, terminal/approval/control event 관측, timeout-free suspend, 내부 keepalive/watchdog, wake scheduling, event coalescing·deduplication, user steering과 await cancellation 전달, changed-invocation compact delta 생성을 소유한다. Formal 계약이 불완전한 host도 `platform-adapters.md` §3.3과 적용 가능한 host orchestration skill이 all-results barrier를 `supported`로 보장하면 managed mode를 사용할 수 있으며 이를 `environment_subscription`으로 표현하지 않는다.
+
+#### Advisor spawn 전 execution mode preflight
+
+Top-level orchestrator는 host-specific agent 기능 전에 적용 가능한 host orchestration skill을 선택해 전체 지침을 읽고, 첫 advisor를 spawn하기 전에 `platform-adapters.md` §3.2~§3.3을 판정해 `environment_subscription | host_managed_subagent_orchestration | tier_b_sequential | blocked_explicit_independence` 중 하나를 선택한다. 배포된 capability profile과 result collection 계약을 실행 중 임의 추론으로 덮어쓰지 않는다. Formal all-required gate는 `environment_subscription` 가용성만 결정하며 child spawn 자체의 all-required gate가 아니다.
+
+- `environment_subscription`: formal capability 12개를 모두 지원하면 기존 timeout-free 경로를 사용한다.
+- `host_managed_subagent_orchestration`: formal capability는 불완전하지만 host가 spawn·routing·all-results collection을 관리하면 team topology와 child authority/ownership을 정상 생성한다.
+- `tier_b_sequential`: 안전한 join이 없는 일반 작업은 사용자 선택을 기다리지 않고 자동 격하하며 mode를 고지·기록한다.
+- `blocked_explicit_independence`: 안전한 join이 없고 실제 독립 child가 산출 요구사항일 때만 child identity·authority·ownership·spawn 0건으로 사용자 선택을 기다린다.
+
+선택된 orchestration capability가 spawn 뒤 unavailable/error로 바뀌면 existing child의 마지막 authoritative state와 authority/ownership을 보존하고 추가 spawn·automatic retry/interrupt/fallback과 automatic Tier B 전환을 0건으로 둔 채 blocked로 반환한다. Status API unavailable/error가 별도로 관측되지 않았다면 `environment_state_unknown`을 합성하지 않는다.
+
+Formal `environment_subscription`의 논리 호출은 다음과 같다.
 
 ```text
 await_invocations({
@@ -291,17 +304,18 @@ await_invocations({
 
 정식 반환은 `await_id`, 단일 resume identity인 `batch_id`, `wake_reason`, 변경된 invocation만 담은 ordered `deltas`, `control_delta`로 구성한다. `wake_reason`은 `condition_satisfied | approval_required | user_steering | await_cancelled | capability_error`의 닫힌 집합이다. 각 delta는 stable `event_id`, `environment_invocation_id`, changed normalized `state`, concrete `source_ref`, 원문 대신 사용할 nullable `detail_ref`를 포함한다. 전체 agent tree/snapshot은 반환하지 않는다. 같은 `event_id`는 정확히 한 batch에서만 전달하며, retry의 새 `environment_invocation_id`를 old event와 합치지 않는다. 여러 관심 event는 resume dispatch 전에 한 batch로 coalesce하되 approval, steering, cancellation을 지연하지 않는다. User steering은 suspend를 선점해 active turn에 control을 반환하고, 응답성·delivery·cancellation semantics는 environment가 소유한다.
 
-#### Wait/wake capability gate와 gap 수렴
+#### Result collection mode와 capability gap 수렴
 
-Subagent를 호출하는 주체는 subscription 등록 전에 `platform-adapters.md` §3.2의 필수 capability 전부를 `supported | unsupported | unknown`으로 판정한다. **전부 `supported`일 때만** `environment_subscription` mode를 활성화한다. 부분 capability를 조합해 model-waking polling scheduler를 합성하지 않는다.
+Subagent를 호출하는 주체는 top-level child spawn 전 execution mode preflight와 formal subscription 등록 직전에 `platform-adapters.md` §3.2~§3.3을 판정한다. Formal capability 전부가 `supported`일 때만 `environment_subscription`을 활성화한다. 그렇지 않아도 선택한 host orchestration skill이 `host_managed_subagent_orchestration: supported`를 보장하면 managed all-results barrier로 child spawn과 결과 회수를 계속한다.
 
-하나라도 `unsupported | unknown`이면 다음을 정확히 수행한다.
+Managed mode는 다음을 지킨다.
 
-1. `wait_wakeup_capability_unavailable`을 아래 phase-local ledger에 정확히 1회 기록한다. status backend unavailable/error가 실제 관측되지 않았다면 child lifecycle을 `environment_state_unknown`으로 바꾸지 않는다.
-2. 자동 await/timed wait, 상태 열거, retry, interrupt, phase fallback, synthetic terminal transition은 모두 0건이다.
-3. 마지막 environment-authoritative lifecycle state, read-only result acceptance authority, write-capable write ownership을 보존한다. capability gap 자체는 lifecycle failure나 `lifecycle_fallback_reason` producer가 아니다.
-4. phase narrative/Open Item을 `blocked`로 반환하거나, 사용자가 명시적으로 선택한 event-only external continuation으로만 이어간다. External continuation은 관심 environment event에서만 새 active turn을 열 수 있는 identity와 cancellation contract가 있어야 하며 timer/polling continuation은 허용하지 않는다.
-5. child가 이후 완료될 수 있으므로 completion race와 late completion 규칙을 그대로 적용한다. 별도의 명시적 `failed | interrupted`가 관측된 경우에만 아래 사용자 승인형 recovery를 연다.
+1. 요청한 모든 child의 terminal result가 도착할 때까지 invocation을 running으로 유지한다.
+2. 실제 nonterminal update를 terminal delivery나 collected result로 세지 않는다.
+3. Generic polling, synthetic terminal, automatic retry/interrupt/fallback, result acceptance authority 또는 write ownership mutation은 정상 경로에서 0건이다.
+4. 모든 terminal result를 검증·취합하기 전 report invocation/session completion과 parent final을 만들지 않는다.
+
+Formal/managed orchestration이 모두 unavailable이면 `wait_wakeup_capability_unavailable`을 phase-local ledger에 정확히 1회 기록한다. 일반 작업은 `tier_b_sequential`로 투명하게 자동 격하하고, 실제 독립 child 요구만 `blocked_explicit_independence`로 수렴한다. Spawn 뒤 선택된 managed capability가 runtime error로 사라지면 마지막 authoritative state·result acceptance authority·write ownership을 보존하고 추가 spawn·automatic recovery와 automatic Tier B 전환 0건으로 blocked 반환한다. 별도의 기존 invocation에 명시적 `failed | interrupted`가 관측되고 사용자가 recovery를 승인한 경우에만 아래 recovery와 단발 authoritative status 조회를 연다.
 
 #### Phase-local wait/wakeup ledger
 
@@ -318,14 +332,16 @@ external_continuation_selected
 measurement
 ```
 
-- `await_capability_checked`: 필수 capability 전체의 `supported | unsupported | unknown` 판정과 `profile_ref`.
+- `await_capability_checked`: 필수 capability 전체의 판정, `formal_adapter_enabled`, `host_managed_subagent_orchestration`, `selected_mode`와 `profile_ref`.
 - `await_registered`: `targets`, `condition`, 정확한 `wake_on`, `mode: environment_subscription`, `capability_profile_ref`.
 - `wake_batch`: `batch_id`, `wake_reason`, compact `deltas`, `deduped_event_ids`.
-- `wait_wakeup_capability_unavailable`: `unavailable_capabilities`, `last_authoritative_states`, `preserved_authorities`, `preserved_write_ownership`, `phase_disposition: blocked | explicit_external_continuation_required`와 자동 wait/list/retry/interrupt/fallback count 각각 0.
+- `wait_wakeup_capability_unavailable`: formal/managed orchestration이 모두 unavailable이면 `unavailable_capabilities`, `selected_mode`, `phase_disposition`, 자동 list/retry/interrupt/fallback count 각각 0을 기록한다. `tier_b_sequential`/`blocked_explicit_independence` preflight는 `request_intent`, `spawn_calls: 0`, child authority·ownership 0을 추가한다. Runtime managed-capability gap은 `last_authoritative_states`, `preserved_authorities`, `preserved_write_ownership`을 기록한다.
 - `external_continuation_selected`: `selected_by_user_ref`, `continuation_identity`, `wake_event_contract_ref`, `cancellation_contract_ref`. event-only continuation이 아니면 기록하지 않는다.
-- `measurement`: `wait_calls`, `list_calls`, `spawn_calls`, `verifier_calls`, `root_model_resumes`, `semantic_recovery_actions`, `input_tokens`, `cached_input_tokens`, `output_tokens`, `latency_ms`, `steering_latency_ms`. 정상 API/로그로 알 수 없는 값은 `null`이며 0으로 합성하지 않는다.
+- `measurement`: formal mode는 기존 batch 측정을 유지한다. Managed mode는 `mode`, `requested_agents`, `requested_report_invocation_ids`, `spawn_calls`, `nonterminal_updates`, `terminal_deliveries`, `collected_results`, `manual_wait_calls`, `list_calls`, `interrupt_calls`, `semantic_recovery_actions`, token/latency telemetry를 기록한다. 정상 API/로그로 알 수 없는 값은 `null`이며 0으로 합성하지 않는다. Concrete `source_ref`는 session/report/environment identity와 monotonic event identity를 사용하고 maintainer validator가 실제 transcript event와 대조한다.
 
 이 scheduling ledger는 lifecycle authority ledger를 대체하거나 report v2 optional lifecycle field 네 개를 늘리지 않는다.
+
+Managed mode의 report/session 종료는 모든 요청 terminal result → 결과 검증·통합 → verification → retrospective와 report 반영 → restage와 staged 재검증 → 요청 범위 mutation/commit/push/remote verification → 실제 시각의 session `ended_at` → final read-only report 검증 → parent final 순서를 지킨다. Timestamp scalar뿐 아니라 completion/termination을 serialize한 실제 event가 마지막 terminal delivery 뒤에 있어야 하며 미래 `ended_at` 선기입은 금지한다.
 
 #### terminal event 이후 사용자 승인형 복구
 

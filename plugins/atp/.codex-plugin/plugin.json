@@ -1,7 +1,7 @@
 {
   "name": "atp",
-  "description": "Agent Team Protocol — Orchestrator + Advisor + Worker 3-tier agent team orchestration for Claude Code and Codex",
-  "version": "2.13.0",
+  "description": "Agent Team Protocol \u2014 Orchestrator + Advisor + Worker 3-tier agent team orchestration for Claude Code and Codex",
+  "version": "2.15.0+codex.20260819053204",
   "author": {
     "name": "sundaytoz"
   },
@@ -14,5 +14,20 @@
     "workflow",
     "protocol"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agent Team Protocol",
+    "shortDescription": "Docs-first agent team orchestration",
+    "longDescription": "Initialize repositories for docs-first work and run explicit, host-capability-aware Orchestrator, Advisor, and Worker workflows.",
+    "developerName": "sundaytoz",
+    "category": "Productivity",
+    "capabilities": [
+      "Project Initialization",
+      "Agent Orchestration"
+    ],
+    "defaultPrompt": [
+      "Use $atp:init to initialize this repository for Agent Team Protocol.",
+      "Use $atp:task to handle this request with the Agent Team Protocol workflow."
+    ]
+  }
 }

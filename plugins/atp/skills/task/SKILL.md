@@ -21,9 +21,29 @@ trigger: /task
 
 `${CLAUDE_PROJECT_DIR}/docs/development/verification-strategies.md` 존재를 확인한다. 없으면 "먼저 `/atp:init` 실행을 권장합니다(아직 docs 골격이 없습니다)." 1줄을 안내하고 **계속 진행**한다 — 차단하지 않는다.
 
+### 0.25 host orchestration skill과 execution mode preflight
+
+이 단계는 §0 init 가드 직후 실행한다. Host-specific agent 기능을 사용하기 전에 적용 가능한 host orchestration skill을 선택하고 **전체 지침**을 읽는다. 이어서 `platform-adapters.md` §3.2~§3.3과 선택한 skill의 배포된 capability profile로 topology와 execution mode를 확정한다. 이 판정을 위해 소비 프로젝트 task마다 임시 child, 시간 기반 진단, 반복 상태 조회, maintainer validation 또는 source/install 비교를 실행하지 않는다.
+
+선택한 host orchestration skill의 capability profile과 result collection 계약을 실행 중 관측의 임의 추론으로 덮어쓰지 않는다. Host-specific skill이 제공하는 managed orchestration을 generic polling보다 우선한다. **첫 advisor를 포함해 어떤 child도 spawn하기 전에** skill 전문 로드와 mode 선택을 끝낸다.
+
+동시에 요청을 다음 두 intent 중 하나로 분류한다.
+
+- `general_task`: `$atp:task`로 팀 작업을 요청했지만 실제 독립 subagent/advisor 의견 자체가 필수 산출물은 아님
+- `explicit_subagent_required`: "실제 subagent 의견", "advisor에게 물어봐", "Blue/Red 독립 검토"처럼 child가 수행했다는 사실과 독립성이 요구사항임
+
+다음 우선순위로 mode를 고른 뒤 §0.5부터 계속한다.
+
+1. formal capability 12개가 전부 `supported` → `environment_subscription`. 기존 Tier A/A-flat 경로와 timeout-free scheduling을 그대로 사용한다.
+2. formal adapter가 불완전하지만 선택한 host skill이 `host_managed_subagent_orchestration: supported`를 보장 → `host_managed_subagent_orchestration`. Child spawn을 허용하고 §5.3의 managed result barrier를 사용한다.
+3. 두 orchestration mode가 모두 불가이고 `general_task` → `tier_b_sequential`. 사용자 선택을 기다리지 않고 자동 격하하며 "Tier B 격하 모드 — 병렬 advisor 미사용, 순차 self-checklist 수행"을 1줄 고지한다.
+4. 두 orchestration mode가 모두 불가이고 `explicit_subagent_required` → `blocked_explicit_independence`. §0.5~§3의 세션 기록까지만 만든 뒤 child identity·authority·write ownership·spawn 0건으로 `지원 host에서 재실행 | 독립성 없는 Tier B로 명시 전환 | 취소`를 제공한다.
+
+선택 결과는 공유 상태 생성 뒤 `wait-wakeup-events.jsonl`의 `await_capability_checked`에 `formal_adapter_enabled`, `host_managed_subagent_orchestration`, `selected_mode`, capability profile ref를 기록한다. 두 orchestration mode가 모두 unavailable일 때만 `wait_wakeup_capability_unavailable`을 정확히 1회 추가한다. `tier_b_sequential` 결과를 advisor/subagent 의견으로 표현하지 않는다.
+
 ### 0.5 1회성 마이그레이션 체크 (atp:migrate 블록 실행)
 
-`§0 init 가드` 완료 직후, `§1 프로토콜 로드` 진입 전에 아래를 1회 수행한다.
+`§0.25 execution mode preflight`가 mode를 선택한 뒤, `§1 프로토콜 로드` 진입 전에 아래를 1회 수행한다.
 
 프로젝트 루트의 지침파일(자기 호스트의 규약 파일을 1순위로, 호환 후보 집합은 init SKILL §2 `detect_guidance_files` 와 동일 — 존재하는 것)을 확인해 `<!-- atp:migrate:begin -->` 마커가 있으면:
 
@@ -65,7 +85,7 @@ trigger: /task
 ${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/
 ```
 
-`sid` = `YYYYMMDD-HHMMSS` (프로젝트 타임존 기준). Orchestrator 가 Bash 로 생성:
+`sid` = `YYYYMMDD-HHMMSS` (프로젝트 타임존 기준). Orchestrator 가 Bash 로 디렉토리를 멱등 생성:
 
 ```bash
 mkdir -p ${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/{research,implementation,artifacts}
@@ -97,8 +117,9 @@ skip 판단도 반드시 기록한다 — 어떤 advisor 를 왜 거치지 않�
 
 ### 4. 요청 해석
 
-- 인자 있음 → 인자 텍스트를 `user_request` 로
-- 인자 없음 → 사용자 직전 메시지 또는 명시 요청 수렴
+- §0.25에서 수렴한 `user_request`, `general_task | explicit_subagent_required` intent와 `selected_mode`를 그대로 사용한다.
+- `tier_b_sequential`이면 자동 격하와 고지 사실을 `Decisions`에 기록하고 advisor 호출은 만들지 않는다. 사용자가 명시 전환한 경우에는 concrete message ref도 함께 기록한다.
+- `blocked_explicit_independence`이면 세션 기록 뒤 advisor 호출 계획으로 진행하지 않고 사용자 선택을 기다린다.
 
 ### 5. Advisor 호출 계획 수립
 
@@ -115,6 +136,8 @@ skip 판단도 반드시 기록한다 — 어떤 advisor 를 왜 거치지 않�
 requirements/design-advisor 산출물은 파일로만 존재 — 사용자는 자동으로 보지 못한다. orchestrator 가 핵심 결정을 전달할 책임을 진다. **옵션 공간이 닫혀있다는 orchestrator 사전 판단은 면제 사유가 아니다** (옵션 공간은 design 산출 이후에만 평가 — 프로토콜 §1). 이 절은 §5.1 정량 skip 기준보다 우선한다. 상세는 프로토콜 §1. **research 가 세션 초반 가정을 뒤집으면 설계 진입 전 plan 게이트를 1회 추가한다**(반전 요약 + 옵션 + Recommended + 근거 — 프로토콜 §2.7).
 
 #### 5.1 Advisor 호출 흐름
+
+§0.25에서 `tier_b_sequential`이 선택됐다면 이 절의 advisor 호출 계획과 모든 advisor `call` 결정을 실행하지 않는다. 각 phase를 `platform-adapters.md` §5 순차 self-check로 수행하고, "advisor가 검토했다" 또는 "독립 의견"으로 표현하지 않는다.
 
 원 요청을 훑고 어떤 advisor 를 어떤 순서로 호출할지 결정한다. 일반적 흐름 (생략 가능):
 
@@ -167,17 +190,18 @@ Advisor spawn 전 orchestrator는 해당 advisor의 report-domain `report_invoca
 
 **verification 불변식**: code 변경이 있으면 verification advisor의 명시적 실패나 interruption도 skip 사유가 아니다. Tier B로 동일 통합 검증을 직접 실행하거나 요구되는 검증을 수행할 수 없어 `blocked`로 끝내며, 기존 L2 허용 규칙 밖의 `needs_user_verification`으로 대체하지 않는다.
 
-#### 5.3 환경 주도 wait/wakeup scheduling
+#### 5.3 negotiated result collection
 
-Advisor/worker를 호출한 뒤의 대기는 lifecycle 판정과 분리해 프로토콜 §2.5의 `await_invocations` 계약을 따른다. Orchestrator는 관심 environment invocation identity, `condition: any | all`, 그리고 정확히 `completed | failed | interrupted | approval_required | user_steering`인 `wake_on` 집합을 정한다. Environment가 관심 event 전까지 model turn을 suspend하고 내부 keepalive, event deduplication, completion coalescing, compact changed-invocation delta, steering과 await cancellation을 소유한다. Unchanged `running`이나 내부 keepalive는 root model wake와 semantic action을 만들지 않는다.
+§0.25의 `selected_mode`에 따라 대기 방식을 분기한다. Lifecycle 판정은 어느 mode에서도 §5.2의 environment-authoritative 규칙을 그대로 따른다.
 
-Subscription 등록 전 `platform-adapters.md` §3.2의 필수 capability를 모두 `supported | unsupported | unknown`으로 판정한다. **전부 `supported`일 때만** `environment_subscription`을 등록한다. 하나라도 `unsupported | unknown`이면 부분 기능이나 시간 기반 반환, 반복 상태 조회로 보충하지 않고 다음을 정확히 수행한다.
+- `environment_subscription`: 프로토콜 §2.5의 `await_invocations`를 사용한다. 관심 identity, `condition: any | all`, 정확한 `wake_on` 집합을 등록하고 timeout-free suspend·deduplication·coalescing·compact delta 계약을 유지한다. 등록 직전 formal capability 12개를 재확인한다.
+- `host_managed_subagent_orchestration`: 선택한 host orchestration skill의 managed result barrier를 사용한다. 요청한 모든 child의 terminal result가 도착한 뒤에만 검증·취합하며 generic polling을 추가하지 않는다. 실제 nonterminal update가 전달되면 invocation을 `running`으로 유지하고 completion, retry/fallback 또는 authority·ownership mutation을 만들지 않는다.
+- `tier_b_sequential`: child가 없으므로 join을 호출하지 않고 §5 순차 self-check를 계속한다.
+- `blocked_explicit_independence`: child와 join을 만들지 않고 사용자 선택을 기다린다.
 
-1. `.atp/work-session/<sid>/artifacts/wait-wakeup-events.jsonl`에 `wait_wakeup_capability_unavailable`을 정확히 1회 기록한다.
-2. Automatic wait/list/retry/interrupt/fallback을 각각 0건으로 유지한다. Child의 마지막 environment-authoritative lifecycle state, read-only result acceptance authority, write-capable write ownership을 그대로 보존한다. 이 gap은 lifecycle failure나 `environment_state_unknown`, `lifecycle_fallback_reason`을 만들지 않는다.
-3. Phase를 `blocked`로 반환하거나, 사용자가 명시적으로 선택한 event-only external continuation만 등록한다. External continuation은 non-empty continuation identity, 관심 event만 root를 재개하는 wake contract, 독립 cancellation contract를 모두 가져야 하며 시간 기반 또는 polling continuation은 허용하지 않는다.
+실행 중 선택된 orchestration capability가 실제 unavailable/error로 바뀌면 child의 마지막 environment-authoritative state, result acceptance authority와 write ownership을 보존하고 추가 spawn·automatic retry/interrupt/fallback을 0건으로 둔 채 phase를 blocked로 반환한다. Automatic Tier B 전환으로 독립 실행 요구를 숨기지 않는다. Status API unavailable/error가 별도로 관측되지 않았다면 `environment_state_unknown`이나 `lifecycle_fallback_reason`을 합성하지 않는다.
 
-Scheduling ledger의 허용 event vocabulary는 정확히 `await_capability_checked | await_registered | wake_batch | wait_wakeup_capability_unavailable | external_continuation_selected | measurement` 여섯 개다. 각 행은 protocol §2.5 envelope을 따르며 orchestrator만 이 top-level ledger에 append한다. Scheduling metadata를 report schema v2 `Invocations[]`에 추가하지 않고, report에는 artifact link와 compact `Decisions` / `Concerns` / `Open Items` narrative만 남긴다. 명시적 `failed | interrupted`가 별도로 관측된 뒤의 사용자 승인형 recovery, completion race, retry identity, result acceptance, write ownership, late completion 규칙은 §5.2 그대로다.
+Scheduling ledger의 허용 event vocabulary는 정확히 `await_capability_checked | await_registered | wake_batch | wait_wakeup_capability_unavailable | external_continuation_selected | measurement` 여섯 개다. `await_capability_checked`에는 `formal_adapter_enabled`, `host_managed_subagent_orchestration`, `selected_mode`를 기록한다. `await_registered`/`wake_batch`는 formal `environment_subscription`에만 사용한다. Managed `measurement`는 `requested_agents`, `spawn_calls`, `nonterminal_updates`, `terminal_deliveries`, `collected_results`, generic wait/list/interrupt와 semantic recovery action의 실제 관측값을 기록하며 알 수 없는 telemetry는 `null`로 둔다. `wait_wakeup_capability_unavailable`은 두 orchestration mode가 모두 불가하거나 선택된 mode가 runtime에서 사라진 경우에만 phase당 정확히 1회 기록한다. 명시적 `failed | interrupted` 뒤의 사용자 승인형 recovery, completion race, retry identity, result acceptance, write ownership, late completion 규칙은 §5.2 그대로다.
 
 ### 6. 각 호출에 모델 override
 
@@ -222,8 +246,8 @@ advisor 산출물의 `concerns` 필드 교차 검사. 프로토콜 §4 절차 �
 - **retro 호출 전 orchestrator 가 `user_signals` 기록**: 세션 중 사용자 발화에서 감지한 부정 시그널("왜 안 했어?", "또야?", "틀렸어") 과 긍정 시그널("좋더라", "그거 맞아", 한 번 만에 수락) 을 `report.md` 의 `user_signals.{positive|negative}` 에 한 줄씩 인용·요약. 구조적 허점이면 `negative[*].structural: true`. 한쪽이 없으면 빈 리스트.
 - 모든 advisor 산출이 수렴 + verification pass 면 retrospective-advisor 호출 (기록된 `user_signals` 를 입력으로). **호출 전 전제**: `report.md` 의 `Summary` / `Invocations` / `Decisions` 세 섹션이 최소 1줄 이상 채워져 있어야 함. 빈 Summary 로 회고를 돌리면 입력 품질이 무너진다. **회고 산출 sink 는 `report.md` 의 `Retrospective` 섹션이다 — 별 파일(`retrospective.md` 등) 산출을 요구하지 않는다**(advisor 의 `Write` 미보유는 프로토콜 §12 "권고만" 설계의 의도된 제약). 산출물 유무는 그 섹션으로만 판정한다.
 - 회고 결과의 `memory_candidates`(교훈 후보) 검토 후 orchestrator 가 수용 여부 결정. **docs-first**: 수용한 교훈은 `docs_sync_target` 경로(`CLAUDE.md` / `docs/development/*.md` / ADR 등) 에 **같은 커밋으로 기재하는 것을 기본**으로 한다. **memory 기록은 사용자의 memory 설정을 존중** — 사용자가 memory 를 활성화한 경우(`memory_optional: true` 후보)에만 보조로 갱신하고, 비활성/미설정이면 docs 단독으로 마감하며 memory 기록을 강제하지 않는다. `signal_source: negative` 뿐 아니라 `positive` 후보도 동등하게 검토 (비자명한 판단이 검증된 경우).
-- `report.md` 에 `ended_at` 기록
-- 커밋/push 는 프로젝트 커밋 정책에 따라 작업 단위 끝에서 진행
+- **종료 serialization 순서**: 모든 요청 child terminal result 수신 → 결과 계약 검증·통합 → verification → retrospective → retrospective 결과를 report에 반영 → report 재스테이징 → staged 상태 재검증 → 요청 범위 mutation/commit/push/remote verification 완료 → session `ended_at` 기록 → report 형식 최종 read-only 검증 → 사용자 최종 응답. 미래 `ended_at`을 앞선 단계에서 미리 쓰지 않는다.
+- 커밋/push 는 프로젝트 커밋 정책과 위 순서에 따라 작업 단위 끝에서 진행
 
 ## system-reminder 수신 시 행동 원칙
 

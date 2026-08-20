@@ -1,0 +1,7 @@
+interface:
+  display_name: "ATP Init"
+  short_description: "Initialize a repository for Agent Team Protocol"
+  default_prompt: "Use $atp:init to initialize this repository for Agent Team Protocol."
+
+policy:
+  allow_implicit_invocation: false

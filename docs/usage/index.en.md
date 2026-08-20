@@ -4,7 +4,7 @@ title: Usage Category Index (English)
 description: English index for plugin installation, initialization, and operation guides.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-10
+last_reviewed: 2026-08-20
 ---
 
 <p align="center">
@@ -20,6 +20,8 @@ This category collects documents written from the perspective of a **user instal
 
 - [setup-checklist.en.md](./setup-checklist.en.md) — 3-step setup checklist after plugin install: `/atp:init` → fill placeholders → `/atp:task` smoke test
 - [faq.en.md](./faq.en.md) — troubleshooting FAQ: install failures, unrecognized commands, graphify skip, init re-run, and more
+- [known-issues.en.md](./known-issues.en.md) — current platform limitations, impact, workarounds, and exit criteria
+- [best-practices.md](./best-practices.md) — known workflow costs and recommended task-shaping practices (Korean-first/canonical)
 
 ## Installation Order
 
@@ -54,5 +56,7 @@ See [setup-checklist.en.md](./setup-checklist.en.md) for details.
 ## Recommended Reading Order
 
 1. [setup-checklist.en.md](./setup-checklist.en.md) — setup right after install (3 steps)
-2. [faq.en.md](./faq.en.md) — when something goes wrong
-3. Agent composition — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md) (Korean-first/canonical)
+2. [known-issues.en.md](./known-issues.en.md) — check current limitations
+3. [faq.en.md](./faq.en.md) — when something goes wrong
+4. [best-practices.md](./best-practices.md) — before shaping a larger task (Korean-first/canonical)
+5. Agent composition — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md) (Korean-first/canonical)

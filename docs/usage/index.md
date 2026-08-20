@@ -4,7 +4,7 @@ title: Usage 카테고리 인덱스
 description: plugin 설치·초기화·운영 관련 사용 가이드 인덱스.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-01
+last_reviewed: 2026-08-20
 ---
 
 <p align="center">
@@ -20,6 +20,7 @@ last_reviewed: 2026-06-01
 
 - [setup-checklist.md](./setup-checklist.md) — plugin 설치 후 `/atp:init` → placeholder 채우기 → `/atp:task` 스모크 3단계 설정 체크리스트
 - [faq.md](./faq.md) — 설치 실패·명령 미인식·graphify skip·init 재실행 등 문제 해결 FAQ
+- [known-issues.md](./known-issues.md) — 현재 확인된 플랫폼 제한·영향·우회책·해소 조건
 - [best-practices.md](./best-practices.md) — 캐시 리드 누적·절차 시간 등 한계점 이해와 권장 작업 방식
 
 ## 설치 순서
@@ -55,6 +56,7 @@ last_reviewed: 2026-06-01
 ## 먼저 읽을 순서
 
 1. [setup-checklist.md](./setup-checklist.md) — 설치 직후 설정 (3단계)
-2. 문제 발생 시 [faq.md](./faq.md)
-3. 작업 전 [best-practices.md](./best-practices.md) — 한계점·캐시 비용·작업 분할 방식
-4. 에이전트 구성 확인 — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md)
+2. 현재 제한 확인 — [known-issues.md](./known-issues.md)
+3. 문제 발생 시 [faq.md](./faq.md)
+4. 작업 전 [best-practices.md](./best-practices.md) — 한계점·캐시 비용·작업 분할 방식
+5. 에이전트 구성 확인 — [`../../plugins/atp/docs/development/agent-catalog.md`](../../plugins/atp/docs/development/agent-catalog.md)

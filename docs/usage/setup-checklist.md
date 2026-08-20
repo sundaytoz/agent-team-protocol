@@ -4,7 +4,7 @@ title: plugin 설치 후 설정 체크리스트
 description: /plugin install 후 /atp:init 실행 → placeholder 채우기 → /atp:task 스모크까지 3단계 체크리스트.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-01
+last_reviewed: 2026-08-20
 ---
 
 # plugin 설치 후 설정 체크리스트
@@ -90,15 +90,17 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 플랫폼별 입력:
 
 - **Claude Code**: `/atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
-- **Codex** (verified-empirical 2026-06-10, codex-cli 0.138.0): `$atp:task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
+- **Codex**: `$atp:task 안녕, ATP skill 로드와 선택된 execution mode만 확인해줘`
 - **Antigravity IDE** (verified-empirical 2026-06-30, Antigravity 2.2.1): `/atp-task 안녕, 에이전트 팀이 로드됐는지 확인만 해줘`
 - **opencode** (verified-empirical 2026-06-24, opencode 1.17.9): `opencode run --command atp-task "안녕, 에이전트 팀이 로드됐는지 확인만 해줘"`
 
 > opencode 는 마켓플레이스 plugin 이 아니라 npm 어댑터로 설치한다: `npx @atp-opencode/opencode install` (위 0단계의 marketplace/install 단계 불필요). 상세는 [faq.md](./faq.md) · [`../../adapters/opencode/README.md`](../../adapters/opencode/README.md).
 
-- [ ] orchestrator 가 `docs/development/agent-team-protocol.md` 를 읽었는가?
+> ATP 2.15.0의 tested Codex CLI profile에서는 team execution이 disabled다. 위 Codex 스모크는 실제 advisor 체인을 기대하지 않는다. 일반 요청이면 `tier_b_sequential` 고지를, 독립 subagent가 필수인 요청이면 blocker와 선택지를 확인한다. 상세는 [known-issues.md](./known-issues.md).
+
+- [ ] orchestrator 가 번들 `agent-team-protocol.md` core와 적용 가능한 host orchestration skill을 읽었는가?
 - [ ] `.atp/work-session/<sid>/` 디렉토리가 생성됐는가?
-- [ ] `report.md` 초기 스키마 v1 헤더가 기록됐는가?
+- [ ] `report.md` 초기 스키마 v2 헤더와 선택된 execution mode가 기록됐는가?
 
 세 가지 모두 YES 면 설정 완료.
 
@@ -107,6 +109,7 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 ## 관련 문서
 
 - [faq.md](./faq.md) — 설치 실패·명령 미인식·graphify skip 등 문제 해결
+- [known-issues.md](./known-issues.md) — 현재 플랫폼 제한·영향·우회책·해소 조건
 - [`../../plugins/atp/docs/development/agent-team-protocol.md`](../../plugins/atp/docs/development/agent-team-protocol.md) — 3-tier 운영 프로토콜 전문
 - `verification-strategies.md` — 검증 전략 레지스트리 (`/atp:init` 이 소비 프로젝트 `docs/development/` 에 생성, 2-A 에서 편집)
 - `document-category-classification.md` — 카테고리 분류 기준 (`/atp:init` 이 생성, 2-B 에서 편집)

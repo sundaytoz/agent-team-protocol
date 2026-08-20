@@ -4,7 +4,7 @@ title: Capability Tier 와 호스트 자가판정
 description: ATP 가 호스트 CLI 의 subagent capability 를 자가판정해 위임 토폴로지(Tier A / A-flat / B)를 결정하는 규칙. 호스트 고유 문법·모델 슬러그는 호스트 위에서 실행 중인 에이전트가 자율 적용한다.
 owner: template-maintainer
 stability: draft
-last_reviewed: 2026-08-13
+last_reviewed: 2026-08-18
 ---
 
 # Capability Tier 와 호스트 자가판정
@@ -52,7 +52,7 @@ ATP 내부의 공통 명령 식별자는 `task`, `init` 이다. 스킬 파일명
 
 ## 3. Capability 자가판정 절차
 
-orchestrator(메인 에이전트)는 ATP task 진입 시 자기 호스트의 capability 를 1회 자가판정한다. 플랫폼 이름이 아니라 **capability 질문**으로 판정한다 — 목록에 없는 호스트도 자연 커버된다.
+orchestrator(메인 에이전트)는 ATP task 진입 시 적용 가능한 host orchestration skill을 먼저 선택해 전체 지침과 배포된 capability profile을 읽는다. 플랫폼 이름이 아니라 **capability 질문**으로 판정한다 — 목록에 없는 호스트도 자연 커버된다. 소비 프로젝트의 매 task에서 임시 child, 시간 기반 probe, 반복 상태 조회나 maintainer validator를 실행해 profile을 다시 만들지 않는다.
 
 ```
 [진입] orchestrator 가 자기 호스트 capability 를 자가판정
@@ -72,7 +72,7 @@ orchestrator(메인 에이전트)는 ATP task 진입 시 자기 호스트의 cap
             phase 완료 아티팩트 기준(§13) · forward phase-gate(§2.7) · 집합 전수 AC(§4.3) 유지.
 ```
 
-판정 근거는 에이전트 자신의 런타임 지식(자기 도구 목록·호스트 문서·과거 동작)으로 충분하다. **확신이 없으면 안전 폴백** — spawn 여부 불확실 → Tier B, 재귀 여부 불확실 → Tier A-flat.
+판정 근거는 선택한 host orchestration skill의 검증된 profile, 호스트 공식 문서와 정상 API다. 실행 중 임의 추론으로 profile과 result collection 계약을 덮어쓰지 않는다. Applicable skill/profile이 없고 확신할 근거도 없으면 안전 폴백한다 — spawn 여부 불확실 → Tier B, 재귀 여부 불확실 → Tier A-flat.
 
 ### 3.1 Invocation lifecycle capability profile
 
@@ -104,9 +104,9 @@ Host termination control과 ATP-local `result acceptance isolation`은 별도 ca
 
 명시적 failed/interrupted/environment blocker 뒤의 clean retry 횟수에는 유한한 안전 한도를 둘 수 있다. 그러나 관측 시간·poll 횟수는 그 한도를 소비하지 않는다. capability가 unknown이어도 사용자 보고 → 옵션 → 확인 순서를 생략하지 않으며, 승인 전 interrupt/retry/fallback은 0건이다.
 
-### 3.2 Wait/wakeup scheduling capability profile
+### 3.2 Formal wait/wakeup scheduling capability profile
 
-Lifecycle capability와 별도로, subagent를 호출하는 주체는 protocol §2.5의 `await_invocations`를 등록하기 전에 다음 capability를 각각 `supported | unsupported | unknown`으로 판정한다. 이 profile은 host-neutral하며 모든 required capability가 `supported`인 경우에만 `adapter_enabled: true`, `mode: environment_subscription`이다.
+Lifecycle capability와 별도로, subagent를 호출하는 주체는 execution mode preflight와 protocol §2.5의 `await_invocations` 등록 직전에 다음 capability를 각각 `supported | unsupported | unknown`으로 판정한다. 이 profile은 host-neutral하며 모든 required capability가 `supported`인 경우에만 `formal_adapter_enabled: true`, `mode: environment_subscription`이다. 이 판정은 timeout-free scheduling 최적화 mode의 가용성을 결정하며 child spawn 가능성 자체는 §3.3이 별도로 판정한다.
 
 | capability identity | 판정 질문 |
 |---|---|
@@ -123,22 +123,50 @@ Lifecycle capability와 별도로, subagent를 호출하는 주체는 protocol �
 | `completion_coalescing` | resume dispatch 전 인접 관심 event를 한 compact batch로 취합하는가 |
 | `internal_keepalive_no_model_wake` | keepalive/watchdog을 environment 내부에서 처리하고 root를 깨우지 않는가 |
 
-**All-required gate**: 위 identity 하나라도 `unsupported | unknown`이면 `adapter_enabled: false`다. ATP는 부분 지원을 조합하거나, root-visible 시간 신호·반복 상태 조회·polling으로 빈 capability를 보충하지 않는다. `wait_wakeup_capability_unavailable`을 phase-local ledger에 정확히 1회 기록하고 automatic wait/list/retry/interrupt/fallback을 각각 0건으로 유지한다.
+**Formal all-required gate**: 위 identity 하나라도 `unsupported | unknown`이면 `formal_adapter_enabled: false`다. ATP는 부분 capability를 조합해 `environment_subscription`이라고 주장하거나 root-visible 시간 신호·반복 상태 조회·polling으로 formal 계약의 빈 capability를 보충하지 않는다. 다만 formal adapter 부재는 곧바로 `spawn_allowed: false`를 뜻하지 않는다. 적용 가능한 host orchestration skill이 product-managed all-results barrier를 `supported`로 보장하면 §3.3의 `host_managed_subagent_orchestration`을 사용할 수 있다.
 
-Capability gap은 scheduling unavailable이지 lifecycle failure가 아니다. 실제 status API unavailable/error가 관측되지 않았다면 child의 마지막 authoritative state를 `environment_state_unknown`으로 바꾸지 않는다. Result acceptance authority와 write ownership도 보존한다. Phase는 `blocked` 또는 사용자가 명시 선택한 event-only external continuation으로만 수렴한다. External continuation에는 host-native 관심 event resume identity와 cancellation contract가 모두 있어야 하며 timer/polling continuation은 허용하지 않는다.
+Formal capability gap은 scheduling 최적화 unavailable이지 lifecycle failure가 아니다. `host_managed_subagent_orchestration`에서는 host가 spawn·routing·all-results collection을 관리하고 ATP는 generic polling을 추가하지 않는다. Managed capability 자체가 runtime에서 unavailable/error로 바뀐 경우에만 마지막 child state·authority·ownership을 보존하고 추가 spawn·automatic recovery를 0건으로 둔 채 phase를 blocked로 반환한다. Formal subscription으로 위장한 timer/polling continuation은 계속 금지한다.
 
 Scheduling 기록은 lifecycle ledger와 분리된 phase-local `wait-wakeup-events.jsonl`에 둔다. Event vocabulary는 정확히 다음 여섯 개의 닫힌 집합이며, host adapter가 다른 event 이름이나 root-visible timeout/keepalive event를 추가하지 않는다.
 
 | scheduling event | 의미 |
 |---|---|
-| `await_capability_checked` | 필수 capability 12개 각각의 `supported | unsupported | unknown` 판정과 profile 근거를 기록한다 |
+| `await_capability_checked` | 필수 capability 12개 각각의 판정, `formal_adapter_enabled`, `host_managed_subagent_orchestration`, `selected_mode`와 profile 근거를 기록한다 |
 | `await_registered` | all-required gate 통과 뒤 `targets`, `condition`, 정확한 `wake_on`, `mode: environment_subscription`, capability profile ref를 기록한다 |
 | `wake_batch` | 하나의 root resume를 식별하는 batch identity, wake reason, changed-invocation compact delta와 deduplicated event identity를 기록한다 |
-| `wait_wakeup_capability_unavailable` | 필수 capability 하나라도 미지원·불명일 때 정확히 1회 기록하고 preserved lifecycle state·authority·ownership, phase disposition, automatic action 0건을 보존한다 |
+| `wait_wakeup_capability_unavailable` | formal adapter와 host-managed orchestration이 모두 unavailable일 때 정확히 1회 기록하고 preserved lifecycle state·authority·ownership, phase disposition, automatic action 0건을 보존한다 |
 | `external_continuation_selected` | 사용자가 명시 선택한 event-only continuation identity와 wake/cancellation contract가 모두 있을 때만 기록한다 |
-| `measurement` | 정상 API나 로그로 확인한 wait/list/spawn/verifier/root-resume, token, latency 측정만 기록하며 알 수 없는 값은 `null`로 둔다 |
+| `measurement` | 정상 API나 로그로 확인한 requested/spawn/nonterminal/terminal/collected/manual-wait/list/interrupt/recovery, token, latency 측정만 기록하며 알 수 없는 값은 `null`로 둔다 |
 
 각 row의 envelope과 event별 closed details, adapter 논리 입출력, 정확한 wake set, compact delta·event ID·coalescing·steering/cancellation 불변식은 protocol §2.5가 정본이다. Scheduling metadata를 report v2 `Invocations[]`에 복사하지 않는다.
+
+### 3.3 Execution mode negotiation
+
+위임 topology(Tier A / A-flat / B)와 scheduling mode는 직교한다. Q1/Q2의 spawn·재귀 판정은 그대로 topology를 정하고, 별도 orchestration 판정이 child 결과의 all-results barrier를 고른다. Host-specific 기능을 사용하기 전에 적용 가능한 host orchestration skill을 선택해 전체 지침을 읽는다. 특정 host 전용 도구명과 event spelling은 공통 규약에 넣지 않고 §7.1의 조건부 appendix와 전용 skill이 해석한다.
+
+`host_managed_subagent_orchestration`은 host와 적용 skill이 다음을 보장하는 capability 값 `supported | unknown | unsupported`다.
+
+별도 축 `manual_wait_polling_supported`는 generic model-visible polling이 correctness primitive인지 나타내며, managed mode에서는 반드시 `false`다. 이 값은 formal adapter capability와 host-managed capability를 합성하지 않는다.
+
+1. 요청된 child를 만들고 environment identity를 report identity에 연결할 수 있다.
+2. Host가 follow-up routing, 결과 대기와 terminal delivery를 관리한다.
+3. 요청한 모든 child terminal result가 준비된 뒤 parent result collection barrier를 연다.
+4. ATP가 generic polling을 추가하지 않아도 user steering 또는 host control을 보존한다.
+
+Execution mode의 닫힌 집합과 선택 우선순위는 다음과 같다.
+
+| selected mode | 조건 | 처리 |
+|---|---|---|
+| `environment_subscription` | `formal_adapter_enabled: true` | 기존 timeout-free `await_invocations` 계약을 그대로 사용 |
+| `host_managed_subagent_orchestration` | formal adapter는 불완전하지만 host profile이 `supported` | host-managed all-results barrier를 사용하고 generic polling을 추가하지 않음 |
+| `tier_b_sequential` | 두 orchestration mode가 모두 불가이고 `request_intent: general_task` | 사용자 선택을 기다리지 않고 순차 self-check로 자동 격하하며 1줄 고지 |
+| `blocked_explicit_independence` | 두 orchestration mode가 모두 불가이고 `request_intent: explicit_subagent_required` | `지원 host에서 재실행 | 독립성 없는 Tier B로 명시 전환 | 취소`를 제시하고 blocked |
+
+Managed mode에서 실제 nonterminal update가 전달돼도 invocation은 `running`이다. 모든 요청 child terminal result를 수신·검증·취합하기 전 report/session completion과 parent final을 만들지 않는다. 정상 경로 measurement는 requested agent, spawn, nonterminal update, terminal delivery, collected result와 generic wait/list/interrupt/recovery action의 실제 횟수를 기록하고 알 수 없는 telemetry는 `null`로 둔다.
+
+실행 중 managed capability가 unavailable/error로 바뀌면 automatic polling, retry, interrupt, fallback 또는 Tier B 전환으로 보상하지 않는다. Child의 마지막 authoritative state, result acceptance authority와 write ownership을 보존하고 요청 의도에 맞는 blocked/user-decision 경로를 사용한다. Formal capability가 나중에 추가되면 topology 변경 없이 scheduling mode만 `environment_subscription`으로 승격한다.
+
+이 협상은 다른 host의 기존 판정을 바꾸지 않는다. Formal capability 12개를 이미 충족하는 host는 계속 `environment_subscription`을 사용하고, 재귀 spawn이 불가능한 host의 Tier A-flat topology도 그대로 유지된다.
 
 ## 4. Tier A-flat 평탄화 규약 (재귀 금지 호스트의 토폴로지 해소)
 
@@ -208,7 +236,7 @@ spawn 미지원/자가판정 불가/실측 실패 호스트에서 **단일 agent
 ### Tier B 진입 트리거
 
 - §3 자가판정에서 spawn 불가/불확실 판정 시.
-- 호스트 install 스모크에서 spawn 실패 확인 시.
+- 배포된 host capability profile이 spawn 또는 orchestration을 `unsupported`로 명시한 경우.
 - 또는 사용자가 명시적으로 단일-agent 모드 요청 시.
 - 진입 시 orchestrator 는 "Tier B 격하 모드 — 병렬 advisor 미사용, 순차 self-checklist 수행" 을 1줄 고지한다.
 
@@ -245,7 +273,7 @@ ATP 모델 정책(프로토콜 §5)은 플랫폼 중립 tier(`small`/`medium`/`l
 host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮어쓰지 않는다. 해당 host 에서만 appendix 를 읽고, route 사용이 불가능하면 즉시 §6 의 기존 tier 매핑으로 fallback 한다.
 
 - Codex host: [codex-spark-routing.md](./codex-spark-routing.md) — Spark 를 저지연 code-worker route 후보로만 사용하고, 미지원/미확인/실패 시 기존 tier 매핑으로 fallback.
-- Codex host lifecycle/wait-wakeup: [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — §2.5의 environment state·terminal event·종결·독립 invocation을 매핑하고, timeout-free scheduling capability gap과 adapter gate를 판정. lifecycle fallback은 scheduling 및 모델 route와 독립.
+- Codex host lifecycle/orchestration: [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — §2.5의 environment state·terminal event·종결·독립 invocation을 매핑하고, formal scheduling과 managed all-results capability를 분리한다. lifecycle fallback은 scheduling 및 모델 route와 독립.
 
 ## 8. 동결 이력 포인터
 
@@ -262,6 +290,9 @@ host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮�
 - [ ] Tier A / A-flat / B 정의가 capability 조건("spawn 가능한가" / "재귀 가능한가")만으로 기술되어 있는가?
 - [ ] 자가판정 절차(§3)에 안전 폴백(불확실 → Tier B / parent 상속)이 포함되어 있는가?
 - [ ] lifecycle capability(environment state·terminal/approval event·종결·identity·context·result acceptance isolation·write isolation)가 supported/unsupported/unknown으로 판정되고 `environment_state_unknown` 안전 폴백이 정의되어 있는가?
-- [ ] wait/wakeup 필수 capability 12개가 전부 `supported`일 때만 `environment_subscription`이 활성화되고, 하나라도 unsupported/unknown이면 unavailable 1회·자동 wait/list/recovery 0건으로 수렴하는가?
+- [ ] wait/wakeup 필수 capability 12개가 전부 `supported`일 때만 `environment_subscription`이 활성화되는가?
+- [ ] formal gap이 있어도 `host_managed_subagent_orchestration: supported`인 host는 managed all-results barrier로 팀 실행을 유지하는가?
+- [ ] 두 orchestration mode가 모두 불가할 때 일반 작업은 투명한 `tier_b_sequential`, 실제 독립성 요구는 `blocked_explicit_independence`로 수렴하는가?
+- [ ] Host 전용 managed mapping이 formal subscription 또는 다른 host의 Tier A/A-flat/B 판정을 변경하지 않는가?
 - [ ] 동결 이력 포인터(§8 → ADR-0009 부록)가 존재하는가?
 - [ ] 게이트·report 스키마·검증규율의 tier 독립성("어느 tier 든 유지")이 명시되어 있는가?

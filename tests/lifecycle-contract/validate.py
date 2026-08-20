@@ -259,6 +259,7 @@ DEPRECATED_ACTIVE_TERMS = {
 }
 WAIT_WAKE_TOP_LEVEL = {
     "logical_contract_cases",
+    "execution_mode_cases",
     "recovery_preservation_cases",
     "capability_gap_cases",
     "comparison_workload",
@@ -316,6 +317,7 @@ RECOVERY_PRESERVATION_CASES = {
     "explicit_failed_waits_for_user",
     "explicit_interrupted_waits_for_user",
     "completion_before_retry_cancels_retry",
+    "approved_completion_race_allows_one_authoritative_list",
     "late_completion_after_revocation_is_quarantined",
     "late_disk_write_pauses_dependency_closure",
 }
@@ -324,6 +326,13 @@ CAPABILITY_GAP_CASES = {
     "unknown_required_capability_blocks",
     "event_only_external_continuation_is_allowed",
     "polling_external_continuation_is_rejected",
+}
+EXECUTION_MODE_CASES = {
+    "formal_subscription_preserves_existing_mode",
+    "host_managed_profile_allows_spawn",
+    "general_task_without_safe_join_auto_tier_b",
+    "explicit_subagent_without_safe_join_blocks",
+    "non_codex_recursive_limit_keeps_tier_a_flat",
 }
 GAP_AUTOMATIC_ACTIONS = {
     "await_calls",
@@ -365,6 +374,7 @@ SCHEDULING_LEDGER_FIELDS = {
 }
 WAIT_WAKE_DISPOSITIONS = {
     "environment_subscription",
+    "host_managed_subagent_orchestration",
     "blocked",
     "explicit_external_continuation_required",
 }
@@ -1767,6 +1777,101 @@ def validate_wait_wakeup(failures: list[str]) -> None:
         failures,
     )
 
+    mode_case_list = scheduling.get("execution_mode_cases", [])
+    mode_cases = {case.get("name"): case for case in mode_case_list}
+    require(
+        len(mode_cases) == len(mode_case_list)
+        and set(mode_cases) == EXECUTION_MODE_CASES,
+        "execution-mode case set is incomplete or duplicated",
+        failures,
+    )
+
+    formal = mode_cases.get("formal_subscription_preserves_existing_mode", {})
+    managed = mode_cases.get("host_managed_profile_allows_spawn", {})
+    general_tier_b = mode_cases.get(
+        "general_task_without_safe_join_auto_tier_b", {}
+    )
+    explicit_block = mode_cases.get(
+        "explicit_subagent_without_safe_join_blocks", {}
+    )
+    non_codex_flat = mode_cases.get(
+        "non_codex_recursive_limit_keeps_tier_a_flat", {}
+    )
+
+    require(
+        formal.get("formal_adapter_enabled") is True
+        and formal.get("selected_mode") == "environment_subscription"
+        and formal.get("spawn_allowed_after_preflight") is True
+        and formal.get("ledger_events") == ["await_capability_checked"],
+        "formal subscription mode no longer preserves the existing spawn path",
+        failures,
+    )
+
+    managed_collection = managed.get("managed_collection", {})
+    require(
+        managed.get("host_scope") == "host-specific-appendix"
+        and managed.get("formal_adapter_enabled") is False
+        and managed.get("manual_wait_polling_supported") is False
+        and managed.get("host_managed_subagent_orchestration") == "supported"
+        and managed.get("selected_mode")
+        == "host_managed_subagent_orchestration"
+        and managed.get("spawn_allowed_after_preflight") is True
+        and managed.get("ledger_events") == ["await_capability_checked"]
+        and managed_collection
+        == {
+            "waits_for_all_requested_results": True,
+            "manual_wait_calls": 0,
+            "list_calls": 0,
+            "interrupt_calls": 0,
+            "automatic_retry_calls": 0,
+        },
+        "host-managed mode lost its all-results barrier or added manual polling",
+        failures,
+    )
+
+    require(
+        general_tier_b.get("request_intent") == "general_task"
+        and general_tier_b.get("formal_adapter_enabled") is False
+        and general_tier_b.get("host_managed_subagent_orchestration")
+        == "unsupported"
+        and general_tier_b.get("selected_mode") == "tier_b_sequential"
+        and general_tier_b.get("spawn_allowed_after_preflight") is False
+        and general_tier_b.get("ux", {}).get("phase_disposition") == "continue"
+        and general_tier_b.get("ux", {}).get("tier_b_auto_entered") is True
+        and general_tier_b.get("ux", {}).get("mode_disclosed") is True
+        and general_tier_b.get("ux", {}).get("claimed_advisor_result") is False,
+        "general task does not transparently auto-degrade to Tier B",
+        failures,
+    )
+
+    require(
+        explicit_block.get("request_intent") == "explicit_subagent_required"
+        and explicit_block.get("selected_mode")
+        == "blocked_explicit_independence"
+        and explicit_block.get("spawn_allowed_after_preflight") is False
+        and explicit_block.get("ux", {}).get("phase_disposition") == "blocked"
+        and explicit_block.get("ux", {}).get(
+            "tier_b_offered_as_explicit_conversion"
+        )
+        is True
+        and explicit_block.get("ux", {}).get("claimed_advisor_result") is False
+        and set(explicit_block.get("ux", {}).get("options", []))
+        == {"supported_host", "explicit_tier_b_conversion", "cancel"},
+        "explicit independence is silently degraded or lacks blocker options",
+        failures,
+    )
+
+    require(
+        non_codex_flat.get("host_scope") == "non_codex"
+        and non_codex_flat.get("spawn_supported") is True
+        and non_codex_flat.get("recursive_spawn_supported") is False
+        and non_codex_flat.get("selected_topology") == "tier_a_flat"
+        and non_codex_flat.get("selected_mode") == "environment_subscription"
+        and non_codex_flat.get("spawn_allowed_after_preflight") is True,
+        "host-managed scheduling changed another host's Tier A-flat topology",
+        failures,
+    )
+
     capability_error = logical_cases.get("explicit_capability_error_is_unknown", {})
     capability_error_events = capability_error.get("environment_inputs", [])
     capability_error_expected = capability_error.get("expected", {})
@@ -1845,6 +1950,24 @@ def validate_wait_wakeup(failures: list[str]) -> None:
             "result_disposition": "normal_candidate",
         },
         "completion race did not preserve the old result as a normal candidate",
+        failures,
+    )
+
+    authoritative_list = recovery_cases.get(
+        "approved_completion_race_allows_one_authoritative_list", {}
+    )
+    require(
+        bool(authoritative_list.get("existing_environment_invocation_id"))
+        and bool(authoritative_list.get("user_approval_ref"))
+        and authoritative_list.get("purpose") == "completion_race_recheck"
+        and authoritative_list.get("expected")
+        == {
+            "list_calls": 1,
+            "polling_calls": 0,
+            "automatic": False,
+            "new_invocations_before_query": 0,
+        },
+        "user-approved completion race lost its single authoritative list query",
         failures,
     )
 
@@ -2093,6 +2216,13 @@ def validate_wait_wakeup(failures: list[str]) -> None:
     implementation_path = ROOT / "plugins/atp/agents/implementation-advisor.md"
     protocol = active_scope(protocol_path, "### 2.5", "### 2.6", failures)
     task = active_scope(task_path, "#### 5.2", "\n### 6.", failures)
+    task_source = task_path.read_text(encoding="utf-8")
+    task_preflight = active_scope(
+        task_path,
+        "### 0.25 host orchestration skill과 execution mode preflight",
+        "\n### 0.5",
+        failures,
+    )
     research = active_scope(
         research_path, "## Worker lifecycle", "\n## 출력", failures
     )
@@ -2123,17 +2253,63 @@ def validate_wait_wakeup(failures: list[str]) -> None:
             failures,
         )
     require_terms(
+        task_preflight,
+        {
+            "첫 advisor",
+            "spawn하기 전에",
+            "general_task",
+            "explicit_subagent_required",
+            "environment_subscription",
+            "host_managed_subagent_orchestration",
+            "host orchestration skill",
+            "전체 지침",
+            "tier_b_sequential",
+            "blocked_explicit_independence",
+            "자동",
+        },
+        "task adaptive execution-mode preflight",
+        failures,
+    )
+    ordered_task_headers = (
+        "### 0.25 host orchestration skill과 execution mode preflight",
+        "### 0.5 1회성 마이그레이션 체크",
+        "### 3. report.md 초기화",
+        "### 5. Advisor 호출 계획 수립",
+    )
+    require(
+        all(header in task_source for header in ordered_task_headers)
+        and list(map(task_source.index, ordered_task_headers))
+        == sorted(map(task_source.index, ordered_task_headers)),
+        "task execution-mode preflight is missing or not ordered before migration/report/advisor planning",
+        failures,
+    )
+    require_terms(
         platform,
         REQUIRED_WAIT_WAKE_CAPABILITIES | SCHEDULING_LEDGER_EVENTS,
         "platform wait/wakeup capability contract",
         failures,
     )
+    require_terms(
+        platform,
+        {
+            "environment_subscription",
+            "host_managed_subagent_orchestration",
+            "tier_b_sequential",
+            "blocked_explicit_independence",
+            "formal_adapter_enabled",
+            "manual_wait_polling_supported",
+        },
+        "platform adaptive execution-mode negotiation",
+        failures,
+    )
     require(
-        "requested_mode: environment_subscription" in appendix
-        and "effective_mode: unavailable" in appendix
-        and "adapter_enabled: false" in appendix
-        and "wait_wakeup_capability_unavailable" in appendix,
-        "Codex appendix does not separate requested and effective scheduling mode",
+        "formal_adapter_enabled: false" in appendix
+        and "manual_wait_polling_supported: false" in appendix
+        and "host_managed_subagent_orchestration: unsupported" in appendix
+        and "team_execution_enabled: false" in appendix
+        and "manual_wait_calls: 0" in appendix
+        and "list_calls: 0" in appendix,
+        "Codex appendix does not map the formal gap to managed execution",
         failures,
     )
     require(
@@ -2283,7 +2459,7 @@ def validate_agent_source_specs(failures: list[str]) -> None:
             {
                 "wait_wakeup_ledger",
                 "wait_wakeup_disposition",
-                "environment_subscription | blocked | explicit_external_continuation_required",
+                "environment_subscription | host_managed_subagent_orchestration | blocked | explicit_external_continuation_required",
                 "top-level field",
                 "lifecycle_ledger",
             },

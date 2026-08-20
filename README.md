@@ -19,13 +19,15 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | 플랫폼 | 상태 | 호출 | 지침파일 | 검증 수준 |
 |---|---|---|---|---|
 | Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
-| Codex CLI | ✅ 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | 설치·skill 노출·호출·본문 로드 실측 (2026-06-10, codex-cli 0.138.0). subagent spawn 은 공식 문서 근거(cited) — 팀 모드 E2E 스모크 권장 |
+| Codex CLI | ⚠️ 부분 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | 설치·skill 실행 지원. Codex CLI 0.147.0에서 managed all-results barrier가 검증되지 않아 ATP 2.15.0의 tested CLI team execution은 disabled: 일반 요청은 Tier B, 독립 subagent 필수 요청은 blocked |
 | Antigravity IDE | ✅ 지원 | `/atp-task` | `GEMINI.md` | 정식 task PASS (verified 2026-06-30, Antigravity 2.2.1): advisor 체인 전수 + TC 10/10. 설치 = Skills 수동 복사 → `~/.gemini/config/skills/` |
 | opencode | ✅ 지원 (어댑터) | `opencode run --command atp-task "..."` | 생성형 emit (CLAUDE.md형 지침파일 없음) | 정식 스모크 PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
 Antigravity IDE 는 `/plugin` 없이 Skills 수동 복사로 설치한다 — 설치 방법은 아래 [3. 설치](#3-설치) 참고. 전략 근거는 [ADR-0015](docs/adr/ADR-0015-antigravity-host-verification.md).
 
 opencode 는 마켓플레이스 plugin 이 아니라 별도 npm 어댑터다 — 설치 명령은 아래 [3. 설치](#3-설치) 참고. 상세는 [adapters/opencode/README.md](adapters/opencode/README.md), 전략 근거는 [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md).
+
+Codex의 현재 제한·영향·우회책과 해소 조건은 [Known Issues](docs/usage/known-issues.md)에서 추적한다. App/IDE surface는 동일한 maintainer smoke를 거치지 않아 현재 `unknown`이다.
 
 capability tier 정의·호스트 자가판정 규칙의 정본은 [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) 다. 위 표의 플랫폼별 호출 문법·실측 마커의 동결 이력 정본은 [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록이다 — 번들 런타임은 플랫폼을 열거하지 않고 capability 자가판정으로 동작하므로, 표에 없는 호스트 CLI 에서도 사용할 수 있다.
 
@@ -118,11 +120,11 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 │   ├── atp/                              (base 플러그인 루트 — 설치 시 이 서브트리만 번들)
 │   │   ├── .claude-plugin/ .codex-plugin/  (plugin manifest)
 │   │   ├── agents/                       (base 에이전트 10개)
-│   │   ├── skills/                       (/atp:task, /atp:init)
+│   │   ├── skills/                       (/atp:task, /atp:init + host orchestration helper)
 │   │   ├── docs/development/             (런타임 레퍼런스 — agent 가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)
 │   │   └── templates/                    (/atp:init 스캐폴딩 원본)
 │   └── atp-graphify/                     (옵트인 add-on 플러그인)
-└── docs/                                 (사람용 문서 — 번들 제외: usage / development / architecture / adr)
+└── docs/                                 (사람용 문서 — 번들 제외: usage / development / architecture / adr / changes / backlog)
 ```
 
 ---
@@ -145,6 +147,7 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 | 초기화 스킬 | [plugins/atp/skills/init/SKILL.md](plugins/atp/skills/init/SKILL.md) | 멱등 생성 계약 |
 | 작업 진입 스킬 | [plugins/atp/skills/task/SKILL.md](plugins/atp/skills/task/SKILL.md) | 호출 방식 |
 | 문제 해결 / FAQ | [docs/usage/faq.md](docs/usage/faq.md) | 설치·init·graphify 트러블슈팅 |
+| Known Issues | [docs/usage/known-issues.md](docs/usage/known-issues.md) | 현재 제한·영향·우회책·해소 조건 |
 
 ---
 

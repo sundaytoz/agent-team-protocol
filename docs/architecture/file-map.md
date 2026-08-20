@@ -4,12 +4,12 @@ title: 구성 파일 맵
 description: 플러그인 레이아웃(레포 루트), init 이 소비 프로젝트에 생성하는 산출물, 런타임 디렉토리를 한 장으로 정리.
 owner: template-maintainer
 stability: stable
-last_reviewed: 2026-06-10
+last_reviewed: 2026-08-20
 ---
 
 # 구성 파일 맵
 
-레포 루트는 **마켓플레이스 `agent-team-protocol`** 이고, base 플러그인 `atp` 의 루트는 **`plugins/atp/`**, add-on `atp-graphify` 의 루트는 **`plugins/atp-graphify/`** 서브디렉토리다 (2.1.0 — 설치 시 해당 서브트리만 번들로 복사된다). 이 문서는 세 가지 트리를 설명한다.
+레포 루트는 **마켓플레이스 `agent-team-protocol`** 이고, base 플러그인 `atp` 의 루트는 **`plugins/atp/`**, add-on `atp-graphify` 의 루트는 **`plugins/atp-graphify/`** 서브디렉토리다. 설치 시 선택한 플러그인 서브트리만 번들로 복사된다. 이 문서는 세 가지 트리를 설명한다.
 
 1. [레포(플러그인 소스) 트리](#1-레포플러그인-소스-트리)
 2. [init 산출물 트리](#2-init-산출물-트리--소비-프로젝트)
@@ -37,7 +37,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 ├── plugins/
 │   ├── atp/                              ← base 플러그인 루트 (설치 시 이 서브트리만 캐시로 복사)
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, version 2.1.0)
+│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, release 2.15.0)
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json               ← base 플러그인 정의 (skills: "./skills/")
 │   │   ├── agents/                       ← base 에이전트 10개 (graphify 3종 제외)
@@ -53,14 +53,17 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   │   └── retrospective-advisor.md
 │   │   ├── skills/
 │   │   │   ├── task/SKILL.md             ← /atp:task 명령 진입점
-│   │   │   └── init/SKILL.md             ← /atp:init 명령 진입점
+│   │   │   ├── init/SKILL.md             ← /atp:init 명령 진입점
+│   │   │   └── codex-team/SKILL.md       ← Codex host orchestration preflight·result barrier 계약
 │   │   ├── docs/                         ← 번들 런타임 레퍼런스 (읽기전용, ${CLAUDE_PLUGIN_ROOT} 로 Read)
 │   │   │   ├── index.md                  ← 번들 전용 경량 허브
 │   │   │   └── development/
-│   │   │       ├── index.md              ← 번들 전용 경량본 (런타임 6건만)
+│   │   │       ├── index.md              ← 번들 전용 경량본
 │   │   │       ├── agent-team-protocol.md ← 3-tier 운영 권위 레퍼런스 (§1~§14 + 선두 코어 구획 atp:core)
 │   │   │       ├── agent-catalog.md      ← 에이전트 카탈로그 (base 10 + add-on 3)
 │   │   │       ├── platform-adapters.md  ← 호스트 capability tier 정의·자가판정 정본
+│   │   │       ├── codex-lifecycle-routing.md ← Codex lifecycle·managed orchestration appendix
+│   │   │       ├── codex-spark-routing.md     ← Codex 조건부 model route appendix
 │   │   │       ├── documentation-guidelines.md
 │   │   │       └── search-tool-matrix.md
 │   │   ├── templates/                    ← init 스캐폴딩 원본 (init 이 소비 프로젝트로 복사)
@@ -72,7 +75,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   └── (gemini-extension manifest)   ← 위치 확정(ADR-0007), 산출물은 F-3PLAT-4 에서 생성 예정
 │   │
 │   └── atp-graphify/                     ← add-on 플러그인 루트 (add-on 설치 시 이 서브트리만 복사)
-│       ├── .claude-plugin/plugin.json    ← add-on 정의 (name: atp-graphify, version 2.1.0, dependencies: ["atp"])
+│       ├── .claude-plugin/plugin.json    ← add-on 정의 (name: atp-graphify, version 2.3.0, dependencies: ["atp"])
 │       ├── .codex-plugin/plugin.json     ← 동일 add-on 정의
 │       ├── agents/                       ← graphify 에이전트 3개
 │       │   ├── graph-refresh-checker.md
@@ -81,16 +84,22 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │       └── docs/
 │           └── graphify-usage.md         ← graphify add-on 설치·통합 가이드
 │
-└── docs/                                 ← 사람용 문서 (번들 제외 — GitHub 독자·기여자 대상)
+├── docs/                                 ← 사람용 문서 (번들 제외 — GitHub 독자·기여자 대상)
     ├── index.md (+ index.en.md)          ← docs-first 풀 허브 (한/영)
-    ├── adr/                              ← ADR 5건 + index.md
+    ├── adr/                              ← 불변 결정 레코드 + index.md
     ├── architecture/
     │   ├── index.md
     │   └── file-map.md                   ← 이 문서
+    ├── backlog/                          ← upstream·후속 capability 제안
+    ├── changes/                          ← 공개 릴리스 구현 변경 이력
     ├── development/
-    │   ├── index.md                      ← 루트 풀본 (런타임 6건은 plugins/atp/docs/ 로 링크)
+    │   ├── index.md                      ← 루트 풀본 (런타임 정본은 plugins/atp/docs/ 로 링크)
     │   └── release-checklist.md          ← 기여자 릴리즈 절차
-    └── usage/                            ← 설치·FAQ 가이드 (한/영 6건)
+    └── usage/                            ← 설치·FAQ·Known Issues 가이드 (9건)
+
+└── tests/
+    ├── lifecycle-contract/              ← protocol·schema·mode 정적/fixture 검증
+    └── runtime-behavior/                ← Codex transcript validator·synthetic fixture·sanitized evidence
 ```
 
 ---
