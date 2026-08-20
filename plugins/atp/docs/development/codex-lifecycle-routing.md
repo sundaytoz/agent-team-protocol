@@ -1,134 +1,189 @@
 ---
 kind: development
-title: Codex subagent lifecycle and wait/wakeup routing appendix
-description: Agent Team Protocol §2.5의 host-neutral lifecycle과 timeout-free wait/wakeup 계약을 Codex collaboration API에 매핑하는 조건부 appendix.
+title: Codex managed subagent orchestration and lifecycle routing appendix
+description: ATP의 host-neutral lifecycle과 result barrier를 Codex built-in managed subagent workflow에 매핑하는 조건부 appendix.
 owner: template-maintainer
 stability: draft
 host_scope: codex
-last_reviewed: 2026-08-13
+last_reviewed: 2026-08-19
 ---
 
-# Codex subagent lifecycle and wait/wakeup routing appendix
+# Codex managed subagent orchestration and lifecycle routing appendix
 
-이 문서는 Codex host에서만 읽는 조건부 appendix다. 상태·승인·clean retry·phase 종단과 논리 `await_invocations`의 정본은 `agent-team-protocol.md` §2.5이고 capability 판정 정본은 `platform-adapters.md` §3.1~§3.2다. 여기서는 Codex collaboration environment가 정상 API에서 실제 보장하는 의미만 매핑한다. 모델 선택 fallback은 protocol §5.7과 `codex-spark-routing.md`의 별도 관심사다.
+이 문서는 Codex host에서만 읽는 조건부 appendix다. 공통 lifecycle·result integration·report authority는 `agent-team-protocol.md` §2.5, host-neutral capability 판정은 `platform-adapters.md` §3.1~§3.3, 실제 실행 절차는 `../../skills/codex-team/SKILL.md`가 정본이다. Codex-specific 도구명과 event spelling은 이 appendix, 전용 skill, maintainer runtime validator에만 둔다.
 
-## 1. Current-host 결론
+## 1. Current Codex orchestration capability
 
+<a id="current-codex-orchestration-capability"></a>
+
+<!-- codex:orchestration-capability:begin -->
 ```yaml
-requested_mode: environment_subscription
-effective_mode: unavailable
-adapter_enabled: false
-fallback: none
-timed_fallback: false
-disposition: wait_wakeup_capability_unavailable
+formal_adapter_enabled: false
+manual_wait_polling_supported: false
+host_managed_subagent_orchestration: unsupported
+team_execution_enabled: false
 ```
+<!-- codex:orchestration-capability:end -->
 
-현재 Codex collaboration API는 persistent timeout-free subscription identity, target별 `any | all`, compact delta/event identity/dedup/coalescing 계약을 제공하지 않는다. 따라서 formal wait/wakeup all-required gate를 통과하지 못한다. ATP는 이 host에서 timed wait를 scheduling adapter나 fallback으로 호출하지 않으며, 반복 상태 조회로 빈 capability를 합성하지 않는다.
+공식 OpenAI 문서는 Codex app/CLI/IDE에서 직접 요청 또는 적용 가능한 `AGENTS.md`/skill instruction으로 delegation을 시작할 수 있고, Codex가 spawn, follow-up routing, 결과 대기와 thread lifecycle을 관리하는 product workflow를 설명한다. 그러나 이 설명만으로 ATP의 예상 밖 nonterminal update와 staggered multi-agent all-results barrier를 versioned correctness primitive로 확정하지 않는다.
 
-호출 주체는 `wait_wakeup_capability_unavailable`을 phase-local `wait-wakeup-events.jsonl`에 정확히 1회 기록한다. Automatic wait/list/retry/interrupt/phase fallback은 각각 0건이다. Child의 마지막 environment-authoritative lifecycle state, result acceptance authority, write ownership을 보존하고 phase를 `blocked`로 반환한다. 사용자가 host-native event-only external continuation을 명시 선택했고 resume identity와 cancellation contract가 모두 있을 때만 그 continuation을 등록할 수 있다. 현재 normal collaboration API만으로는 이 경로도 제공되지 않는다.
+- 공식 계약: <https://learn.chatgpt.com/docs/agent-configuration/subagents>
+- Skill loading 계약: <https://learn.chatgpt.com/docs/build-skills> — name/description으로 선택한 뒤 전체 `SKILL.md`를 읽는다.
+- ChatGPT Work는 eligible-account hosted surface이며 이 local Codex profile과 분리한다.
 
-이 판정은 scheduling capability gap이며 child failure, stall, interruption 또는 `environment_state_unknown`이 아니다. Status API unavailable/error가 별도로 실제 관측된 identity만 `environment_state_unknown`으로 정규화한다.
+공식 문서는 low-level event schema, failure/approval taxonomy, latency SLA, stable event identity를 보장하지 않는다. 2026-08-19 Codex CLI 0.147.0 격리 smoke는 terminal-only 1-agent만 통과했고, nonterminal 뒤 delayed terminal과 staggered 2-agent에서는 parent turn이 모든 terminal 전 종료됐다. `multi_agent_v2` opt-in도 delayed case를 보장하지 못했다. 따라서 tested CLI profile은 `unsupported`, app/IDE empirical status는 `unknown`이다. 공식 보장과 empirical 관측을 서로 대체하지 않는다.
 
-## 2. Wait/wakeup capability matrix
+<a id="managed-orchestration-contract-fixture"></a>
 
-판정값은 `supported | unsupported | unknown`이다. `supported`인 부분 기능도 §2.5의 all-required gate를 단독 충족하거나 formal adapter 활성화를 의미하지 않는다.
+<!-- codex:managed-contract-fixture:begin -->
+```yaml
+formal_adapter_enabled: false
+manual_wait_polling_supported: false
+host_managed_subagent_orchestration: supported
+team_execution_enabled: true
+```
+<!-- codex:managed-contract-fixture:end -->
 
-| capability | 판정 | gate | API 근거와 처리 |
-|---|---|---|---|
-| `timeout_free_suspend` / subscription handle | unsupported | required | bounded `wait_agent`에는 persistent await identity가 없고 시간 경계 반환이 root turn을 재개하므로 gap evidence일 뿐 adapter가 아니다 |
-| bounded global mailbox wait | supported | ineligible | `wait_agent`의 live-agent mailbox wait는 target/condition subscription이 아니며 ATP가 scheduling path로 사용하지 않는다 |
-| environment-internal re-await without model wake | unsupported | required | root-visible 반환 뒤 environment 내부에서 같은 await를 이어갈 control이 없다 |
-| `targeted_wait_any` | unsupported | required | 선택 target/filter 입력이 없다 |
-| `targeted_wait_all` | unsupported | required | `targets`와 `condition: all` barrier가 없다 |
-| `terminal_event_subscription` — completed | supported | required subset | final-status notification/result 전달은 있으나 전체 terminal 종류의 structured subscription은 아니다 |
-| `terminal_event_subscription` — failed/interrupted detail | unknown | required | 공개 반환 계약이 두 종류와 원인/detail을 구조적으로 보장하지 않는다 |
-| `approval_event_subscription` | unknown | required | `approval_required` structured subscription을 공개 계약이 보장하지 않는다 |
-| `user_steering_preemption` | supported | required subset | active mailbox wait는 새 user input에 조기 control을 반환할 수 있으나 formal subscription은 없다 |
-| user steering numeric latency SLA | unknown | advisory | 조기 반환 가능성 외 ms bound는 없다. ATP는 응답성 보상 timer를 만들지 않는다 |
-| `await_cancellation` | unsupported | required | await identity나 subscription cancel token이 없다 |
-| `compact_changed_invocation_delta` | unsupported | required | changed invocation만 담은 structured delta payload가 없다 |
-| `stable_event_identity` | unsupported | required | stable `event_id`가 반환 계약에 없다 |
-| `environment_deduplication` | unsupported | required | cursor/dedup token과 exactly-once batch 계약이 없다 |
-| `completion_coalescing` | unknown | required | resume dispatch 전 인접 event를 하나의 causal batch로 묶는 보장이 없다 |
-| `internal_keepalive_no_model_wake` | unsupported | required | keepalive/scheduler가 environment 내부에서 root resume 없이 동작하는 API가 없다 |
-| scheduler/watchdog registration | unsupported | required host function | 등록·해제·health와 event-only resume 계약이 없다 |
-| invocation current-turn cancellation | supported | separate | `interrupt_agent`는 child turn control이며 await subscription cancellation을 대체하지 않는다 |
-| root token/live-context telemetry | unknown | advisory | collaboration API 표면에서 causal live usage를 보장하지 않는다 |
-| explicit compaction control | unsupported | advisory | collaboration API 표면에 compaction trigger/control이 없다 |
+위 block은 future supported implementation이 충족해야 할 deterministic contract fixture이며 배포 capability 판정이 아니다.
 
-결론은 `adapter_enabled: false`다. Current host에서 “관심 상태 변화가 없으면 root model 호출도 0건”인 end-to-end 진행을 ATP 문서나 호출 조합만으로 구현할 수 없다. Host가 protocol §2.5의 timeout-free handle, target condition, terminal/approval/steering/cancel subscription, stable event ID, compact delta, dedup/coalescing을 함께 제공해야 한다.
+## 2. Formal subscription profile
 
-## 3. Lifecycle 도구 매핑
+Codex built-in managed workflow 지원은 formal `environment_subscription` 지원을 뜻하지 않는다. Validator와 ledger가 대조하는 formal capability 정본은 다음 12개다.
 
-Scheduling adapter가 비활성이어도 lifecycle authority와 명시적 사용자 승인형 recovery는 유지한다.
+<!-- codex:formal-capabilities:begin -->
+```yaml
+formal_capabilities:
+  timeout_free_suspend: unsupported
+  targeted_wait_any: unsupported
+  targeted_wait_all: unsupported
+  terminal_event_subscription: unknown
+  approval_event_subscription: unknown
+  user_steering_preemption: supported
+  await_cancellation: unsupported
+  compact_changed_invocation_delta: unsupported
+  stable_event_identity: unsupported
+  environment_deduplication: unsupported
+  completion_coalescing: unknown
+  internal_keepalive_no_model_wake: unsupported
+```
+<!-- codex:formal-capabilities:end -->
 
-| 공통 의미 | Codex mapping | 제약 |
+따라서 `formal_adapter_enabled: false`다. ATP는 timer, bounded `wait_agent`, 반복 `list_agents`로 빈 formal capability를 합성하지 않는다. Formal subscription과 product-managed all-results barrier는 별도 capability다.
+
+## 3. Managed orchestration contract
+
+첫 collaboration action 전에 `codex-team` skill을 선택하고 전체 내용을 읽는다. 소비 프로젝트의 매 task에서는 capability 확인용 child, timeout/wait/list probe, runtime validator, source/install parity 검사를 실행하지 않는다. 배포된 profile을 사용하고 실행 중 임의 추론으로 덮어쓰지 않는다. 현재 tested CLI profile에서는 first collaboration action을 실행하지 않고 explicit blocked/user-decision으로 반환한다.
+
+정상 dispatch는 다음 계약을 갖는다.
+
+1. `spawn_agent`로 bounded child task를 요청한다. Child prompt에는 정상 경로에서 intermediate `MESSAGE`를 보내지 않고 terminal result 한 건만 반환하도록 명시한다.
+2. 요청한 여러 child가 있으면 모두 dispatch하고 Codex built-in workflow가 결과 대기와 follow-up routing을 관리하도록 둔다.
+3. ATP orchestrator는 `wait_agent` polling loop와 `list_agents` polling을 운영하지 않는다.
+4. 예상 밖 `Message Type: MESSAGE`가 전달돼도 invocation은 `running`이다. `Message Type: FINAL_ANSWER` 또는 environment의 명시적 terminal delivery만 terminal 후보다.
+5. 모든 요청 child의 terminal delivery를 받고 result contract를 검증·취합하기 전에는 report invocation/session completion, `ended_at`, parent final response를 만들지 않는다.
+
+Host는 child execution, follow-up routing, all-results wait와 terminal delivery를 소유한다. ATP는 logical task/DAG, preallocated report identity, result validation/integration, recovery 승인, result acceptance, write ownership, report/session lifecycle을 소유한다.
+
+## 4. Identity mapping
+
+표시명 정규화만으로 identity를 추론하지 않는다. Dispatch 전에 `report_invocation_id`를 할당하고 다음을 연결한다.
+
+- spawn call identity
+- spawn output의 environment identity: `agent_id`가 있으면 그 값, 없고 canonical `task_name`이 있으면 그 값
+- requested task name
+- preallocated `report_invocation_id`
+
+Report invocation은 exact field `environment_invocation_id`를 사용하며 alias를 허용하지 않는다. 예를 들어 environment가 `/root/research_advisor`를 반환하고 report가 `research-advisor`를 표시하더라도 위 dispatch mapping이 있을 때만 같은 invocation으로 검증한다. Retry는 새 environment identity와 `retry_of`를 가져야 하며 same-invocation `followup_task`는 clean retry가 아니다.
+
+## 5. Ledger and measurement
+
+Ledger row는 정확히 `recorded_at`, `await_id`, `owner_report_invocation_id`, `event`, concrete `source_ref`, `details`의 six-field envelope을 유지한다. Managed mode의 `await_id`는 `null`이다.
+
+정상 완료 뒤 aggregate `measurement`는 다음을 기록한다.
+
+- `requested_agents`
+- `requested_report_invocation_ids`
+- `spawn_calls`
+- `nonterminal_updates`
+- `terminal_deliveries`
+- `collected_results`
+- `manual_wait_calls`
+- `list_calls`
+- `interrupt_calls`
+- `semantic_recovery_actions`
+
+Capability row는 profile의 네 축과 exact `selected_mode: host_managed_subagent_orchestration`을 생략 없이 기록한다. Measurement의 `mode`도 같은 exact value이며 축약 alias를 허용하지 않는다.
+
+정상 fixture는 `requested_agents == spawn_calls == terminal_deliveries == collected_results`, `manual_wait_calls: 0`, `list_calls: 0`, `interrupt_calls: 0`, `semantic_recovery_actions: 0`이다. 관측하지 못한 token/latency telemetry는 `null`이며 0으로 합성하지 않는다.
+
+모델은 미래 transcript ordinal을 예측해 쓰지 않는다. 실행 중에는 session/report/environment identity와 monotonic event identity를 사용해 `session:<session_id>:report:<report_invocation_id>:environment:<environment_id>:event:terminal-NNNN` 형태로 기록한다. Maintainer validator가 보존 JSONL의 실제 spawn mapping, terminal delivery 순서와 timestamp에 사후 연결한다. 연결되지 않는 `source_ref`는 실패다.
+
+## 6. Lifecycle and recovery
+
+실제 capability error가 관측되면 manual polling, automatic retry/interrupt/fallback, authority mutation 또는 automatic Tier B 전환으로 보상하지 않는다. 마지막 environment-authoritative state, result acceptance authority와 write ownership을 보존하고 요청 의도에 맞는 blocked/user-decision 경로를 사용한다.
+
+`list_agents`는 정상 scheduling이나 capability probe에 사용하지 않는다. 기존 invocation의 명시적 terminal failure/interruption 뒤 사용자가 recovery를 승인했고 completion race 재확인이 필요할 때만 기존 lifecycle 계약에 따른 단발 authoritative 조회가 허용된다. `interrupt_agent`, 새 `spawn_agent`, fallback과 authority mutation도 같은 terminal evidence와 승인 계약 뒤에만 가능하다.
+
+Late completion, read-only result quarantine, write isolation/ownership, partial write 분류, retry cap과 mandatory verification은 공통 protocol §2.5를 그대로 따른다. 공식 문서가 보장하지 않는 approval/failure detail은 `unknown`으로 유지한다.
+
+### 6.1 Codex tool and lifecycle mapping
+
+Codex의 `spawn_agent`는 새 child environment identity를 만들고, `followup_task`는 같은 environment identity의 continuation을 routing한다. `fork_turns`는 child에 전달할 대화 범위를 정할 뿐 lifecycle state나 retry attempt를 만들지 않는다. `send_message`는 실행 중 steering이며 terminal delivery가 아니다. `interrupt_agent`는 승인된 recovery에서만 사용하고, 반환된 environment event가 명시적 `interrupted`일 때만 termination으로 기록한다. `list_agents`와 `wait_agent`는 정상 managed scheduling에 사용하지 않는다.
+
+Environment가 전달한 nonterminal update는 `running`으로 유지한다. 명시적 terminal delivery만 `completed`로 매핑한다. Status 자체가 unavailable/error이거나 의미가 불명확하면 `environment_state_unknown`이며 silence나 시간으로 `failed`를 합성하지 않는다.
+
+### 6.2 Approval relay and continuation
+
+관측된 `approval_required`와 이를 parent/user에게 relay하거나 같은 environment identity로 continuation할 capability는 별도 축이다. Relay가 unsupported/unavailable이어도 관측 state를 `environment_state_unknown`으로 낮추지 않는다. 반대로 status unavailable/error인 경우만 `environment_state_unknown`이다.
+
+Approval relay/control이 unavailable이면 child `ended_at`과 `termination`을 비워 둔 채 phase control만 `blocked`로 반환한다. Environment provenance와 concrete `source_ref`, capability ref를 concern과 ledger에 남기고 retry, interrupt, fallback, result-acceptance/write-ownership mutation은 0건이다. Relay가 복구되어 같은 environment identity를 continuation하면 attempt와 retry accounting을 바꾸지 않는다.
+
+## 7. Completion order
+
+종료 순서는 다음과 같다.
+
+1. 모든 요청 subagent terminal result 수신
+2. 결과 계약 검증 및 통합
+3. verification
+4. retrospective
+5. retrospective 결과를 report에 반영
+6. report 재스테이징
+7. staged 상태 재검증
+8. 요청 범위 mutation/commit/push/remote verification 완료
+9. session `ended_at` 기록
+10. report 형식 최종 read-only 검증
+11. 사용자 최종 응답
+
+Validator는 timestamp scalar만 비교하지 않는다. Report completion 또는 termination을 실제로 serialize한 transcript event가 마지막 요청 child terminal delivery 뒤에 있는지 검사한다. 미래 `ended_at`을 terminal 전에 미리 쓰면 실패다.
+
+## 8. Maintainer evidence
+
+`supported` 판정은 deterministic fixture만으로 만들지 않는다. Release 전 격리된 temporary `CODEX_HOME`/workspace에서 다음 실제 smoke를 실행하고 JSONL·report·ledger를 보존한다.
+
+1. agent 1개, terminal result만 반환
+2. agent 1개, nonterminal update 뒤 지연 terminal result
+3. agent 2개, 서로 다른 시각에 terminal result 반환
+
+세 smoke는 manual `wait_agent` 0, `list_agents` 0, 요청 전원 terminal/result 수신, parent final과 report completion이 마지막 terminal 뒤, timeout/polling semantic action 0을 충족해야 한다. 실제 사용자 plugin cache, settings, hooks와 소비 프로젝트 설정은 변경하지 않는다.
+
+2026-08-19 isolated Codex CLI 0.147.0 결과:
+
+| smoke | product/result | 판정 |
 |---|---|---|
-| environment status snapshot | `list_agents` | completion race 재확인 등 lifecycle 계약이 명시적으로 요구할 때만 사용한다. Capability-gap 자동 보상이나 inertial polling에는 사용하지 않는다 |
-| final-status/result delivery | collaboration environment가 전달한 final notification과 agent result | environment가 명시한 terminal 의미만 정규화하고 결과 계약 검증 뒤 취합한다 |
-| 기존 invocation 종결 요청·결과 | `interrupt_agent` | explicit terminal recovery 또는 사용자 취소 뒤 사용자 승인 하에서만 호출한다. 반환된 실제 상태만 기록하고 write isolation은 ownership·disk 상태도 확인한다 |
-| read-only result acceptance isolation | ATP-local ledger `result_acceptance_revoked` | 사용자 승인·completion race 뒤 old identity future result 수용만 철회한다. Codex terminal event나 write isolation을 합성하지 않는다 |
-| clean retry | `spawn_agent` | 반환된 새 environment identity가 기존 대상과 다를 때만 새 `attempt`로 센다 |
-| same-invocation continuation/diagnostic | `followup_task` | clean retry가 아니며 `attempt`를 증가시키지 않는다. 기존 invocation 종결 전 새 logical task를 보내 retry를 흉내 내지 않는다 |
-| retry context 범위 | `spawn_agent.fork_turns` + 명시 payload | 고정 turn 수를 정책으로 두지 않는다. 최소 권위 payload가 정본이고 fork 범위는 host/config·민감도에 맞춘다 |
+| terminal-only 1-agent | spawn 1, terminal/collected 1, manual wait/list/interrupt 0, terminal 뒤 completion/final | pass |
+| nonterminal 뒤 delayed terminal 1-agent | progress 뒤 parent가 terminal 전 final; child turn aborted. `multi_agent_v2` opt-in도 terminal 전 종료 | fail |
+| staggered terminal 2-agent | spawn 2 뒤 fast terminal만 받은 상태에서 parent가 terminal 전 blocked final; slow child 미수집 | fail |
 
-Task name suffix나 표시명은 가독성 보조일 뿐 identity 정본이 아니다. `spawn_agent`가 돌려준 새 environment identity를 report의 새 `id`와 연결하고 `retry_of`에는 직전 report invocation ID를 기록한다.
+따라서 deterministic fixture는 모두 green이어도 deployed CLI profile은 `unsupported`, `team_execution_enabled: false`다. App/IDE는 같은 smoke 미수행으로 `unknown`이다. 보존 transcript와 hash는 `tests/runtime-behavior/evidence/codex-cli-0.147.0-20260819.json`에 기록한다.
 
-## 4. Codex 상태·event 정규화
+## 9. 실행 체크리스트
 
-ATP는 collaboration environment가 실제 반환하거나 전달한 상태 문자열과 notification 의미만 공통 상태로 정규화하며 존재하지 않는 세부 상태를 보간하지 않는다.
-
-| Codex 관측 | ATP 정규화 |
-|---|---|
-| lifecycle 목적의 명시 조회가 invocation을 `running`으로 반환 | `running` 유지 |
-| 명시 조회가 그 밖의 상태를 반환 | 공통 계약과 의미가 일치할 때만 그대로 정규화; 의미가 불명확하면 `environment_state_unknown` |
-| final-status notification과 최종 결과 전달 | environment가 명시한 terminal state; `completed`는 반환 계약 검증 후 취합 |
-| `interrupt_agent`가 현재 turn 중단을 명시 | 해당 attempt의 `interrupted`; partial write·ownership 확인 |
-| snapshot/status API 부재·오류 또는 의미 불명 | `environment_state_unknown`; failure/terminal 아님 |
-
-현재 공개 계약은 `approval_required`와 모든 failure 원인·terminal detail을 별도 structured event로 보장하지 않는다. 이를 supported로 선언하거나 output·silence·경과 시간에서 합성하지 않는다. 실제 runtime response가 `approval_required`를 명시했다면 relay/control 미지원과 무관하게 그 state를 보존한다. Relay 불가 child는 environment provenance·report/environment identity·concrete `source_ref`·concern/capability evidence·ledger를 반환하고 `ended_at: null`, termination 생략, mutation 0을 유지한다. Report의 `Summary` / `Open Items` / `concerns` narrative만 blocked다.
-
-Capability가 복구돼 same environment identity continuation이 가능하면 `attempt`와 retry accounting을 바꾸지 않는다. 이후 status API unavailable/error가 실제 관측된 경우에만 그 identity를 `environment_state_unknown`으로 바꾼다. Progress/message/tool output과 그 부재, 같은 `running` snapshot, internal keepalive는 lifecycle transition이나 root wake 사유가 아니다.
-
-## 5. 승인 후 종결과 clean retry
-
-1. 명시적 failure/interruption/environment blocker 뒤 사용자가 retry를 승인하면, lifecycle 목적의 authoritative status 조회 또는 이미 전달된 새 environment event로 completion race를 재확인한다. Old invocation이 이미 `completed`면 retry를 취소하고 기존 결과를 검토한다.
-2. Environment가 여전히 실행 중이고 termination control을 제공하면 `interrupt_agent`를 먼저 호출한다. Environment가 반환한 event와 read/write 성질을 확인한다. Termination control이 unsupported라도 read-only임이 확정된 old identity에는 ATP-local result acceptance isolation을 사용할 수 있으나 write-capable scope에는 사용할 수 없다.
-3. Read-only recovery가 계속되면 같은 old report/environment identity의 11개 공통 field와 `scope`/`rationale`/`source_ref`를 가진 `result_acceptance_revoked` advisor ledger event를 기록한다. 이 event 뒤에만 새 identity를 spawn한다.
-4. Write-capable invocation은 old ownership 회수와 partial write 분류가 끝나기 전 새 invocation을 만들지 않는다. Codex가 termination/isolation을 확인할 수 없으면 동일 write scope의 새 spawn은 금지한다.
-5. 새 invocation payload에는 목표, 권위 파일, 확정 계약, write scope, 보존할 partial, 필수 산출물, 검증·반환 형식을 명시한다. Transcript 상속에 의존해 권위 계약을 생략하지 않는다.
-6. 새 identity를 확인한 뒤에만 `attempt`를 증가시키고 `retry_of`를 연결한다. Same-invocation follow-up은 이 단계를 대체하지 않는다.
-
-Scheduling capability gap만으로는 이 절을 열지 않는다. Gap path의 automatic status 조회, interrupt, retry, phase fallback은 모두 0건이다.
-
-## 6. Late completion과 invocation authority
-
-Codex environment가 old invocation의 final completion/result를 전달하면 먼저 environment `completed`로 기록한다. 같은 old identity의 `result_acceptance_revoked` 또는 write ownership 회수가 선행한 경우에만 advisor가 `authority_kind`와 그 선행 anchor의 `authority_ref`를 phase ledger에 연결해 report `termination: late_completion` disposition을 기록한다. 선행 authority 철회가 없으면 정상 completion race 후보이며 `late_completion`으로 바꾸지 않는다.
-
-Read-only late result와 write ownership 회수 뒤 disk write가 없는 late result는 quarantine-only이며 자동 merge·취합·성공 판정·ownership pause를 하지 않는다. Old invocation의 실제 late disk write가 보인 경우에만 affected scope와 dependency closure를 persisted pause하고 diff/ownership 충돌을 중재한다. Write isolation을 확인할 수 없으면 새 owner의 동일 scope 작업을 진행하지 않고 protocol §2.5의 Tier B 직접 수행 또는 blocked 종단을 적용한다.
-
-Capability-gap blocked 반환 뒤에도 authority/ownership이 보존되므로, 이후 전달된 completion은 정상 후보다. 별도 사용자 승인형 recovery로 authority가 먼저 철회된 identity만 late-completion quarantine 대상이다.
-
-## 7. 유한 clean retry와 phase 종단
-
-명시적 terminal failure 뒤 logical task별 clean retry 상한과 retry payload의 fork 범위는 host/config가 정할 수 있다. 경과 시간, progress 부재, 동일 snapshot 조회 횟수는 retry 한도를 소비하거나 phase fallback을 열지 않는다.
-
-승인된 clean retry도 environment가 명시한 같은 terminal failure로 끝나거나 retry 상한이 소진되면 protocol §2.5의 phase별 종단으로 수렴한다. 특히 code 변경 검증은 Tier B 직접 실행 또는 blocked이며 lifecycle 장애를 이유로 skip할 수 없다.
-
-Report schema는 v2를 유지한다. `attempt`, `termination`, `retry_of`, `lifecycle_fallback_reason` 네 optional lifecycle field의 의미를 바꾸거나 scheduling field를 `Invocations[]`에 추가하지 않는다. Wait/wakeup capability와 batch 측정은 별도 `wait-wakeup-events.jsonl`만 사용한다.
-
-## 8. Codex 실행 체크리스트
-
-- [ ] formal wait/wakeup profile이 `adapter_enabled: false`이고 timed scheduling fallback 실행이 0건인가?
-- [ ] `wait_wakeup_capability_unavailable`을 phase-local scheduling ledger에 정확히 1회 기록했는가?
-- [ ] gap 뒤 automatic wait/list/retry/interrupt/fallback이 각각 0건이고 child state·result acceptance·write ownership을 보존했는가?
-- [ ] phase가 blocked 또는 사용자 선택 event-only external continuation으로만 수렴했는가?
-- [ ] lifecycle state·terminal event는 collaboration environment의 실제 snapshot/notification에서만 관측했는가?
-- [ ] `running`을 그대로 유지하고 경과 시간·progress/heartbeat 부재·동일 snapshot으로 전이시키지 않았는가?
-- [ ] 미보장 approval/failure detail을 합성하지 않고, 실제 `approval_required`는 relay/control 미지원이어도 보존했는가?
-- [ ] 명시적 recovery에서 사용자 승인 전 `interrupt_agent`, `spawn_agent`, phase fallback 실행이 0건인가?
-- [ ] same-invocation follow-up을 clean retry로 세거나 `attempt`를 올리지 않았는가?
-- [ ] read-only retry는 same-identity `result_acceptance_revoked`를 새 spawn 전에 기록했는가?
-- [ ] write retry 전 termination/isolation, partial diff, ownership 회수를 확인했는가?
-- [ ] late completion은 선행 authority 철회와 identity/ref가 일치하고, late disk write가 없으면 quarantine-only인가?
-- [ ] report v2 optional lifecycle field 네 개를 유지하고 scheduling metadata는 별도 ledger에만 두었는가?
+- [ ] 첫 collaboration action 전에 `codex-team` skill 전체를 읽었는가?
+- [ ] 모든 요청 child에 terminal-only 정상 반환과 all-results integration 계약을 전달했는가?
+- [ ] 정상 경로 manual wait/list/interrupt가 0인가?
+- [ ] nonterminal update를 running으로 유지했는가?
+- [ ] dispatch identity mapping과 report invocation identity가 one-to-one인가?
+- [ ] terminal delivery와 collected result가 요청 agent 전원과 일치하는가? 불일치하면 supported 판정을 거부했는가?
+- [ ] unknown telemetry를 `null`로 보존했는가?
+- [ ] completion serialization과 parent final이 마지막 terminal 뒤인가?
+- [ ] capability error를 automatic Tier B/retry/interrupt/fallback으로 숨기지 않았는가?

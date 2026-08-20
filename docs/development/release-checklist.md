@@ -4,7 +4,7 @@ title: Release Checklist
 description: ATP 릴리즈 전 문서·매니페스트 동기화 점검 목록.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-13
+last_reviewed: 2026-08-18
 ---
 
 # Release Checklist
@@ -104,6 +104,25 @@ rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|agent-team-protocol' .cl
 기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다. 모든 marketplace 의 atp source 는 `./plugins/atp`, atp-graphify source 는 `./plugins/atp-graphify`.
 
 버전 invariant: base atp 매니페스트 4개(`plugins/atp/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/atp/.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`plugins/atp-graphify/.claude-plugin/plugin.json`, `plugins/atp-graphify/.codex-plugin/plugin.json`)도 서로 같아야 한다. base 와 add-on 은 독립 버저닝(불일치 정상). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
+
+### 4.1 Codex manifest와 skill invocation policy
+
+형식 migration은 다음 세 계약을 분리해 판정한다.
+
+- **공식 제품 계약**: [Build plugins](https://learn.chatgpt.com/docs/build-plugins)의 skills-only 최소 예시는 `.codex-plugin/plugin.json`에 `name`, `version`, `description`, `skills`를 둔다. [Package your plugin](https://developers.openai.com/plugins/build/plugins)은 `interface`를 install-surface metadata로 설명하며 manifest entry point 외 필드는 optional이라고 명시한다.
+- **공식 skill 정책**: [Build skills](https://learn.chatgpt.com/docs/build-skills)은 implicit invocation 차단을 `skills/<name>/agents/openai.yaml`의 `policy.allow_implicit_invocation: false`로 선언한다. 이 값은 명시적 `$skill` invocation을 막지 않는다.
+- **로컬 publishing/scaffold validator**: 최신 `plugin-creator` validator는 공식 최소 ingestion 예시보다 엄격하게 `author.name`과 `interface.displayName`, `shortDescription`, `longDescription`, `developerName`, `category`, `capabilities`, `defaultPrompt`를 요구한다. `skill-creator` quick validator는 `SKILL.md` frontmatter를 허용된 authoring 필드로 제한한다.
+
+공식 문서는 legacy `disable-model-invocation`의 deprecated 여부를 명시하지 않는다. 따라서 해당 frontmatter 제거는 deprecated 사실의 인용이 아니라, 공식 대체 정책 위치와 최신 validator 거부를 함께 적용한 migration 추론으로 기록한다. CLI, Codex app, ChatGPT Chat/Work는 같은 배포 형식을 공유해도 discovery·UI·invocation behavior가 surface별로 다를 수 있으므로, 실제 설치 smoke의 surface와 버전을 반드시 함께 남긴다.
+
+검증 명령:
+
+```bash
+uv run --with pyyaml python \
+  ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/atp
+uv run --with pyyaml python \
+  ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/atp/skills/init
+```
 
 ## 5. Agent catalog ↔ agents/ 목록 일치
 
@@ -237,9 +256,9 @@ comm -23 \
 
 ## 10. Environment-authoritative subagent lifecycle 계약
 
-이 gate는 lifecycle뿐 아니라 2.13.0의 wait/wakeup scheduling 계약도 함께 다룬다.
+이 gate는 lifecycle뿐 아니라 2.15.0의 formal/host-managed scheduling과 adaptive execution-mode 계약도 함께 다룬다.
 
-`agent-team-protocol.md` §2.5의 lifecycle correctness, timeout-free environment-owned wait/wakeup scheduling, host appendix 경계와 report schema v2 호환성을 함께 검사한다. 한 문서만 갱신하거나 bounded wait를 fallback으로 남겨 공통 의미와 실행 mapping이 drift한 상태로 릴리즈하지 않는다.
+`agent-team-protocol.md` §2.5의 lifecycle correctness, timeout-free environment-owned formal scheduling, host-managed all-results barrier, host appendix 경계와 report schema v2 호환성을 함께 검사한다. 한 문서만 갱신하거나 manual wait를 correctness primitive로 승격해 공통 의미와 실행 mapping이 drift한 상태로 릴리즈하지 않는다.
 
 ### (a) Lifecycle + scheduling fixture와 schema v2 역호환
 
@@ -260,29 +279,57 @@ python3 tests/lifecycle-contract/validate.py
 - Unchanged `running`/internal keepalive N회에 lifecycle transition, root model resume, semantic action, retry/list가 모두 0이어야 한다.
 - Single completion은 wake 1회, 인접 completion 여러 개는 coalesced wake 1회, duplicate event는 delta/result acceptance 1회여야 한다.
 - `approval_required`와 user steering은 barrier를 단락하되 state/authority/ownership을 보존해야 한다. Explicit `failed|interrupted`만 기존 사용자 승인형 recovery를 열어야 한다.
-- Required capability 하나라도 `unsupported|unknown`이면 `wait_wakeup_capability_unavailable` 정확히 1회, automatic wait/list/retry/interrupt/fallback 각각 0, disposition은 blocked 또는 user-selected event-only external continuation이어야 한다.
-- Current Codex gated mode의 resume/wait/list 0은 workload completion이 아니라 unsupported adapter가 timed polling을 시작하지 않았다는 assertion으로 검사한다.
+- Required formal capability 하나라도 `unsupported|unknown`이면 formal adapter만 disabled여야 하며 managed capability가 `supported`인 host는 `host_managed_subagent_orchestration`으로 spawn/result collection을 유지해야 한다.
+- Formal/managed orchestration이 모두 없으면 general task는 `tier_b_sequential`로 진입하고, explicit subagent request는 silent Tier B 대체 없이 `blocked_explicit_independence`와 options를 제공해야 한다.
+- 사용자 승인형 recovery나 completion-race 확인의 단발 authoritative list는 허용하되, existing invocation과 approval ref 없이 실행되거나 polling 목적으로 반복되면 실패해야 한다.
+- Current Codex managed candidate는 requested/spawn/terminal/collected가 일치하고 manual wait/list와 정상 경로 interrupt가 0이며 terminal 전 completion serialization이 없을 때만 supported다. 하나라도 실패하면 tested surface profile은 `unsupported`, team execution은 disabled여야 한다.
+- Non-Codex formal subscription과 Tier A-flat fixture가 기존 mode/topology를 유지해야 한다.
 
 ### (b) 공통 정본 host-neutrality와 appendix 연결
 
-위 validator는 공통 §2.5에 Codex collaboration 도구명과 고정 시간값이 0건인지, `codex-lifecycle-routing.md`에는 실제 Codex snapshot/notification/control mapping과 미지원 event 한계가 있는지 함께 검사한다. Active lifecycle 범위에는 `suspected_silent_stall`, observation budget 또는 heartbeat deadline 기반 전이가 없어야 한다. Active scheduling 범위에는 `wait_agent`, `timeout_ms`, longer/repeated wait recommendation과 timeout 뒤 automatic list가 없어야 한다. Codex appendix의 bounded-wait 언급은 `adapter_enabled: false`인 gap evidence로만 허용한다.
+위 validator는 공통 §2.5·task·agent에 Codex collaboration 도구명과 event spelling이 0건인지, `codex-lifecycle-routing.md`와 전용 skill에는 실제 Codex mapping이 있는지 함께 검사한다. Active lifecycle 범위에는 `suspected_silent_stall`, observation budget 또는 heartbeat deadline 기반 전이가 없어야 한다. Codex 정상 경로의 manual wait/list polling은 0이어야 한다.
 
-신규 host mapping을 추가하면 공통 §2.5가 아니라 해당 host appendix에 배치한다. `platform-adapters.md`에는 host-neutral lifecycle provenance와 wait/wakeup capability identity만 추가한다. 모든 required scheduling capability가 `supported`일 때만 adapter를 enable하며 partial support를 timed wait/polling으로 보충하지 않는다. Environment가 노출하지 않는 lifecycle event는 추정하지 않고 실제 status API unavailable/error/semantic unknown일 때만 `environment_state_unknown`으로 둔다. `model_choice.fallback_reason`과 §5.7은 모델 routing 전용이며 lifecycle 사유는 `lifecycle_fallback_reason`에 기록한다.
+신규 host mapping을 추가하면 공통 §2.5가 아니라 해당 host appendix와 orchestration skill에 배치한다. `platform-adapters.md`에는 host-neutral lifecycle provenance, formal capability와 managed orchestration 판정만 추가한다. 모든 required scheduling capability가 `supported`일 때만 formal adapter를 enable하며 partial support를 `environment_subscription`으로 위장하지 않는다. Managed mode를 쓰려면 all-results barrier와 적용 surface/version 근거를 appendix에 명시한다. Environment가 노출하지 않는 lifecycle event는 추정하지 않는다.
 
-### (c) Capability matrix와 제한된 probe
+### (c) Capability matrix와 release-time maintainer smoke
 
 현재 tool schema와 host appendix의 capability identity를 양방향 대조한다. Timeout-free await identity, target wait-any/all, terminal/approval/steering/cancel subscription, compact delta, stable event ID, deduplication, coalescing과 internal keepalive no-model-wake 중 하나라도 `unsupported|unknown`이면 formal adapter는 disabled여야 한다.
 
-Unsupported host에서 timed wait를 실행해 scheduling을 probe하지 않는다. 특히 longer timeout, timeout 유도, 반복 wait/list는 검증 절차가 아니다. Historical JSONL과 작은 기존 probe는 evidence-only로 사용한다. 향후 host가 formal subscription을 제공할 때만 작은 read-only workload로 unchanged 무재개, completion batch 1회, steering/cancel control 반환과 compact delta를 확인하며, 수치 SLA가 계약에 없으면 latency를 `unknown`으로 둔다.
+Codex managed capability는 deterministic fixture만으로 `supported`를 확정하지 않는다. 임시 Codex home/workspace에서 terminal-only 1-agent, delayed nonterminal+terminal 1-agent, staggered terminal 2-agent smoke를 실행한다. ATP manual wait/list 0, 요청 전원 결과, 마지막 terminal 뒤 parent final/report completion, timeout/polling semantic action 0을 transcript로 확인한다. 소비 프로젝트의 각 task에서는 capability child, timeout/wait/list probe, runtime validator, source/install parity를 실행하지 않는다.
 
-### (d) 링크·index·§N·릴리스 메타데이터 전수 확인
+### (d) 실제 설치본·session JSONL behavioral regression
+
+문자열 존재만으로 통과시키지 않는다. Historical regression은 2.13.0 관측 JSONL을 직접 parse해 기존 회귀가 실제 executed call로 재현되는지 확인한다.
+
+```bash
+python3 tests/runtime-behavior/validate_codex_session.py \
+  --profile historical-regression \
+  --session-jsonl "$ATP_HISTORICAL_JSONL"
+```
+
+기대값: executed `spawn_agent: 1`, `wait_agent: 13`, `list_agents: 2`, wait timeout 11과 `PASS: Codex runtime behavioral regression`.
+
+격리 base bundle에서는 실제 managed orchestration smoke 3종의 `codex exec --json`, scheduling ledger와 report를 아래 profile에 전달한다.
+
+```bash
+python3 tests/runtime-behavior/validate_codex_session.py \
+  --profile host-managed \
+  --session-jsonl "$ATP_RUNTIME_JSONL" \
+  --ledger "$ATP_WAIT_WAKE_LEDGER" \
+  --report "$ATP_RUNTIME_REPORT" \
+  --appendix plugins/atp/docs/development/codex-lifecycle-routing.md
+```
+
+각 smoke는 requested/spawn/terminal/collected가 정확히 일치하고 manual wait/list/정상 interrupt/semantic recovery 0이어야 한다. Nonterminal update는 invocation을 `running`으로 유지한다. Ledger의 six-field envelope과 concrete source는 실제 JSONL event에 연결돼야 한다. Report invocation/session completion serialization과 parent final은 마지막 terminal 뒤여야 하고 report 최종 read-only 검증은 parent final 전이어야 한다. 격리 실행은 사용자 전역 plugin cache/settings/hooks와 소비 프로젝트 설정을 변경하지 않는다.
+
+### (e) 링크·index·§N·릴리스 메타데이터 전수 확인
 
 - 신규 appendix는 `plugins/atp/docs/development/index.md`와 `docs/development/index.md` 양쪽에 등록한다.
 - 신규 ADR/changes는 각각 `docs/adr/index.md`, `docs/changes/index.md`에 등록한다.
 - §8의 끊긴 protocol 인용 검사를 재실행한다. 기존 §N을 재배열하지 않는다.
 - §4의 base manifest 4곳 version invariant를 확인하고 add-on version과 `.agents/plugins/marketplace.json`의 versionless 계약을 변경하지 않는다.
-- 2.13.0 release에서는 base manifest 4곳이 모두 `2.13.0`, add-on은 기존 버전, `.agents/plugins/marketplace.json`은 versionless인지 확인한다.
-- user-facing FAQ는 한국어/영어에서 current host formal scheduling unsupported, longer/repeated timed wait fallback 없음, unavailable 1회와 zero auto action, child state/authority/ownership 보존, blocked/event-only external continuation, steering/cancel host ownership, report v2 의미가 동등한지 대조한다.
+- 2.15.0 release에서는 base manifest 4곳의 semantic version이 모두 `2.15.0`, add-on은 기존 버전, `.agents/plugins/marketplace.json`은 versionless인지 확인한다.
+- user-facing FAQ는 한국어/영어에서 current tested CLI formal/managed contract unsupported + team disabled, manual wait/list 0, explicit blocker UX, app/IDE unknown, report v2 의미가 동등한지 대조한다.
 - 카탈로그 confidence FAQ 한·영 모두에서 every axis/every item marker, `high|mixed|low` 결정 규칙, marker coverage와 aggregate derivation 두 self-check가 동등한지 대조한다.
-- ADR-0021과 2026-08-13 change가 각각 자기 index에 정확히 한 번 등록되고 architecture/change/ADR 사이 교차 링크가 유효한지 확인한다.
+- ADR-0021·ADR-0022·ADR-0023·ADR-0024와 공개 릴리스인 2026-08-13·2026-08-19 change가 각각 자기 index에 정확히 한 번 등록되고 architecture/change/ADR 사이 교차 링크가 유효한지 확인한다. 미출시 2.14 중간 구현은 ADR-0023의 superseded history로만 보존하고 Changes index에 싣지 않는다.
 - Verification이 pending인 동안 architecture/change 문서가 current Codex end-to-end event-driven wake나 전체 validator PASS를 주장하지 않는지 확인한다. 실제 GREEN 후에만 상태를 갱신한다.

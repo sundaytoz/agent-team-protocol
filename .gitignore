@@ -4,8 +4,15 @@
 # 유지자 발화 인용이 포함돼 opt-out(미추적)한다 — ADR-0010.
 .atp/work-session/
 
+# Private feedback capture may include verbatim user conversation and branch/session metadata.
+docs/feedback/
+
 # OS
 .DS_Store
+
+# Python bytecode / local test cache
+__pycache__/
+*.py[cod]
 
 # Editor
 .vscode/

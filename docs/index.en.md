@@ -4,7 +4,7 @@ title: Agent Team Protocol Documentation Index (English)
 description: English entry point for the bundled reference docs. Korean docs remain canonical unless an English page exists.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-06-10
+last_reviewed: 2026-08-20
 ---
 
 <p align="center">
@@ -24,6 +24,8 @@ This is the English entry point for the agent-team-protocol docs. English docs a
 | Development | Contributors maintaining the ATP protocol, agents, and skills — Korean-first/canonical | [docs/development/index.md](./development/index.md) |
 | Architecture | Contributors checking repository structure and runtime artifact boundaries — Korean-first/canonical | [docs/architecture/index.md](./architecture/index.md) |
 | ADR | Maintainers tracking hard-to-reverse technical and operational decisions — Korean-first/canonical | [docs/adr/index.md](./adr/index.md) |
+| Changes | Maintainers reviewing implemented runtime and installation-path changes — Korean-first/canonical | [docs/changes/index.md](./changes/index.md) |
+| Backlog | Maintainers reviewing out-of-repository upstream and capability-dependent proposals — Korean-first/canonical | [docs/backlog/index.md](./backlog/index.md) |
 
 ## Boundary
 
@@ -37,7 +39,9 @@ The graphify feature is an opt-in add-on. Installation, operation, and graph ref
 
 - Install and setup: [docs/usage/setup-checklist.en.md](./usage/setup-checklist.en.md)
 - Troubleshooting: [docs/usage/faq.en.md](./usage/faq.en.md)
+- Known issues: [docs/usage/known-issues.en.md](./usage/known-issues.en.md)
 - Protocol reference (Korean-first/canonical): [plugins/atp/docs/development/agent-team-protocol.md](../plugins/atp/docs/development/agent-team-protocol.md)
 - Agent catalog (Korean-first/canonical): [plugins/atp/docs/development/agent-catalog.md](../plugins/atp/docs/development/agent-catalog.md)
 - File map (Korean-first/canonical): [docs/architecture/file-map.md](./architecture/file-map.md)
+- Upstream and follow-up proposals (Korean-first/canonical): [docs/backlog/index.md](./backlog/index.md)
 - Release / deploy trigger (required when `plugins/atp/` bundle changes): [docs/development/release-checklist.md](./development/release-checklist.md) — **read §0 first** (release-completion duty; Korean-first/canonical)

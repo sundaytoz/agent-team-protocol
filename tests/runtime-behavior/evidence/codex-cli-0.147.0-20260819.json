@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-19",
+  "surface": "codex-cli",
+  "version": "0.147.0",
+  "workspace_isolation": "temporary CODEX_HOME and temporary git workspaces",
+  "artifact_root": ".atp/work-session/20260819-124643/artifacts/codex-managed-smoke",
+  "official_sources": [
+    "https://learn.chatgpt.com/docs/agent-configuration/subagents",
+    "https://learn.chatgpt.com/docs/build-skills"
+  ],
+  "deployed_profile": {
+    "formal_adapter_enabled": false,
+    "manual_wait_polling_supported": false,
+    "host_managed_subagent_orchestration": "unsupported",
+    "team_execution_enabled": false
+  },
+  "smokes": [
+    {
+      "id": "terminal-only-one-agent",
+      "feature_flags": [],
+      "requested_agents": 1,
+      "spawn_calls": 1,
+      "nonterminal_updates": 0,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "semantic_recovery_actions": 0,
+      "completion_before_all_terminal": 0,
+      "parent_final_before_all_terminal": 0,
+      "result": "pass",
+      "parent_sha256": "2e60f831d689ad6744e8b4c42359e713101d59cd42bf1ecc290965e46c10461a",
+      "report_sha256": "ace1b6df0e4c516d18f815924e59a4d168b37ccf5d1a13d47178a2a93566bab4",
+      "ledger_sha256": "d032d300e3cd7b2cdd0a3be4a491ab0609bb08a7c3d6e3860576ad9b16286995"
+    },
+    {
+      "id": "nonterminal-then-delayed-terminal",
+      "feature_flags": [],
+      "requested_agents": 1,
+      "spawn_calls": 1,
+      "nonterminal_updates": 1,
+      "terminal_deliveries": 0,
+      "collected_results": 0,
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "semantic_recovery_actions": 0,
+      "completion_before_all_terminal": 0,
+      "parent_final_before_all_terminal": 1,
+      "result": "fail",
+      "failure": "parent final at ordinal 50 after MESSAGE ordinal 44; child was then aborted before terminal delivery",
+      "parent_sha256": "9945660a0bc5933739fa3ea2d4974972ef9aabf81b49bc1ef7e0dfdb93971d05",
+      "report_sha256": "e3f8d719a5ae43c86cfaf358d7cf7af94ab058ce579e01ae252470375d3f5623"
+    },
+    {
+      "id": "nonterminal-then-delayed-terminal-v2-opt-in",
+      "feature_flags": ["multi_agent_v2"],
+      "requested_agents": 1,
+      "spawn_calls": 1,
+      "nonterminal_updates": 0,
+      "terminal_deliveries": 0,
+      "collected_results": 0,
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "semantic_recovery_actions": 0,
+      "completion_before_all_terminal": 0,
+      "parent_final_before_all_terminal": 1,
+      "result": "fail",
+      "failure": "parent emitted an empty final at ordinal 45 before any child delivery",
+      "parent_sha256": "80bb85f69efe70c1dca55f682b568d893260b9b1b5ad236af6d97ecf62e7f64d"
+    },
+    {
+      "id": "staggered-two-agent-terminal",
+      "feature_flags": [],
+      "requested_agents": 2,
+      "spawn_calls": 2,
+      "nonterminal_updates": 0,
+      "terminal_deliveries": 1,
+      "collected_results": 0,
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "semantic_recovery_actions": 0,
+      "completion_before_all_terminal": 0,
+      "parent_final_before_all_terminal": 1,
+      "result": "fail",
+      "failure": "parent emitted blocked final at ordinal 55 after fast terminal ordinal 48 and before slow terminal",
+      "parent_sha256": "88e6bed74f57e0ed5105b9f25f3ffeddb69dedd20d5fc196e750e40894de6975",
+      "report_sha256": "ed0528149926f77f3520132dfe21afe37200f21d3f7c4d73e2962fe50d304455"
+    }
+  ],
+  "global_state_integrity": {
+    "config_sha256_before_after": "238c010d2525f28c6cfc542512d3f4fc47d8353538fc945c0068c44180354b9a",
+    "hooks_sha256_before_after": "30aad5a042f06325bf6ff3ebf17aa0cbf72da6efd71d020504001cd79d43ba84",
+    "plugin_tree_digest_before_after": "92562aac197ded7ae899f51df2270722297689a0bc2c5758c5bb9c9dbd56f32c"
+  }
+}

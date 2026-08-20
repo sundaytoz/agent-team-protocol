@@ -4,7 +4,7 @@ title: Architecture 카테고리 인덱스
 description: 시스템 경계·저장 구조·구성 파일 맵 등 아키텍처 문서 인덱스.
 owner: template-maintainer
 stability: stable
-last_reviewed: 2026-08-13
+last_reviewed: 2026-08-19
 ---
 
 # Architecture — 시스템 경계 / 저장 구조 / 구성 파일 맵
@@ -14,7 +14,7 @@ last_reviewed: 2026-08-13
 ## 목록
 
 - [file-map.md](./file-map.md) — 템플릿 루트의 구성 파일 트리 + 파일별 역할 + 런타임 생성 디렉토리(`.atp/work-session/` 은 git 추적되는 durable history) (원 위치: 과거 README §3)
-- [environment-authoritative-subagent-lifecycle-design.md](./environment-authoritative-subagent-lifecycle-design.md) — lifecycle correctness와 timeout-free environment-owned wait/wakeup scheduling을 분리한 implemented·verified 아키텍처(current Codex formal adapter는 unsupported)
+- [environment-authoritative-subagent-lifecycle-design.md](./environment-authoritative-subagent-lifecycle-design.md) — lifecycle correctness와 formal/host-managed scheduling을 분리한 아키텍처(tested Codex CLI full managed contract unsupported, app/IDE unknown)
 
 ## 관련 카테고리
 

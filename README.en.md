@@ -19,11 +19,15 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 | Platform | Status | Invocation | Instruction file | Verification level |
 |---|---|---|---|---|
 | Claude Code | Supported | `/atp:task` | `CLAUDE.md` | Reference implementation; continuously used and verified |
-| Codex CLI | Supported | `$atp:task` or `$task` | `AGENTS.md` | Install, skill exposure, invocation, and body loading verified on 2026-06-10 with codex-cli 0.138.0; subagent spawn is based on cited official docs, so team-mode E2E smoke testing is recommended |
-| Gemini CLI | Planned | `/atp:task` planned | `GEMINI.md` | Design documented as Tier A-flat; release artifact not generated yet |
+| Codex CLI | Partial | `$atp:task` or `$task` | `AGENTS.md` | Install and skill execution are supported. The managed all-results barrier was not verified on Codex CLI 0.147.0, so ATP 2.15.0 disables team execution for the tested CLI: general requests use Tier B and requests requiring independent subagents are blocked |
+| Antigravity IDE | Supported | `/atp-task` | `GEMINI.md` | Full task PASS (verified 2026-06-30, Antigravity 2.2.1): complete advisor chain and TC 10/10; install by copying Skills into `~/.gemini/config/skills/` |
 | opencode | Supported (adapter) | `opencode run --command atp-task "..."` | Generated emit (no CLAUDE.md-style instruction file) | Formal smoke PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
+Antigravity IDE uses manually installed Skills instead of `/plugin`; see [ADR-0015](docs/adr/ADR-0015-antigravity-host-verification.md).
+
 opencode is not a marketplace plugin but a separate npm adapter — see [3. Installation](#3-installation) below for the install command. See [adapters/opencode/README.md](adapters/opencode/README.md) for details and [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md) for the strategy rationale.
+
+Current Codex limitations, impact, workarounds, and exit criteria are tracked in [Known Issues](docs/usage/known-issues.en.md). Codex App/IDE surfaces remain `unknown` because the same maintainer smoke has not been run there.
 
 The canonical capability-tier definitions and host self-assessment rules live in [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md). The per-platform invocation syntax and verification markers in the table above are frozen as history in the appendices of [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) — the bundled runtime no longer enumerates platforms and works by capability self-assessment, so ATP can also run on host CLIs not listed here.
 
@@ -99,7 +103,7 @@ agent-team-protocol/
 │   ├── atp/                              base plugin root — only this subtree ships in the bundle
 │   │   ├── .claude-plugin/ .codex-plugin/  plugin manifests
 │   │   ├── agents/                       base agent definitions
-│   │   ├── skills/                       atp:init and atp:task skills
+│   │   ├── skills/                       atp:init, atp:task, and host orchestration helpers
 │   │   ├── docs/development/             runtime reference docs
 │   │   └── templates/                    atp:init scaffolding sources
 │   └── atp-graphify/                     optional atp-graphify add-on
@@ -118,6 +122,7 @@ agent-team-protocol/
 | Platform adapters | [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) |
 | File map | [docs/architecture/file-map.md](docs/architecture/file-map.md) |
 | FAQ | [docs/usage/faq.en.md](docs/usage/faq.en.md) |
+| Known Issues | [docs/usage/known-issues.en.md](docs/usage/known-issues.en.md) |
 | Init skill | [plugins/atp/skills/init/SKILL.md](plugins/atp/skills/init/SKILL.md) |
 | Task skill | [plugins/atp/skills/task/SKILL.md](plugins/atp/skills/task/SKILL.md) |
 | graphify add-on | [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md) |
