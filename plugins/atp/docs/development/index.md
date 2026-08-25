@@ -20,3 +20,4 @@ last_reviewed: 2026-08-19
 - [documentation-guidelines.md](./documentation-guidelines.md) — 문서 작성 규칙
 - [codex-spark-routing.md](./codex-spark-routing.md) — Codex host 전용 Spark 조건부 라우팅 appendix
 - [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — Codex host 전용 lifecycle mapping, tested CLI managed contract unsupported/team disabled + future contract fixture appendix
+- [claude-code-lifecycle-routing.md](./claude-code-lifecycle-routing.md) — Claude Code host 전용 lifecycle mapping, managed orchestration supported(turn-end await barrier) + 2026-08-25 smoke evidence appendix

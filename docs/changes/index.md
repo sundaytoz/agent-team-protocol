@@ -32,6 +32,7 @@ last_reviewed: 2026-08-20
 | [2026-08-12-environment-authoritative-subagent-lifecycle.md](./2026-08-12-environment-authoritative-subagent-lifecycle.md) | wait/progress 관측 추론 제거와 명시적 host environment lifecycle event 권위화 — validator/direct probe/release 정적 gate PASS, base 2.12.0 | 2026-08-12 |
 | [2026-08-13-environment-driven-subagent-wakeup.md](./2026-08-13-environment-driven-subagent-wakeup.md) | timeout-free environment subscription 계약, current Codex no-polling capability gate와 deterministic scheduling fixture — base 2.13.0 구현·독립 검증 PASS, host adapter unsupported | 2026-08-13 |
 | [2026-08-19-codex-managed-subagent-orchestration.md](./2026-08-19-codex-managed-subagent-orchestration.md) | Codex host-managed orchestration 후보와 release-time smoke 도입, tested CLI team execution disabled·일반 Tier B·독립성 요청 blocker — base 2.15.0 | 2026-08-19 |
+| [2026-08-25-claude-code-managed-orchestration.md](./2026-08-25-claude-code-managed-orchestration.md) | Claude Code 전용 claude-code-team skill + lifecycle appendix 신설 — turn-end await barrier 정본화, advisor no-op 틱·transcript 폴링 제거, smoke 3건 pass — base 2.16.0 | 2026-08-25 |
 
 ## 관련 카테고리
 
