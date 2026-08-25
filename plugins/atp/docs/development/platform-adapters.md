@@ -274,6 +274,7 @@ host 전용 모델 route 나 사용량 정책은 공통 §6 tier 매핑을 덮�
 
 - Codex host: [codex-spark-routing.md](./codex-spark-routing.md) — Spark 를 저지연 code-worker route 후보로만 사용하고, 미지원/미확인/실패 시 기존 tier 매핑으로 fallback.
 - Codex host lifecycle/orchestration: [codex-lifecycle-routing.md](./codex-lifecycle-routing.md) — §2.5의 environment state·terminal event·종결·독립 invocation을 매핑하고, formal scheduling과 managed all-results capability를 분리한다. lifecycle fallback은 scheduling 및 모델 route와 독립.
+- Claude Code host lifecycle/orchestration: [claude-code-lifecycle-routing.md](./claude-code-lifecycle-routing.md) — async `Agent` spawn과 task-notification terminal 전달을 §2.5 계약에 매핑. barrier 는 turn-end await(live children 보유 agent 를 완료 처리하지 않고 모델 호출 0으로 suspend)이며, no-op 틱·transcript 파일 폴링 등 manual liveness polling 을 금지한다. 실행 절차는 `claude-code-team` skill 이 정본.
 
 ## 8. 동결 이력 포인터
 

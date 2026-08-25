@@ -1,0 +1,69 @@
+{
+  "host": "claude-code",
+  "host_version": "2.1.243",
+  "platform": "darwin",
+  "date": "2026-08-25",
+  "purpose": "Claude Code async Agent tool orchestration capability smoke — deployed profile evidence for claude-code-lifecycle-routing.md §8",
+  "method": "general-purpose parent agents spawned via Agent tool from an interactive session; children are Explore agents; parents instructed to never poll and never call tools for waiting",
+  "smokes": [
+    {
+      "id": "E1-terminal-only-1-agent",
+      "parent_task_id": "a3d193f16f50e4d55",
+      "design": "spawn 1 child, end turn with no further tool calls (checkpoint text), expect re-invocation on child terminal",
+      "observed": {
+        "parent_final": "RESUMED: 2",
+        "tool_uses": 1,
+        "duration_ms": 10963,
+        "notes": "parent turn-end with a live child did NOT complete the parent; harness suspended it (zero model invocations) and re-invoked it on child terminal; child result available inline"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "E2-nested-taskoutput-availability",
+      "parent_task_id": "a5e495a3694152287",
+      "design": "spawn 1 child, then call TaskOutput(task_id, block=true) exactly once",
+      "observed": {
+        "taskoutput_available": false,
+        "taskoutput_error": "tool not present in subagent toolset",
+        "child_result_via": "task-notification",
+        "child_result": "10"
+      },
+      "verdict": "confirmed-absent (TaskOutput is not a barrier candidate in nested contexts)"
+    },
+    {
+      "id": "E3-staggered-2-agent-all-results",
+      "parent_task_id": "a43654cb3fb4160f4",
+      "design": "spawn fast + slow(+25s) children in one assistant message, end turn, re-end turn on each wake, final only after both collected",
+      "observed": {
+        "parent_final": "ALL-COLLECTED wakes=3 order=fast,slow fast=fast-done slow=slow-done batched=no",
+        "wakes": 3,
+        "per_child_delivery": true,
+        "coalescing_observed": false,
+        "tool_uses": 2,
+        "duration_ms": 37902,
+        "notes": "after the fast child's wake the parent re-suspended and still received the delayed slow terminal ~25s later; covers the delayed-terminal axis of the codex smoke 2 (early parent final is structurally absent: harness never completes an agent holding live children)"
+      },
+      "verdict": "pass"
+    }
+  ],
+  "counterexample_session": {
+    "session_id": "c9027225-43af-495f-bbee-668b3ed7e9c2",
+    "project": "stz-game-service-php8-anipang3",
+    "atp_version": "2.15.0",
+    "observed": {
+      "advisor": "atp:research-advisor (agent-aa0b176e37c32f107)",
+      "noop_idle_bash_ticks": "233+ (echo idleN, ~3-5s interval)",
+      "transcript_file_polling": "wc -l / stat -f%z on ~/.claude/projects/**/subagents/agent-*.jsonl, ~10s interval; kept polling an already-terminal worker for 5+ minutes",
+      "bash_calls_total": "316+",
+      "task_notifications_recorded_in_transcript": 0,
+      "inline_delivery_evidence": "W2 worker final text (terminal 00:40:13Z) reproduced verbatim in advisor Write at 00:41:56Z with zero inbound transcript records — notification content is injected into model context without transcript persistence"
+    },
+    "conclusion": "functional convergence with severe cost: every idle tick is a full model inference over a growing context; motivated the claude-code-team skill + appendix"
+  },
+  "deployed_profile": {
+    "formal_adapter_enabled": false,
+    "manual_wait_polling_supported": false,
+    "host_managed_subagent_orchestration": "supported",
+    "team_execution_enabled": true
+  }
+}
