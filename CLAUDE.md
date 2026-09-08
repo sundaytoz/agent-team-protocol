@@ -1,6 +1,6 @@
 # agent-team-protocol (플러그인 소스 레포)
 
-이 레포는 Claude Code/Codex 플러그인 **`atp`** (base) 와 **`atp-graphify`** (옵트인 add-on) 의 소스다. 마켓플레이스명은 레포명과 같은 `agent-team-protocol`.
+이 레포는 Claude Code/Codex 플러그인 **`atp`** (base), **`atp-graphify`** (옵트인 add-on), **`atp-codex-hooks`** (Codex 팀 실행용 옵트인 add-on)의 소스다. 마켓플레이스명은 레포명과 같은 `agent-team-protocol`.
 
 > 소비 프로젝트의 CLAUDE.md 에 삽입되는 안내 블록·placeholder 템플릿은 `plugins/atp/templates/` 와 `plugins/atp/skills/init/SKILL.md` 에 있다. 이 파일(레포 루트 CLAUDE.md)은 **이 레포 자체를 개발하는 기여자용** 가이드다.
 
@@ -14,12 +14,13 @@ agent-team-protocol/
 ├── .codex-plugin/marketplace.json    (Claude 미러 — Codex 는 읽지 않음)
 ├── .agents/plugins/marketplace.json  (Codex marketplace 정본 — 객체형 source)
 ├── plugins/atp/             (base 플러그인 루트 — 설치 시 이 서브트리만 번들로 복사)
-│   ├── .claude-plugin/ .codex-plugin/  (plugin.json — version 2.1.0)
+│   ├── .claude-plugin/ .codex-plugin/  (plugin.json — 현재 버전은 manifest 참조)
 │   ├── agents/              (base 에이전트 10개)
 │   ├── skills/task/, skills/init/  (base 스킬)
 │   ├── docs/development/    (런타임 레퍼런스 — 에이전트가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)
 │   └── templates/           (/atp:init 스캐폴딩 원본)
 ├── plugins/atp-graphify/    (옵트인 add-on — graphify 에이전트 3개 + docs/graphify-usage.md)
+├── plugins/atp-codex-hooks/ (Codex 옵트인 add-on — hook runner + 설치·trust 가이드)
 └── docs/                    (사람용 문서 — 번들 제외: usage / development / architecture / adr)
 ```
 
@@ -54,6 +55,8 @@ agent-team-protocol/
 - 에이전트 정의: `plugins/atp/agents/*.md` (base), `plugins/atp-graphify/agents/*.md` (add-on)
 
 작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `/atp:task` 명시 호출 시에만 진입한다.
+
+Codex의 실제 팀 실행은 별도 `atp-codex-hooks` 설치·hook trust와 exact marker가 필요하다. Claude Code에는 이 add-on을 설치하지 않는다. Codex 안내는 [AGENTS.md](AGENTS.md), [add-on 가이드](plugins/atp-codex-hooks/docs/codex-hooks-usage.md), [단일 연결 스모크](docs/usage/codex-connection-smoke.md)를 따른다.
 
 **에이전트 정의를 편집했으면 세션 종료 전에 그 에이전트를 1회 실호출한다.** 정의 파일은 실행되지 않는 산문이라 자기모순·미해소 참조가 정적 검토를 통과한다 — 실호출만이 새 규약이 실제로 적용되는지 보여준다. 비용은 거의 0이고, 세션 종료 조건이 이미 요구하는 호출(예: `graph-refresh-checker`)로 갈음되는 경우도 많다. 실증: 2026-07-30 세션에서 `graph-refresh-checker` 의 판정 키를 바꾼 뒤 종료 조건 호출이 그 규약을 실제로 적용해 오탐을 피하는 것을 확인했다.
 

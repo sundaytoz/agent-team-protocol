@@ -4,7 +4,7 @@ title: Usage Category Index (English)
 description: English index for plugin installation, initialization, and operation guides.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-20
+last_reviewed: 2026-09-08
 ---
 
 <p align="center">
@@ -21,6 +21,7 @@ This category collects documents written from the perspective of a **user instal
 - [setup-checklist.en.md](./setup-checklist.en.md) — 3-step setup checklist after plugin install: `/atp:init` → fill placeholders → `/atp:task` smoke test
 - [faq.en.md](./faq.en.md) — troubleshooting FAQ: install failures, unrecognized commands, graphify skip, init re-run, and more
 - [known-issues.en.md](./known-issues.en.md) — current platform limitations, impact, workarounds, and exit criteria
+- [codex-connection-smoke.en.md](./codex-connection-smoke.en.md) — actual one-subagent connection check, 2026-09-08 observations, and validation limits
 - [best-practices.md](./best-practices.md) — known workflow costs and recommended task-shaping practices (Korean-first/canonical)
 
 ## Installation Order

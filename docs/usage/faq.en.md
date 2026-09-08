@@ -4,7 +4,7 @@ title: Troubleshooting / FAQ (English)
 description: Common issues during plugin install, init, and daily use.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-20
+last_reviewed: 2026-09-08
 ---
 
 <p align="center">
@@ -80,6 +80,10 @@ A. Yes, it is idempotent. Existing files are not overwritten, and the `<!-- atp:
 ---
 
 ## Codex hooks add-on
+
+### Q. Does a real subagent response validate all ATP functionality?
+
+A. A one-child connection smoke checks spawn acceptance, terminal delivery, and collection. On 2026-09-08, requested, accepted, terminal, and collected counts were each 1, but the child lacked `update_plan`, so it did not call `ATP_POOL_BIND`. Receiving a terminal delta alone does not prove bind-hook validation, approval, cancellation, or capacity refill. See the [Codex connection smoke](./codex-connection-smoke.en.md) for observations and reproduction steps. Never claim a missing tool was called or synthesize a marker.
 
 ### Q. I installed atp in Codex and the "Hooks need review" prompt appears (or does not).
 

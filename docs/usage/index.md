@@ -4,7 +4,7 @@ title: Usage 카테고리 인덱스
 description: plugin 설치·초기화·운영 관련 사용 가이드 인덱스.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-20
+last_reviewed: 2026-09-08
 ---
 
 <p align="center">
@@ -21,6 +21,7 @@ last_reviewed: 2026-08-20
 - [setup-checklist.md](./setup-checklist.md) — plugin 설치 후 `/atp:init` → placeholder 채우기 → `/atp:task` 스모크 3단계 설정 체크리스트
 - [faq.md](./faq.md) — 설치 실패·명령 미인식·graphify skip·init 재실행 등 문제 해결 FAQ
 - [known-issues.md](./known-issues.md) — 현재 확인된 플랫폼 제한·영향·우회책·해소 조건
+- [codex-connection-smoke.md](./codex-connection-smoke.md) — 실제 단일 서브에이전트 연결 확인 절차·2026-09-08 관측·검증 범위
 - [best-practices.md](./best-practices.md) — 캐시 리드 누적·절차 시간 등 한계점 이해와 권장 작업 방식
 
 ## 설치 순서

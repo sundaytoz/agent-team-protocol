@@ -4,7 +4,7 @@ title: 문제 해결 / FAQ
 description: plugin 설치·init·사용 중 흔한 문제와 대응.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-20
+last_reviewed: 2026-09-08
 ---
 
 # 문제 해결 / FAQ
@@ -87,6 +87,10 @@ A. `atp` base 가 먼저 설치돼 있어야 한다. `atp-graphify` 는 `atp` �
 ---
 
 ## Codex hooks add-on
+
+### Q. 실제 subagent가 응답했으면 전체 ATP 기능이 검증된 것인가?
+
+A. 단일 연결 스모크는 spawn 수락과 terminal 결과 수신·취합을 확인한다. 2026-09-08에는 요청·수락·terminal·취합이 각각 1건이었지만 child의 `update_plan` 도구가 없어 `ATP_POOL_BIND` 호출은 수행되지 않았다. Terminal delta 수신만으로 bind hook의 검증 성공이나 승인·취소·capacity refill까지 입증할 수 없다. 상세 결과와 재현 절차는 [Codex 연결 스모크](./codex-connection-smoke.md)를 본다. 미제공 도구를 호출했다고 기록하거나 marker를 합성해서는 안 된다.
 
 ### Q. Codex 에서 atp 를 설치했는데 "Hooks need review" 가 뜬다 / 안 뜬다.
 

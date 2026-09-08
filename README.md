@@ -19,7 +19,7 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | 플랫폼 | 상태 | 호출 | 지침파일 | 검증 수준 |
 |---|---|---|---|---|
 | Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
-| Codex CLI | ⚠️ 부분 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | 설치·skill 실행 지원. Codex CLI 0.147.0에서 managed all-results barrier가 검증되지 않아 ATP 2.15.0의 tested CLI team execution은 disabled: 일반 요청은 Tier B, 독립 subagent 필수 요청은 blocked |
+| Codex CLI | ✅ 선언 scope 내 팀 실행 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | CLI 0.149.1·Unix·`python3`·`atp-codex-hooks` 설치 및 hook trust 조건에서 hook-guarded bounded pool 검증 통과(2026-09-08). exact marker가 없으면 일반 요청은 Tier B, 독립 subagent 필수 요청은 blocked |
 | Antigravity IDE | ✅ 지원 | `/atp-task` | `GEMINI.md` | 정식 task PASS (verified 2026-06-30, Antigravity 2.2.1): advisor 체인 전수 + TC 10/10. 설치 = Skills 수동 복사 → `~/.gemini/config/skills/` |
 | opencode | ✅ 지원 (어댑터) | `opencode run --command atp-task "..."` | 생성형 emit (CLAUDE.md형 지침파일 없음) | 정식 스모크 PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
@@ -28,6 +28,8 @@ Antigravity IDE 는 `/plugin` 없이 Skills 수동 복사로 설치한다 — �
 opencode 는 마켓플레이스 plugin 이 아니라 별도 npm 어댑터다 — 설치 명령은 아래 [3. 설치](#3-설치) 참고. 상세는 [adapters/opencode/README.md](adapters/opencode/README.md), 전략 근거는 [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md).
 
 Codex의 현재 제한·영향·우회책과 해소 조건은 [Known Issues](docs/usage/known-issues.md)에서 추적한다. App/IDE surface는 동일한 maintainer smoke를 거치지 않아 현재 `unknown`이다.
+
+실제 가동 확인은 [Codex 연결 스모크](docs/usage/codex-connection-smoke.md)를 따른다. 단일 child의 결과 수신과 전체 pool·승인·취소 검증을 구분하며, 2026-09-08 관측의 `update_plan` 미제공 제한도 기록했다.
 
 capability tier 정의·호스트 자가판정 규칙의 정본은 [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) 다. 위 표의 플랫폼별 호출 문법·실측 마커의 동결 이력 정본은 [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록이다 — 번들 런타임은 플랫폼을 열거하지 않고 capability 자가판정으로 동작하므로, 표에 없는 호스트 CLI 에서도 사용할 수 있다.
 

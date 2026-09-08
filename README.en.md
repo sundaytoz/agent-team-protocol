@@ -19,7 +19,7 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 | Platform | Status | Invocation | Instruction file | Verification level |
 |---|---|---|---|---|
 | Claude Code | Supported | `/atp:task` | `CLAUDE.md` | Reference implementation; continuously used and verified |
-| Codex CLI | Partial | `$atp:task` or `$task` | `AGENTS.md` | Install and skill execution are supported. The managed all-results barrier was not verified on Codex CLI 0.147.0, so ATP 2.15.0 disables team execution for the tested CLI: general requests use Tier B and requests requiring independent subagents are blocked |
+| Codex CLI | Team execution supported within declared scope | `$atp:task` or `$task` | `AGENTS.md` | Hook-guarded bounded pool qualified on CLI 0.149.1 with Unix, `python3`, and the installed and trusted `atp-codex-hooks` add-on (2026-09-08). Without the exact marker, general requests use Tier B and requests requiring independent subagents are blocked |
 | Antigravity IDE | Supported | `/atp-task` | `GEMINI.md` | Full task PASS (verified 2026-06-30, Antigravity 2.2.1): complete advisor chain and TC 10/10; install by copying Skills into `~/.gemini/config/skills/` |
 | opencode | Supported (adapter) | `opencode run --command atp-task "..."` | Generated emit (no CLAUDE.md-style instruction file) | Formal smoke PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
@@ -28,6 +28,8 @@ Antigravity IDE uses manually installed Skills instead of `/plugin`; see [ADR-00
 opencode is not a marketplace plugin but a separate npm adapter — see [3. Installation](#3-installation) below for the install command. See [adapters/opencode/README.md](adapters/opencode/README.md) for details and [ADR-0014](docs/adr/ADR-0014-opencode-host-adapter-strategy.md) for the strategy rationale.
 
 Current Codex limitations, impact, workarounds, and exit criteria are tracked in [Known Issues](docs/usage/known-issues.en.md). Codex App/IDE surfaces remain `unknown` because the same maintainer smoke has not been run there.
+
+Use the [Codex connection smoke](docs/usage/codex-connection-smoke.en.md) to check actual execution. It separates one-child result delivery from full pool, approval, and cancellation validation, and records the missing `update_plan` tool observed on 2026-09-08.
 
 The canonical capability-tier definitions and host self-assessment rules live in [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md). The per-platform invocation syntax and verification markers in the table above are frozen as history in the appendices of [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) — the bundled runtime no longer enumerates platforms and works by capability self-assessment, so ATP can also run on host CLIs not listed here.
 

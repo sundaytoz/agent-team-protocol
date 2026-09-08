@@ -4,7 +4,7 @@ title: plugin 설치 후 설정 체크리스트
 description: /plugin install 후 /atp:init 실행 → placeholder 채우기 → /atp:task 스모크까지 3단계 체크리스트.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-20
+last_reviewed: 2026-09-08
 ---
 
 # plugin 설치 후 설정 체크리스트
@@ -96,13 +96,28 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 
 > opencode 는 마켓플레이스 plugin 이 아니라 npm 어댑터로 설치한다: `npx @atp-opencode/opencode install` (위 0단계의 marketplace/install 단계 불필요). 상세는 [faq.md](./faq.md) · [`../../adapters/opencode/README.md`](../../adapters/opencode/README.md).
 
-> ATP 2.15.0의 tested Codex CLI profile에서는 team execution이 disabled다. 위 Codex 스모크는 실제 advisor 체인을 기대하지 않는다. 일반 요청이면 `tier_b_sequential` 고지를, 독립 subagent가 필수인 요청이면 blocker와 선택지를 확인한다. 상세는 [known-issues.md](./known-issues.md).
+> 현재 Codex profile(ADR-0025)은 `atp-codex-hooks` add-on의 exact hook marker가 있는 선언 scope에서 hook-guarded bounded pool로 실제 team execution을 지원한다. 검증 범위는 Codex CLI 0.149.1, Unix, PATH의 `python3`, add-on 설치와 TUI hook trust다. Marker가 없거나 schema/hash가 맞지 않으면 spawn 0이며, `skip: no-codex-hooks`와 함께 일반 요청은 `tier_b_sequential`, 실제 독립 subagent 필수 요청은 `blocked_explicit_independence`다. 위 기본 스모크는 skill 로드와 execution mode 확인용이다. 설치·trust의 의미는 [add-on 가이드](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md), 현재 제한은 [known-issues.md](./known-issues.md)를 본다.
 
 - [ ] orchestrator 가 번들 `agent-team-protocol.md` core와 적용 가능한 host orchestration skill을 읽었는가?
 - [ ] `.atp/work-session/<sid>/` 디렉토리가 생성됐는가?
 - [ ] `report.md` 초기 스키마 v2 헤더와 선택된 execution mode가 기록됐는가?
 
 세 가지 모두 YES 면 설정 완료.
+
+### 선택: Codex 실제 1-agent 연결 스모크
+
+실제 child 실행까지 확인하려면 다음과 같이 요청한다.
+
+```text
+$atp:task 서브에이전트 1명을 실제로 가동해 연결 상태를 확인해줘
+```
+
+- [ ] 현재 root context에 add-on hook이 생성한 exact marker가 있는가? Marker를 직접 복사하거나 합성하지 않는다.
+- [ ] 실제 spawn 응답과 terminal 결과 수집 근거로 `requested=accepted=terminal=collected=1`인가? Skill 로드 확인이나 중간 `MESSAGE`는 terminal이 아니다.
+- [ ] child의 연결 상태와 작업 디렉토리 일치를 확인하고, 파일 변경 없이 결과를 수집했는가?
+- [ ] `update_plan` 미노출 등 concern과 실행하지 못한 bind 절차를 결과에 명시했는가?
+
+이 스모크는 한 child의 연결·결과 전달만 확인한다. Bind, approval continuation, capacity denial, 다중 child all-results qualification을 증명하지 않으며 배포 profile을 승격하지 않는다. App/IDE·Windows는 여전히 선언 scope 밖이고 in-flight steering/cancellation delivery는 `unknown`이다. 2026-09-08의 확인 결과와 한계는 [Codex 연결 스모크](./codex-connection-smoke.md)에 기록한다.
 
 ---
 
