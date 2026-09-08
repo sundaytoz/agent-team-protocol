@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-28",
+  "surface": "codex-cli",
+  "version": "0.149.1",
+  "candidate_plugin_version": "2.16.0+codex.20260825102518",
+  "qualification": "hook_guarded_bounded_pool_candidate",
+  "workspace_isolation": "temporary Codex home and temporary workspace",
+  "overall_result": "fail",
+  "deployed_profile": {
+    "formal_adapter_enabled": false,
+    "manual_wait_polling_supported": false,
+    "host_managed_subagent_orchestration": "unsupported",
+    "team_execution_enabled": false
+  },
+  "candidate_artifacts": {
+    "source_install_byte_parity": true,
+    "plugin_hook_location": "hooks/hooks.json",
+    "manifest_hooks_field_added": false,
+    "sha256": {
+      "hooks_json": "9a34381d0b3a839a6d2bf554dda3016f31d74473bb897410267fcbb88b0db22d",
+      "hook_runner": "ba4a8a202e60d5cb03104f1880d49628e7a42aa882a5c04f97957f6f48ca1cc2",
+      "codex_team_skill": "3e64e744bdeb1df35ac73757c2e9e58799af7bd2fb832a4ddad3ccffd50fe407"
+    }
+  },
+  "runtime_dependencies": {
+    "unix_python3": "pass",
+    "windows_py_minus_3": "unknown",
+    "result": "unknown",
+    "reason": "the Windows commandWindows runner was configured but not executed on a Windows host"
+  },
+  "hook_preflight": {
+    "untrusted_hook_spawn_calls": 0,
+    "hooks_disabled_spawn_calls": 0,
+    "exact_marker_required": true,
+    "allow_managed_hooks_only": "unknown",
+    "result": "partial_pass",
+    "artifact_sha256": {
+      "untrusted_root_jsonl": "a86ee3e91cddfcff8438f811f5546f54b4993f787bd4262bdf57df4c28287878",
+      "hooks_disabled_root_jsonl": "813d063d8ac9a2765e615eea6d15064ba9536c1bb408c980ebf706dc2fa48200"
+    }
+  },
+  "smokes": [
+    {
+      "id": "T1-hook-coverage",
+      "requested_tasks": 1,
+      "spawn_attempts": 1,
+      "accepted_spawns": 1,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "pool_wait_calls": 1,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "ordering": [
+        "SessionStart",
+        "PreToolUse_spawn",
+        "PostToolUse_spawn",
+        "SubagentStart",
+        "PreToolUse_bind",
+        "SubagentStop_terminal",
+        "wait_terminal_delta",
+        "Stop_complete"
+      ],
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "0b9bc3d6cb889a59b58d656685fde8fb3ee578fbb5d524e0e2b19d63b6233009",
+        "state": "f30b07883b1d8f3bba7975968a19c002f1b8c0da2cc0a617af2ef79f5de7a493",
+        "event_ledger": "fa67cc983560fd1c5e34dbb27cda95eada21c7cdd5f0e6f02a830d715cc464e1"
+      }
+    },
+    {
+      "id": "T2-saturated-nonterminal",
+      "requested_tasks": 5,
+      "spawn_attempts": 5,
+      "accepted_spawns": 5,
+      "nonterminal_sends": 1,
+      "message_triggered_slot_releases": 0,
+      "refills_before_first_terminal": 0,
+      "terminal_deliveries": 5,
+      "collected_results": 5,
+      "pool_wait_calls": 3,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "observed_max_running": 3,
+      "ordering": [
+        "spawn_workers_1_to_3",
+        "nonterminal_send",
+        "worker_1_terminal",
+        "refill_worker_4",
+        "worker_2_terminal",
+        "refill_worker_5",
+        "remaining_terminals",
+        "parent_completion"
+      ],
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "1c5213cad5da0c9379211d0581f35fdbc1940c803935977f44b1661c36107fac",
+        "state": "63a94da188d664fb9f5f376f93b4ad008ed79063a010eb0bfa9b77d3c09c376c",
+        "event_ledger": "b271e30e4ee1c893d9b04b9b346cf39c356cb5e4c54ae0d4535137c1e06966bc"
+      }
+    },
+    {
+      "id": "T3-premature-root-stop",
+      "requested_tasks": 1,
+      "accepted_spawns": 1,
+      "first_stop_counts": {
+        "pending": 0,
+        "running": 1,
+        "terminal": 0,
+        "collected": 0
+      },
+      "first_stop_blocked": true,
+      "same_root_turn": true,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "fb4c71fbb80c7123392b47a18ca6dfc2d8513c4faa4fc737b1c29c956f792dd2",
+        "state": "922c67021c853fc07cb98dfc1aebdf58b85bc87dcbc62e7cf3fd29e83fee9142",
+        "event_ledger": "f463636547146ea0c0ebc3ad245b60adc50ff0abe9dd77da25346d519301b10d"
+      }
+    },
+    {
+      "id": "T4-active-wait-steering",
+      "requested_tasks": 2,
+      "spawn_attempts": 1,
+      "accepted_spawns": 1,
+      "pending_tasks": 1,
+      "steering_queue_accepted": 1,
+      "user_prompt_submit_deliveries": 0,
+      "send_or_followup_calls": 0,
+      "terminal_deliveries": 0,
+      "collected_results": 0,
+      "harness_process_termination": 1,
+      "scheduler_interrupt_calls": 0,
+      "result": "fail",
+      "failure": "codex queue accepted the control but did not deliver UserPromptSubmit into the active wait; the root and child remained waiting",
+      "artifact_sha256": {
+        "root_jsonl": "452c5aa135b4e93fd5335a46d3554a1a231da64a38fdf19d0dda65e7b3faf832",
+        "state": "74c4e79f8a9a16e753232bafded7c302ccf2b2333f1aa605a08068e2b133b3c4",
+        "event_ledger": "75ecca7b98a9491bc04e6f60b431e407cef003846b6a0391ae38e4360b01408a"
+      }
+    },
+    {
+      "id": "T5-interactive-approval",
+      "requested_tasks": 1,
+      "accepted_spawns": 1,
+      "permission_requests": 1,
+      "human_allow_decisions": 1,
+      "persistent_allow_decisions": 0,
+      "approval_action_observed": true,
+      "same_identity_terminal": true,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "result": "pass",
+      "artifact_sha256": {
+        "tui_rollout": "f698863bdfd438c2a4c9daff412e14f36f3c2b6bcfd1fb149399d1cf696c07a1",
+        "harmless_marker": "d47cc24e25769aba388698e4af097f287c318592ddf176dbc4169dec9a7837a7",
+        "state": "9952d9209e0ff90849b40e2da99dae4bd86c4273151f22c4e2cd0c52f18482d3",
+        "event_ledger": "3d56df6ec32eda2b05afa39b42555eb9a0e53110e3f89850040f40e89e11d2a8"
+      }
+    },
+    {
+      "id": "T6-active-wait-cancellation",
+      "requested_tasks": 2,
+      "spawn_attempts": 1,
+      "accepted_spawns": 1,
+      "running_tasks": 1,
+      "pending_tasks": 1,
+      "cancellation_queue_accepted": 1,
+      "user_prompt_submit_deliveries": 0,
+      "cancel_requested_in_ledger": false,
+      "scheduler_interrupt_calls": 0,
+      "harness_process_termination": 1,
+      "synthetic_terminal_results": 0,
+      "result": "fail",
+      "failure": "queued cancellation did not enter the active wait, so no authoritative pool interrupt could be issued",
+      "artifact_sha256": {
+        "root_jsonl": "4ee13830c53758b4921ce4bed864f2b8d72c66acca275672a2abca6a11c5743e",
+        "state": "3ff80a21171a410284f5001679f87390dac0c123b203d9e6d0175c1e2d11db38",
+        "event_ledger": "8220e507a18da583c012a7023b24fb416e4cf6ffe8f26eeeb2528132521c127f"
+      }
+    },
+    {
+      "id": "T7-capacity-denial",
+      "requested_tasks": 5,
+      "spawn_attempts": 6,
+      "accepted_spawns": 5,
+      "parent_observed_capacity_denials": 1,
+      "hook_ledger_capacity_denials": 0,
+      "terminal_deliveries": 5,
+      "collected_results": 5,
+      "denied_task_spawn_attempts": 2,
+      "result": "fail",
+      "failure": "Codex emitted no PostToolUse event for the failed spawn_agent call, leaving the first attempt durable status attempted instead of capacity_denied",
+      "artifact_sha256": {
+        "root_jsonl": "8a338071c44253fddb8c39715a979b60044b9d1848422c2829bb05bf5830a3a7",
+        "state": "31eb70690adc2fa8fc64c0a956e6753d3fc03ff01c7db682195b6be1e3e96110",
+        "event_ledger": "ce7b3a9d1d45e090e1a639b8807e85613be0c5f672a3e0e419d773252e7764e2"
+      }
+    },
+    {
+      "id": "T8-nested-owner",
+      "root_requested_owners": 1,
+      "root_accepted_owners": 1,
+      "root_terminal_deliveries": 1,
+      "root_collected_results": 1,
+      "worker_requested_tasks": 3,
+      "worker_accepted_spawns": 3,
+      "worker_terminal_deliveries": 3,
+      "worker_collected_results": 3,
+      "owner_terminal_after_worker_terminals": true,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "a2e5b991b448c8673c7fd2313e745acfc42747a1179304942934d19da12e7349",
+        "state": "76600e843c3207eac276537a6dcb095965660fd5ad2b2576e304d8780bc5da02",
+        "event_ledger": "5d1842377038e2730070d561c78474912ffbbc3ab440a15e78385692b49326f2"
+      }
+    },
+    {
+      "id": "T9-source-install-parity",
+      "source_install_byte_parity": true,
+      "installed_T1": "pass",
+      "installed_T2": "pass",
+      "installed_T7": "fail",
+      "result": "fail",
+      "failure": "the required installed T7 regression did not produce a durable capacity-denial hook event"
+    }
+  ],
+  "hypotheses": {
+    "H1_terminal_delta_closes_missing_delivery": "pass",
+    "H2_root_stop_barrier": "pass",
+    "H3_task_name_and_bind_identity": "pass",
+    "H4_terminal_boundary_steering": "fail",
+    "H5_actual_pool_cancellation": "fail",
+    "H6_approval_allow_same_identity": "pass",
+    "H7_fail_closed_hook_marker": "partial_pass",
+    "H8_declared_portable_runner_dependency": "unknown"
+  },
+  "promotion": {
+    "new_execution_mode_added": false,
+    "capability_axis_added": false,
+    "version_changed": false,
+    "release_metadata_changed": false
+  },
+  "blockers": [
+    "active-wait queued controls are accepted but not delivered through UserPromptSubmit",
+    "failed spawn_agent calls do not emit PostToolUse, so capacity denial cannot be hook-attested",
+    "Windows py -3 runner dependency remains unqualified",
+    "allow_managed_hooks_only policy behavior remains unqualified"
+  ]
+}

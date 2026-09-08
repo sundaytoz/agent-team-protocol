@@ -20,7 +20,7 @@ AGENT_DIR = ROOT / "plugins/atp/agents"
 FIXTURES = ROOT / "tests/runtime-behavior/fixtures"
 EVIDENCE = (
     ROOT
-    / "tests/runtime-behavior/evidence/codex-cli-0.147.0-20260819.json"
+    / "tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json"
 )
 
 
@@ -332,6 +332,139 @@ class CodexManagedContractTests(unittest.TestCase):
         self.assertTrue(any(item["result"] == "fail" for item in evidence["smokes"]))
         self.assertEqual("unsupported", deployed["host_managed_subagent_orchestration"])
         self.assertFalse(deployed["team_execution_enabled"])
+
+    def test_bounded_pool_candidate_evidence_is_not_promoted(self) -> None:
+        evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+        self.assertEqual(
+            "2.16.0+codex.20260825102518",
+            evidence["candidate_plugin_version"],
+        )
+        topology = evidence["topology_and_capacity_probes"]
+        self.assertEqual("pass", topology["nested_spawn"]["result"])
+        self.assertEqual(
+            5, topology["short_lived_nested_fanout"]["accepted_spawns"]
+        )
+        saturated = topology["saturated_nested_fanout"]
+        self.assertEqual(2, saturated["accepted_spawns"])
+        self.assertEqual(3, saturated["rejected_spawns"])
+        self.assertEqual(4, saturated["observed_active_threads_at_limit"])
+
+        candidate = evidence["bounded_pool_candidate_smokes"]
+        for key in ("flat_root_pool", "nested_owner_pool"):
+            self.assertEqual("pass", candidate[key]["result"])
+        self.assertEqual(5, candidate["flat_root_pool"]["collected_results"])
+        self.assertEqual(
+            5, candidate["nested_owner_pool"]["worker_collected_results"]
+        )
+        denial = candidate["capacity_denial_refill"]
+        self.assertEqual(6, denial["spawn_attempts"])
+        self.assertEqual(5, denial["accepted_spawns"])
+        self.assertEqual(1, denial["capacity_denials"])
+        self.assertEqual(5, denial["collected_results"])
+
+        saturated = candidate["saturated_nonterminal_then_terminal"]
+        self.assertEqual("fail", saturated["result"])
+        self.assertEqual(3, saturated["nonterminal_observed_running"])
+        self.assertEqual(2, saturated["nonterminal_observed_pending"])
+        self.assertEqual(0, saturated["nonterminal_slot_releases"])
+        self.assertEqual(0, saturated["nonterminal_triggered_refills"])
+        self.assertEqual(3, saturated["terminal_deliveries"])
+        self.assertEqual(1, saturated["collected_results"])
+        self.assertTrue(saturated["identity_continuity"])
+        self.assertFalse(saturated["parent_turn_completed"])
+
+        steering = candidate["steering_while_pool_wait_active"]
+        self.assertEqual("fail", steering["result"])
+        self.assertEqual(1, steering["external_steering_queued"])
+        self.assertEqual(1, steering["external_steering_acknowledged"])
+        self.assertEqual(0, steering["external_steering_delivered_to_root"])
+        self.assertEqual(4, steering["terminal_deliveries"])
+        self.assertEqual(4, steering["collected_results"])
+        self.assertEqual(5, steering["pool_wait_calls"])
+
+        approval = candidate["approval_relay_and_continuation"]
+        self.assertEqual("fail", approval["result"])
+        self.assertEqual(1, approval["approval_required_events"])
+        self.assertEqual(1, approval["approval_relays"])
+        self.assertEqual("rejected", approval["approval_decision"])
+        self.assertTrue(approval["approval_target_turn_aborted_after_decision"])
+        self.assertEqual(0, approval["approval_target_terminal_deliveries"])
+        self.assertIsNone(approval["approval_environment_identity_continued"])
+        self.assertFalse(approval["approval_side_effect_marker_present"])
+
+        cancellation = candidate["cancellation_with_running_and_pending"]
+        self.assertEqual("fail", cancellation["result"])
+        self.assertEqual(1, cancellation["external_cancellation_queued"])
+        self.assertEqual(1, cancellation["external_cancellation_acknowledged"])
+        self.assertEqual(0, cancellation["external_cancellation_delivered_to_root"])
+        self.assertEqual(2, cancellation["spawns_after_external_cancellation_queued"])
+        self.assertEqual(0, cancellation["scheduler_interrupt_calls"])
+        self.assertFalse(
+            cancellation["outer_cleanup_sigterm_is_scheduler_interrupt"]
+        )
+
+        parity = candidate["source_install_parity"]
+        self.assertEqual("pass", parity["result"])
+        self.assertTrue(parity["byte_equal"])
+        self.assertEqual(
+            parity["source_skill_sha256"], parity["installed_skill_sha256"]
+        )
+        installed = candidate["fresh_installed_regression"]
+        self.assertEqual("pass", installed["result"])
+        for key in ("flat_root_pool", "nested_owner_pool", "capacity_denial_refill"):
+            self.assertEqual("pass", installed[key]["result"])
+        installed_denial = installed["capacity_denial_refill"]
+        self.assertEqual(6, installed_denial["spawn_attempts"])
+        self.assertEqual(1, installed_denial["capacity_denials"])
+        self.assertEqual(0, installed_denial["denied_task_retry_count"])
+
+        gate = candidate["qualification_gate"]
+        self.assertEqual("blocked", gate["decision"])
+        self.assertFalse(gate["promotion_allowed"])
+        self.assertFalse(gate["bounded_pool_execution_mode_integrated"])
+        self.assertFalse(gate["version_bumped"])
+        self.assertFalse(gate["release_metadata_changed"])
+        self.assertFalse(candidate["release_qualification_complete"])
+        self.assertFalse(evidence["deployed_profile"]["team_execution_enabled"])
+
+    def test_codex_evidence_is_sanitized_and_hashes_are_well_formed(self) -> None:
+        evidence_text = EVIDENCE.read_text(encoding="utf-8")
+        self.assertNotIn("/Users/", evidence_text)
+        self.assertNotIn("/private/tmp/", evidence_text)
+        self.assertNotIn("wemadeplay", evidence_text)
+        evidence = json.loads(evidence_text)
+
+        def visit(value: object, key: str = "") -> None:
+            if isinstance(value, dict):
+                for child_key, child_value in value.items():
+                    visit(child_value, child_key)
+            elif isinstance(value, list):
+                for child_value in value:
+                    visit(child_value, key)
+            elif key.endswith("sha256") or key in {
+                "parent_jsonl",
+                "root_jsonl",
+                "child_jsonl",
+                "grandchild_jsonl",
+                "pool_owner_jsonl",
+                "report",
+                "ledger",
+                "validator_output",
+                "public_jsonl",
+                "internal_rollout",
+                "root_rollout",
+                "approval_target_rollout",
+                "companion_rollout",
+                "root_internal_rollout",
+                "depth_1_jsonl",
+                "depth_2_jsonl",
+                "depth_3_jsonl",
+            }:
+                self.assertIsInstance(value, str)
+                assert isinstance(value, str)
+                self.assertRegex(value, r"^[0-9a-f]{64}$")
+
+        visit(evidence)
 
     def test_consumer_task_has_no_runtime_smoke_or_probe(self) -> None:
         task = TASK_SKILL.read_text(encoding="utf-8")

@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-31",
+  "surface": "codex-cli",
+  "version": "0.149.1",
+  "candidate_plugin_version": "2.16.0+codex.20260825102518",
+  "qualification": "hook_guarded_bounded_pool_candidate_axis_a_rerun",
+  "workspace_isolation": "temporary Codex home and temporary git workspace; fresh source plugin install",
+  "supersedes_axis": "A (all-results barrier) portion of codex-cli-0.149.1-hook-guarded-20260828.json",
+  "overall_result": "pass",
+  "scope": "axis A only; axes B (in-flight control) and D (Windows/policy) were not measured in this run",
+  "deployed_profile_unchanged": {
+    "formal_adapter_enabled": false,
+    "manual_wait_polling_supported": false,
+    "host_managed_subagent_orchestration": "unsupported",
+    "team_execution_enabled": false
+  },
+  "change_under_test": "parent-attested capacity denial via update_plan ATP_POOL_DENIED marker (handle_pre_denial)",
+  "candidate_artifacts": {
+    "source_install_byte_parity": true,
+    "plugin_hook_location": "hooks/hooks.json",
+    "manifest_hooks_field_added": false,
+    "hook_activated_by_default_discovery_path": true,
+    "sha256": {
+      "hooks_json": "9a34381d0b3a839a6d2bf554dda3016f31d74473bb897410267fcbb88b0db22d",
+      "hook_runner": "e8736a0891b9121dd7f075504b243adc9637b0c95922f30e71a88694972475a2",
+      "codex_team_skill": "c43559b9f091d0da2e0f6f8ac4d2ff89892d8db6d307255af11237d2f95bda21"
+    }
+  },
+  "runtime_dependencies": {
+    "unix_python3": "pass",
+    "windows_py_minus_3": "unknown",
+    "result": "unknown",
+    "reason": "no Windows host was available in this run"
+  },
+  "hook_preflight": {
+    "session_start_marker_reached_model_context": true,
+    "marker_matches_installed_hashes": true,
+    "exact_marker_required": true,
+    "allow_managed_hooks_only": "unknown",
+    "untrusted_exec_marker_absent": true,
+    "untrusted_exec_new_plugin_data_state": false,
+    "untrusted_exec_prompt_or_warning_emitted": false,
+    "interactive_tui_first_encounter": {
+      "prompt_shown": true,
+      "prompt_title": "Hooks need review",
+      "hook_count_reported": 8,
+      "hook_count_matches_candidate": true,
+      "notice": "hooks can run outside the sandbox after you trust them",
+      "options": [
+        "Review hooks",
+        "Trust all and continue",
+        "Continue without trusting (hooks won't run)"
+      ],
+      "reprompted_on_restart_after_trust": false,
+      "trust_persistence": "config.toml [hooks.state.\"<plugin>:hooks/hooks.json:<event>:0:0\"] trusted_hash",
+      "observed_at": "2026-09-08"
+    },
+    "features_hooks_enabled_by_default": true,
+    "only_gate_is_hook_trust": true,
+    "trust_scope": {
+      "keyed_to_command_string": true,
+      "keyed_to_runner_file_contents": false,
+      "runner_content_change_keeps_trust": true,
+      "command_string_change_invalidates_trust": true,
+      "implication": "once a consumer trusts the hooks, later releases can change the runner code and it executes outside the sandbox with no further review"
+    }
+  },
+  "host_observations": {
+    "capacity_error_text": "collab spawn failed: agent thread limit reached",
+    "failed_spawn_emits_post_tool_use": false,
+    "default_concurrency_limit_is_a_fixed_constant": false,
+    "concurrency_limit_control_used": "agents.max_concurrent_threads_per_session"
+  },
+  "smokes": [
+    {
+      "id": "T7-capacity-denial",
+      "pool_concurrency_limit": 1,
+      "requested_tasks": 5,
+      "spawn_attempts": 6,
+      "spawn_post_tool_use_events": 5,
+      "missing_post_tool_use_for_failed_spawn": 1,
+      "accepted_spawns": 5,
+      "hook_ledger_capacity_denials": 1,
+      "denial_attested_by": "parent_marker",
+      "terminal_deliveries": 5,
+      "collected_results": 5,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "last_hook_event": "Stop",
+      "result": "pass",
+      "note": "2026-08-28 recorded hook_ledger_capacity_denials 0 for the same counts; the parent-attested marker closes that gap",
+      "artifact_sha256": {
+        "state": "c77e4cb34df7a8a5006d7608da49a80bff16b2ed52fe48f3a8de6742368dd4f2",
+        "event_ledger": "e66a6b31e1817622add5cb6a5bd2dbec3cb4518437a4b3dbf8bb74baed45b363"
+      }
+    },
+    {
+      "id": "T2-baseline-all-results",
+      "pool_concurrency_limit": 2,
+      "requested_tasks": 5,
+      "spawn_attempts": 5,
+      "accepted_spawns": 5,
+      "hook_ledger_capacity_denials": 0,
+      "terminal_deliveries": 5,
+      "collected_results": 5,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "last_hook_event": "Stop",
+      "result": "pass",
+      "note": "no denial occurred because trivial children released slots before the next spawn; recorded as an all-results baseline, not a denial case",
+      "artifact_sha256": {
+        "state": "8df1420dc0741c73f2e4c1e9a928637ed61de07a356d5dfff630cf19d64b45ef",
+        "event_ledger": "63761b769db8d56c064bf03694d46e694012ba0aaaef386719568b6241adc890"
+      }
+    },
+    {
+      "id": "T7a-minimal-denial-probe",
+      "pool_concurrency_limit": 1,
+      "requested_tasks": 2,
+      "spawn_attempts": 3,
+      "spawn_post_tool_use_events": 2,
+      "missing_post_tool_use_for_failed_spawn": 1,
+      "accepted_spawns": 2,
+      "hook_ledger_capacity_denials": 1,
+      "denial_attested_by": "parent_marker",
+      "terminal_deliveries": 2,
+      "collected_results": 2,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "last_hook_event": "Stop",
+      "result": "pass",
+      "artifact_sha256": {
+        "state": "cb5d6cbd547ff3569fa123ca874f2c7f3a143956c00ed5e442ef1ecf4e6f5ede",
+        "event_ledger": "aa20edc05e2e6f5c23cca0cc4c947be965dac94ed4f102cece621c9031ecb4a1"
+      }
+    }
+  ],
+  "incidental_confirmations": {
+    "H1_terminal_delta_blocks_redundant_wait": "observed (PreToolUse blocked a wait and returned ATP_POOL_TERMINAL_DELTA)",
+    "H2_root_stop_barrier": "observed (root Stop blocked while one task ran and one was pending; same root turn continued into wait)",
+    "H3_task_name_and_bind_identity": "observed",
+    "H6_same_identity_continuation": "observed (invalid child terminal continued once under the same agent_id)"
+  },
+  "not_measured": [
+    "T4 steering",
+    "T6 cancellation",
+    "T5 approval (already pass 2026-08-28)",
+    "Windows runner",
+    "allow_managed_hooks_only"
+  ],
+  "promotion": {
+    "new_execution_mode_added": false,
+    "capability_axis_added": false,
+    "version_changed": false,
+    "release_metadata_changed": false,
+    "reason": "axis A passes, but axis D scope declaration and the packaging side effect below remain open"
+  },
+  "open_findings": [
+    "installing the plugin ships hooks/hooks.json and the runner through the default discovery path; hook state and ledger rows were written even for a prompt that used no tools, but only in sessions where hook trust was bypassed or granted",
+    "features.hooks is enabled by default: with no [features] entry in a fresh Codex home the marker is absent without the trust bypass and present with it, so hook trust is the only gate on a freshly installed bundled hook",
+    "without the hook-trust bypass, non-interactive codex exec emitted no prompt or warning, delivered no marker, and created no PLUGIN_DATA state; the interactive TUI first-encounter behavior remains unmeasured",
+    "the 2026-08-26 observation of four active threads at the limit is condition dependent, not a fixed default constant",
+    "interactive TUI prompts once with a Hooks need review dialog naming 8 hooks and an out-of-sandbox notice, then persists trust per hook entry; trust follows the command string, not the runner contents"
+  ]
+}
