@@ -98,12 +98,12 @@ Claude, Codex, marketplace 정본의 plugin 이름·버전·source 경로가 같
 검증 명령:
 
 ```bash
-rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|agent-team-protocol' .claude-plugin .codex-plugin .agents/plugins plugins/atp/.claude-plugin plugins/atp/.codex-plugin plugins/atp-graphify/.claude-plugin plugins/atp-graphify/.codex-plugin
+rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|atp-codex-hooks|agent-team-protocol' .claude-plugin .codex-plugin .agents/plugins plugins/atp/.claude-plugin plugins/atp/.codex-plugin plugins/atp-graphify/.claude-plugin plugins/atp-graphify/.codex-plugin plugins/atp-codex-hooks/.claude-plugin plugins/atp-codex-hooks/.codex-plugin
 ```
 
-기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다. 모든 marketplace 의 atp source 는 `./plugins/atp`, atp-graphify source 는 `./plugins/atp-graphify`.
+기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다. 모든 marketplace 의 atp source 는 `./plugins/atp`, atp-graphify source 는 `./plugins/atp-graphify`, atp-codex-hooks source 는 `./plugins/atp-codex-hooks`.
 
-버전 invariant: base atp 매니페스트 4개(`plugins/atp/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/atp/.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`plugins/atp-graphify/.claude-plugin/plugin.json`, `plugins/atp-graphify/.codex-plugin/plugin.json`)도 서로 같아야 한다. base 와 add-on 은 독립 버저닝(불일치 정상). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
+버전 invariant: base atp 매니페스트 4개(`plugins/atp/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/atp/.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`plugins/atp-graphify/.claude-plugin/plugin.json`, `plugins/atp-graphify/.codex-plugin/plugin.json`)와 add-on atp-codex-hooks 매니페스트 2개(`plugins/atp-codex-hooks/.claude-plugin/plugin.json`, `plugins/atp-codex-hooks/.codex-plugin/plugin.json`)도 각각 서로 같아야 한다. base 와 각 add-on 은 독립 버저닝(불일치 정상). **base `plugins/atp/` 에는 `hooks/` 가 없어야 한다** — candidate hook 은 `atp-codex-hooks` 에만 있다(회귀 `test_base_bundle_ships_no_hooks`). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
 
 ### 4.1 Codex manifest와 skill invocation policy
 

@@ -1,0 +1,613 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-26",
+  "surface": "codex-cli",
+  "version": "0.149.1",
+  "candidate_plugin_version": "2.16.0+codex.20260825102518",
+  "workspace_isolation": "temporary Codex home and temporary git workspaces",
+  "deployed_profile": {
+    "formal_adapter_enabled": false,
+    "manual_wait_polling_supported": false,
+    "host_managed_subagent_orchestration": "unsupported",
+    "team_execution_enabled": false
+  },
+  "smokes": [
+    {
+      "id": "terminal-only-one-agent",
+      "child_context": "fork_turns:all",
+      "requested_agents": 1,
+      "spawn_calls": 1,
+      "nonterminal_updates": 0,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "semantic_recovery_actions": 0,
+      "ordering": [
+        "spawn",
+        "terminal_delivery",
+        "report_completion",
+        "parent_turn_completion"
+      ],
+      "parent_turn_completed_before_all_terminal": false,
+      "result": "pass",
+      "artifact_sha256": {
+        "parent_jsonl": "2254e9ed5ea8740189e4e87e7a059472729c90b8d0322075d876c53c1e064675",
+        "report": "c737013964a40c22459ce238543e04f304796f3f301490f8e44d574ae767572b",
+        "ledger": "eecdb6cc9cb1af7e2f34f5351c22c36e02188622a769f4744bfca9fab18fffaa",
+        "validator_output": "05936a601013fb80d1ee174e4cfd6133c0d3e7f615df1d883938e90975b705e4"
+      }
+    },
+    {
+      "id": "nonterminal-then-delayed-terminal-one-agent",
+      "child_context": "fork_turns:none",
+      "requested_agents": 1,
+      "spawn_calls": 1,
+      "nonterminal_updates": 1,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "semantic_recovery_actions": 0,
+      "ordering": [
+        "spawn",
+        "nonterminal_message",
+        "terminal_delivery",
+        "report_completion",
+        "parent_turn_completion"
+      ],
+      "nonterminal_state": "running",
+      "parent_turn_completed_before_all_terminal": false,
+      "result": "pass",
+      "artifact_sha256": {
+        "parent_jsonl": "8ba65a9dfb2b8ccd4d920b3c120f941fb5c13c41e8afbb0641309bfbbe17aacb",
+        "report": "33aa80cf8acb3bb3fddb7ae5b550d256cb3a24ee820d918f1930f551890b7c64",
+        "ledger": "df053e75f413f93e930bafd0f3cf38d50ba40180b7f02c279bf1c952a6bd8049",
+        "validator_output": "f83dab951f6d74fdcfe6ac71be6f295269b653c4b99026c491a2677f6cfec9e2"
+      }
+    },
+    {
+      "id": "staggered-terminal-two-agent",
+      "child_context": "fork_turns:none",
+      "requested_agents": 2,
+      "spawn_calls": 2,
+      "nonterminal_updates": 0,
+      "terminal_deliveries": 1,
+      "collected_results": null,
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "semantic_recovery_actions": 0,
+      "ordering": [
+        "spawn_fast_child",
+        "spawn_slow_child",
+        "fast_terminal_delivery",
+        "parent_turn_completion",
+        "slow_terminal_not_delivered"
+      ],
+      "parent_turn_completed_before_all_terminal": true,
+      "result": "fail",
+      "failure": "the parent turn ended after the fast terminal delivery without receiving the slow terminal result",
+      "artifact_sha256": {
+        "parent_jsonl": "db441ff1a0d0f9ba008387ef48b574069057b34f78f9b1d7b7b4c66e6daa1052",
+        "report": "9e0cc92e3aecac3018b57dad7dfa860565c40be5ba4e12b9efdbc2e235d6b40d",
+        "validator_output": "b77a6632ca10b3e3bd13b97c096367d328202a13058256177513909ec0596ce7"
+      }
+    }
+  ],
+  "topology_and_capacity_probes": {
+    "qualification_scope": "supplemental topology and capacity observations; fixed-delay harness probes are not all-results-barrier qualification",
+    "configuration": {
+      "agents_enabled": "unset; Codex default",
+      "agents_max_concurrent_threads_per_session": "unset; Codex default"
+    },
+    "nested_spawn": {
+      "root_spawn_calls": 1,
+      "child_spawn_calls": 1,
+      "grandchild_terminal_results": 1,
+      "fork_turns": [
+        "root_to_child:all",
+        "child_to_grandchild:none"
+      ],
+      "ordering": [
+        "root_spawn_child",
+        "child_spawn_grandchild",
+        "grandchild_terminal",
+        "child_terminal",
+        "root_terminal"
+      ],
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "659a7d026a97cb01af665cc2a36956c4a1a7dd0996a4f3269a8501df4fbd546c",
+        "child_jsonl": "7d0d8c7aaf2efd0ae1a7110b28113c3b6c5f29fa715b0fc637ad4bf8b6c18519",
+        "grandchild_jsonl": "c2bb54f81528f731f667cace7d53da7b27279a96a269b42d4e117c409b37ff0b"
+      }
+    },
+    "short_lived_nested_fanout": {
+      "requested_grandchildren": 5,
+      "accepted_spawns": 5,
+      "rejected_spawns": 0,
+      "observed_max_concurrent_grandchildren": 2,
+      "conclusion": "one child can create at least five grandchildren cumulatively; this probe does not establish a cumulative upper bound",
+      "artifact_sha256": {
+        "child_jsonl": "7e2db5443755d4fbf7d48f4df6416086bffcfcae4e244827af3cbc6133e68ea7"
+      }
+    },
+    "saturated_nested_fanout": {
+      "harness_fixed_delay_seconds": {
+        "root": 35,
+        "accepted_grandchild": 60
+      },
+      "requested_grandchildren": 5,
+      "accepted_spawns": 2,
+      "rejected_spawns": 3,
+      "rejection": "collab spawn failed: agent thread limit reached",
+      "observed_active_threads_at_limit": 4,
+      "active_thread_composition": [
+        "primary_root",
+        "fanout_child",
+        "grandchild_1",
+        "grandchild_2"
+      ],
+      "manual_wait_calls": 0,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "result": "capacity_limit_observed",
+      "artifact_sha256": {
+        "root_jsonl": "90c234ae9f3b47c79bd44ae345c9947534bb77c8b891d1b3bffb60aacb8170c0",
+        "child_jsonl": "fcf71c19bfdaee8927d185ad1cd75415ebb10bd883b29e3d8b9a7104318a0b0d"
+      }
+    },
+    "nested_depth_under_saturation": {
+      "accepted_descendant_depths": 3,
+      "rejected_descendant_depth": 4,
+      "rejection": "collab spawn failed: agent thread limit reached",
+      "interpretation": "the observed depth ceiling follows the concurrent thread limit; no separate nesting-depth limit was established",
+      "artifact_sha256": {
+        "root_jsonl": "2e0a37811aebb0cc19c1572c9a8ecde286c38266cd87845c3bc5aaccaa4f564c",
+        "depth_1_jsonl": "82d6edf0f257d8d15884d5db1e8021ba8538e9d501de9f2c941eb29aa1c69fe5",
+        "depth_2_jsonl": "f80078af92b7428c9c0f8ad9accbd84a383d661b46f9528449b640d14e42d3a3",
+        "depth_3_jsonl": "8aa3eed0f0829c57638d8d0054e22347bfdc1799c8121a39675c86eeedbbe4bd"
+      }
+    }
+  },
+  "bounded_pool_candidate_smokes": {
+    "initial_source_skill_sha256": "e67796eaa14826605477ee99c5c3c6b68a06a0e273e697519bd4506adf2013e1",
+    "current_source_skill_sha256": "bcfbdd0f0f7d066233155faebdec9aadb78de73fc2bfa057b3c7aec740eee146",
+    "flat_root_pool": {
+      "requested_tasks": 5,
+      "spawn_attempts": 5,
+      "accepted_spawns": 5,
+      "capacity_denials": 0,
+      "terminal_deliveries": 5,
+      "collected_results": 5,
+      "pool_wait_calls": 2,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "observed_max_running": 3,
+      "ordering": [
+        "spawn_workers_1_to_3",
+        "collect_workers_1_to_3",
+        "refill_workers_4_to_5",
+        "collect_workers_4_to_5",
+        "parent_turn_completion"
+      ],
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "8c556070b94062ccdd7cc464dd2247c039be13fb9832d72f44afc4d03e6278b4"
+      }
+    },
+    "nested_owner_pool": {
+      "root_requested_pool_owners": 1,
+      "root_accepted_pool_owners": 1,
+      "root_pool_wait_calls": 1,
+      "worker_tasks": 5,
+      "worker_spawn_attempts": 5,
+      "worker_accepted_spawns": 5,
+      "worker_capacity_denials": 0,
+      "worker_terminal_deliveries": 5,
+      "worker_collected_results": 5,
+      "owner_pool_wait_calls": 4,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "observed_max_running_workers": 2,
+      "ordering": [
+        "root_spawn_pool_owner",
+        "owner_spawn_workers_1_to_2",
+        "worker_1_terminal",
+        "owner_refill_worker_3",
+        "workers_2_to_3_terminal",
+        "owner_refill_workers_4_to_5",
+        "workers_4_to_5_terminal",
+        "pool_owner_terminal",
+        "root_turn_completion"
+      ],
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "7c9fe465284c5a23dfba86acf046fdde9610042ea3a5424a339488f399a1f298",
+        "pool_owner_jsonl": "e944fc8d379fa614351d63558d2f1d8fb4ead43fffac8987fc70c71c72d3ac21"
+      }
+    },
+    "capacity_denial_refill": {
+      "source_skill_sha256": "bcfbdd0f0f7d066233155faebdec9aadb78de73fc2bfa057b3c7aec740eee146",
+      "requested_tasks": 5,
+      "spawn_attempts": 6,
+      "accepted_spawns": 5,
+      "capacity_denials": 1,
+      "capacity_rejection": "collab spawn failed: agent thread limit reached",
+      "terminal_deliveries": 5,
+      "collected_results": 5,
+      "pool_wait_calls": 2,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "observed_max_running": 3,
+      "ordering": [
+        "spawn_workers_1_to_3",
+        "worker_4_capacity_denied",
+        "worker_1_terminal",
+        "workers_2_to_3_terminal",
+        "worker_4_refill_accepted_with_new_environment_identity",
+        "worker_5_accepted",
+        "workers_4_to_5_terminal",
+        "parent_turn_completion"
+      ],
+      "result": "pass",
+      "artifact_sha256": {
+        "root_jsonl": "f5a47b5dc62afdcfeb6b7209a1a783193166f1e5132b86f8536bea3116fce778"
+      }
+    },
+    "saturated_nonterminal_then_terminal": {
+      "requested_tasks": 5,
+      "spawn_attempts": 3,
+      "accepted_spawns": 3,
+      "capacity_denials": 0,
+      "nonterminal_deliveries": 1,
+      "nonterminal_observed_running": 3,
+      "nonterminal_observed_pending": 2,
+      "nonterminal_slot_releases": 0,
+      "nonterminal_triggered_refills": 0,
+      "terminal_deliveries": 3,
+      "terminal_delivery_disposition": {
+        "successful": 2,
+        "explicit_failure": 1
+      },
+      "collected_results": 1,
+      "pool_wait_calls": 2,
+      "externally_aborted_pool_wait_calls": 1,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "follow_up_calls": 0,
+      "send_calls": 1,
+      "worker_send_calls": 1,
+      "observed_max_running": 3,
+      "pending_refill_ordering": [],
+      "parent_turn_completed": false,
+      "parent_turn_completed_before_all_terminal": false,
+      "ordering": [
+        "spawn_workers_1_to_3",
+        "pool_saturated_with_running_3_and_pending_2",
+        "worker_nonterminal_message",
+        "nonterminal_kept_worker_running",
+        "nonterminal_released_zero_slots_and_triggered_zero_refills",
+        "two_success_terminals_and_one_explicit_failure_terminal",
+        "scheduler_collected_one_result",
+        "second_pool_wait_externally_aborted",
+        "no_pending_refill",
+        "no_parent_turn_completion"
+      ],
+      "message_environment_label": "worker_1",
+      "terminal_environment_label": "worker_1",
+      "identity_continuity": true,
+      "result": "fail",
+      "failure": "terminal deliveries were not all collected, so the saturated pool did not refill or reach its completion barrier",
+      "artifact_sha256": {
+        "public_jsonl": "449d072ad202c9caaca75135b497efa25e5d8a5fa3141f35b6f09d50e08169ce",
+        "internal_rollout": "45bb579934b4f0864290f1429a623a2c54aa0a14b18449724834aa8879040996"
+      },
+      "reproducible_next_check": "rerun the five-task saturated source-skill case and require all terminal deliveries to be collected, each terminal to free capacity, FIFO refill of both pending tasks, and parent completion only after five collected results"
+    },
+    "steering_while_pool_wait_active": {
+      "requested_tasks": 5,
+      "spawn_attempts": 5,
+      "accepted_spawns": 5,
+      "capacity_denials": 0,
+      "nonterminal_deliveries": 0,
+      "terminal_deliveries": 4,
+      "collected_results": 4,
+      "pool_wait_calls": 5,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "follow_up_calls": 0,
+      "send_calls": 0,
+      "observed_max_running": 3,
+      "external_steering_queued": 1,
+      "external_steering_acknowledged": 1,
+      "external_steering_delivered_to_root": 0,
+      "steering_retries": 0,
+      "pending_refill_ordering": [
+        "terminal_delivery_batch",
+        "refill_workers_4_to_5"
+      ],
+      "parent_turn_completed": false,
+      "parent_turn_completed_before_all_terminal": false,
+      "ordering": [
+        "spawn_workers_1_to_3",
+        "pool_wait_active_with_running_3_and_pending_2",
+        "external_steering_queued",
+        "external_steering_acknowledged",
+        "external_steering_not_delivered_to_root_wait_control_flow",
+        "terminal_delivery_batch_preceded_refill_workers_4_to_5",
+        "four_terminal_results_collected",
+        "fifth_terminal_not_delivered",
+        "no_parent_turn_completion"
+      ],
+      "steered_environment_identity_continued": null,
+      "result": "fail",
+      "failure": "the queued steering message was acknowledged by the CLI but did not wake or reach the active pool wait, leaving one running child without a terminal result",
+      "artifact_sha256": {
+        "public_jsonl": "e9dd2d7020fb1cbd0a83afe911fca0fdd7f3ddbf94350a636730aa2da39ee539",
+        "internal_rollout": "bf8ba12ce4b22b481a5acb64230b98fa87c91fad455520882bee760f170bce10"
+      },
+      "reproducible_next_check": "rerun on a surface where an externally queued message wakes the active pool wait, then require one delivery to the root, one steer call to the existing child identity, zero retry spawns, and five terminal results before parent completion"
+    },
+    "approval_relay_and_continuation": {
+      "requested_tasks": 2,
+      "spawn_attempts": 2,
+      "accepted_spawns": 2,
+      "capacity_denials": 0,
+      "approval_required_events": 1,
+      "approval_relays": 1,
+      "approval_decisions": 1,
+      "approval_decision": "rejected",
+      "approval_target_terminal_deliveries": 0,
+      "approval_target_turn_aborted_after_decision": true,
+      "companion_terminal_deliveries": 1,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "pool_wait_calls": 2,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "follow_up_calls": 0,
+      "send_calls": 0,
+      "observed_max_running": 2,
+      "approval_side_effect_marker_present": false,
+      "pending_refill_ordering": [],
+      "parent_turn_completed": false,
+      "parent_turn_completed_before_all_terminal": false,
+      "ordering": [
+        "spawn_approval_target_and_companion",
+        "approval_required",
+        "approval_relayed_to_interactive_parent_surface",
+        "approval_rejected",
+        "approval_target_turn_aborted_without_terminal_delivery",
+        "companion_terminal_collected",
+        "no_parent_turn_completion"
+      ],
+      "approval_environment_identity_continued": null,
+      "result": "fail",
+      "failure": "approval relay and rejection were observed, but the approval target aborted without a terminal continuation, so same-environment identity continuation could not be verified",
+      "artifact_sha256": {
+        "root_rollout": "5406d551b6eab40aeacb3cd3bf9d1f76525a0d4cb648cd64fe499a55fb8bbebd",
+        "approval_target_rollout": "e06272c1c8ae69244efdf113d02d88997ae6fec6558f8c87c29fb7bb9100a9b1",
+        "companion_rollout": "a4e08f0633fc284b267040518d9364ef5145e4bd0ccf5cfe3e8b863814d033b2"
+      },
+      "reproducible_next_check": "repeat the harmless interactive approval case and require the decision to return to the same approval-target environment identity, followed by an explicit target terminal result and parent completion after both results are collected"
+    },
+    "cancellation_with_running_and_pending": {
+      "requested_tasks": 5,
+      "spawn_attempts": 5,
+      "accepted_spawns": 5,
+      "capacity_denials": 0,
+      "nonterminal_deliveries": 0,
+      "terminal_deliveries": 4,
+      "collected_results": 4,
+      "pool_wait_calls": 4,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "scheduler_interrupt_calls": 0,
+      "follow_up_calls": 0,
+      "send_calls": 0,
+      "observed_max_running": 3,
+      "external_cancellation_queued": 1,
+      "external_cancellation_acknowledged": 1,
+      "external_cancellation_delivered_to_root": 0,
+      "spawns_after_external_cancellation_queued": 2,
+      "outer_cleanup_sigterm_calls": 1,
+      "outer_cleanup_sigterm_is_scheduler_interrupt": false,
+      "pending_refill_ordering": [
+        "external_cancellation_queued_and_acknowledged",
+        "terminal_delivery_freed_capacity",
+        "refill_worker_4",
+        "refill_worker_5"
+      ],
+      "parent_turn_completed": false,
+      "parent_turn_completed_before_all_terminal": false,
+      "ordering": [
+        "spawn_workers_1_to_3",
+        "pool_wait_active_with_running_3_and_pending_2",
+        "external_cancellation_queued",
+        "external_cancellation_acknowledged",
+        "external_cancellation_not_delivered_to_root_wait_control_flow",
+        "terminal_delivery_freed_capacity",
+        "scheduler_spawned_workers_4_and_5_after_queued_cancellation",
+        "four_terminal_results_collected",
+        "no_parent_turn_completion",
+        "outer_harness_sigterm_cleanup"
+      ],
+      "cancellation_environment_identity_continued": null,
+      "result": "fail",
+      "failure": "the acknowledged cancellation did not reach the active scheduler, pending dispatch continued with two post-cancellation spawns, and running invocations were not terminally confirmed",
+      "artifact_sha256": {
+        "public_jsonl": "990d94a4cde011c230203cae1137991e84d502b71e438ecad57228d35064ccaf",
+        "internal_rollout": "b10aaac3c40f013d1310d29b67a4326d4093f65d5e81c980c113028d9ec3417d"
+      },
+      "reproducible_next_check": "rerun only after external cancellation can wake the active pool wait; require zero dispatches after cancellation delivery, explicit terminal confirmation for every interrupted running identity, and zero retry, fallback, or authority mutation"
+    },
+    "source_install_parity": {
+      "candidate_base_plugin_version": "2.16.0+codex.20260825102518",
+      "source_skill_sha256": "bcfbdd0f0f7d066233155faebdec9aadb78de73fc2bfa057b3c7aec740eee146",
+      "installed_skill_sha256": "bcfbdd0f0f7d066233155faebdec9aadb78de73fc2bfa057b3c7aec740eee146",
+      "byte_equal": true,
+      "installation_scope": "isolated temporary Codex home",
+      "user_global_plugin_cache_mutated": false,
+      "result": "pass"
+    },
+    "fresh_installed_regression": {
+      "flat_root_pool": {
+        "requested_tasks": 5,
+        "spawn_attempts": 5,
+        "accepted_spawns": 5,
+        "capacity_denials": 0,
+        "terminal_deliveries": 5,
+        "collected_results": 5,
+        "pool_wait_calls": 4,
+        "observed_max_running": 3,
+        "refill_count": 2,
+        "ordering": [
+          "spawn_workers_1_to_3",
+          "terminal_driven_fifo_refill_worker_4",
+          "terminal_driven_fifo_refill_worker_5",
+          "collect_five_results",
+          "parent_turn_completion"
+        ],
+        "result": "pass"
+      },
+      "nested_owner_pool": {
+        "worker_tasks": 5,
+        "worker_spawn_attempts": 5,
+        "worker_accepted_spawns": 5,
+        "worker_capacity_denials": 0,
+        "worker_terminal_deliveries": 5,
+        "worker_collected_results": 5,
+        "owner_pool_wait_calls": 4,
+        "root_pool_wait_calls": 1,
+        "observed_max_running_workers": 2,
+        "refill_count": 3,
+        "ordering": [
+          "root_spawn_pool_owner",
+          "owner_spawn_workers_1_to_2",
+          "terminal_driven_fifo_refill_workers_3_to_5",
+          "collect_five_worker_results",
+          "pool_owner_terminal",
+          "root_turn_completion"
+        ],
+        "result": "pass"
+      },
+      "capacity_denial_refill": {
+        "requested_tasks": 5,
+        "spawn_attempts": 6,
+        "accepted_spawns": 5,
+        "capacity_denials": 1,
+        "terminal_deliveries": 5,
+        "collected_results": 5,
+        "pool_wait_calls": 4,
+        "observed_max_running": 3,
+        "refill_count": 2,
+        "denied_task_retry_count": 0,
+        "ordering": [
+          "spawn_workers_1_to_3",
+          "worker_4_capacity_denied_and_returned_to_pending",
+          "terminal_delivery_freed_capacity",
+          "fifo_refill_worker_4_with_new_environment_identity",
+          "fifo_refill_worker_5",
+          "collect_five_results",
+          "parent_turn_completion"
+        ],
+        "result": "pass"
+      },
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "follow_up_calls": 0,
+      "send_calls": 0,
+      "result": "pass",
+      "artifact_sha256": {
+        "public_jsonl": "071e83ae3be23c9b6cfedfa6cbf5c132a3290ca06981bbbdf13462ef6b198280",
+        "root_internal_rollout": "3522894144896684203dc29cde2bab94427bb2124d54d54c9f6830ea51aba26b"
+      }
+    },
+    "qualification_gate": {
+      "checks": [
+        {
+          "id": "flat_root_pool",
+          "result": "pass"
+        },
+        {
+          "id": "nested_owner_pool",
+          "result": "pass"
+        },
+        {
+          "id": "capacity_denial_refill",
+          "result": "pass"
+        },
+        {
+          "id": "saturated_nonterminal_then_terminal",
+          "result": "fail"
+        },
+        {
+          "id": "steering_while_pool_wait_active",
+          "result": "fail"
+        },
+        {
+          "id": "approval_relay_and_continuation",
+          "result": "fail"
+        },
+        {
+          "id": "cancellation_with_running_and_pending",
+          "result": "fail"
+        },
+        {
+          "id": "source_install_parity",
+          "result": "pass"
+        },
+        {
+          "id": "all_requested_results_collected_in_normal_completion_cases",
+          "result": "fail"
+        },
+        {
+          "id": "parent_completion_before_terminal_barrier",
+          "observed_violations": 0,
+          "result": "pass"
+        },
+        {
+          "id": "repeated_list_polling",
+          "observed_calls": 0,
+          "result": "pass"
+        },
+        {
+          "id": "fixed_sleep_or_shell_polling_as_scheduler_primitive",
+          "observed_calls": 0,
+          "result": "pass"
+        }
+      ],
+      "promotion_allowed": false,
+      "bounded_pool_execution_mode_integrated": false,
+      "version_bumped": false,
+      "release_metadata_changed": false,
+      "decision": "blocked",
+      "blockers": [
+        "saturated terminal deliveries were not fully collected and the pending queue did not refill",
+        "acknowledged user steering did not reach an active pool wait",
+        "approval rejection aborted the target without a terminal same-identity continuation",
+        "acknowledged cancellation did not reach the scheduler and two pending tasks were spawned afterward"
+      ]
+    },
+    "release_qualification_complete": false,
+    "remaining_required_smokes": [
+      "passing saturated nonterminal-to-terminal collection and refill",
+      "passing steering delivery and same-identity continuation during an active pool wait",
+      "passing approval decision and same-identity terminal continuation during an active pool wait",
+      "passing cancellation delivery with pending dispatch stopped and running terminal confirmation"
+    ]
+  },
+  "sanitization": {
+    "raw_transcripts_committed": false,
+    "excluded": [
+      "authentication material",
+      "user conversation text",
+      "local usernames",
+      "absolute paths"
+    ]
+  }
+}

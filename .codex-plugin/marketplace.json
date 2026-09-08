@@ -1,8 +1,8 @@
 {
   "name": "agent-team-protocol",
   "owner": { "name": "sundaytoz" },
-  "description": "Agent Team Protocol marketplace (self-hosted): base orchestration plugin + optional graphify add-on",
-  "version": "2.16.0",
+  "description": "Agent Team Protocol marketplace (self-hosted): base orchestration plugin + optional graphify and Codex-hooks add-ons",
+  "version": "2.17.0",
   "plugins": [
     {
       "name": "atp",
@@ -14,6 +14,12 @@
       "name": "atp-graphify",
       "source": "./plugins/atp-graphify",
       "description": "Optional graphify add-on (knowledge-graph advisors). Requires atp.",
+      "license": "MIT"
+    },
+    {
+      "name": "atp-codex-hooks",
+      "source": "./plugins/atp-codex-hooks",
+      "description": "Optional Codex hook add-on (hook-guarded bounded-pool candidate runner). Codex CLI only. Requires atp.",
       "license": "MIT"
     }
   ]

@@ -1,0 +1,21 @@
+{
+  "name": "atp-codex-hooks",
+  "description": "Optional Codex hook add-on for Agent Team Protocol — hook-guarded bounded-pool candidate runner (SessionStart marker, spawn/wait/Stop ledger). Codex CLI only; requires the atp base plugin and explicit hook trust.",
+  "version": "1.0.0",
+  "author": {
+    "name": "sundaytoz"
+  },
+  "homepage": "https://github.com/sundaytoz/agent-team-protocol",
+  "repository": "https://github.com/sundaytoz/agent-team-protocol",
+  "license": "MIT",
+  "keywords": [
+    "orchestration",
+    "codex",
+    "hooks",
+    "bounded-pool",
+    "addon"
+  ],
+  "dependencies": [
+    "atp"
+  ]
+}

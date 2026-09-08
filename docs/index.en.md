@@ -35,6 +35,8 @@ This is the English entry point for the agent-team-protocol docs. English docs a
 
 The graphify feature is an opt-in add-on. Installation, operation, and graph refresh rules are documented in [plugins/atp-graphify/docs/graphify-usage.md](../plugins/atp-graphify/docs/graphify-usage.md) (Korean-first/canonical).
 
+The Codex hook-guarded bounded-pool candidate hook ships only in the Codex-CLI-only opt-in add-on `atp-codex-hooks`; a base-only install receives no hook. Installation, what hook trust means, and scope are in [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) (Korean-first/canonical).
+
 ## Quick Links
 
 - Install and setup: [docs/usage/setup-checklist.en.md](./usage/setup-checklist.en.md)

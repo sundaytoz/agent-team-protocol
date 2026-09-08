@@ -5,7 +5,7 @@ description: ATP의 host-neutral lifecycle과 result barrier를 Codex built-in m
 owner: template-maintainer
 stability: draft
 host_scope: codex
-last_reviewed: 2026-08-19
+last_reviewed: 2026-09-08
 ---
 
 # Codex managed subagent orchestration and lifecycle routing appendix
@@ -31,7 +31,7 @@ team_execution_enabled: false
 - Skill loading 계약: <https://learn.chatgpt.com/docs/build-skills> — name/description으로 선택한 뒤 전체 `SKILL.md`를 읽는다.
 - ChatGPT Work는 eligible-account hosted surface이며 이 local Codex profile과 분리한다.
 
-공식 문서는 low-level event schema, failure/approval taxonomy, latency SLA, stable event identity를 보장하지 않는다. 2026-08-19 Codex CLI 0.147.0 격리 smoke는 terminal-only 1-agent만 통과했고, nonterminal 뒤 delayed terminal과 staggered 2-agent에서는 parent turn이 모든 terminal 전 종료됐다. `multi_agent_v2` opt-in도 delayed case를 보장하지 못했다. 따라서 tested CLI profile은 `unsupported`, app/IDE empirical status는 `unknown`이다. 공식 보장과 empirical 관측을 서로 대체하지 않는다.
+공식 문서는 low-level event schema, failure/approval taxonomy, latency SLA, stable event identity를 보장하지 않는다. 2026-08-26 Codex CLI 0.149.1 격리 smoke는 terminal-only 1-agent와 nonterminal 뒤 delayed terminal 1-agent가 통과했지만, staggered 2-agent에서는 두 spawn 중 fast terminal 하나만 전달된 뒤 parent turn이 종료됐다. 최소 child context(`fork_turns: none`)에서도 동일했다. 따라서 tested CLI profile은 `unsupported`, app/IDE empirical status는 `unknown`이다. 공식 보장과 empirical 관측을 서로 대체하지 않는다.
 
 <a id="managed-orchestration-contract-fixture"></a>
 
@@ -166,15 +166,163 @@ Validator는 timestamp scalar만 비교하지 않는다. Report completion 또�
 
 세 smoke는 manual `wait_agent` 0, `list_agents` 0, 요청 전원 terminal/result 수신, parent final과 report completion이 마지막 terminal 뒤, timeout/polling semantic action 0을 충족해야 한다. 실제 사용자 plugin cache, settings, hooks와 소비 프로젝트 설정은 변경하지 않는다.
 
-2026-08-19 isolated Codex CLI 0.147.0 결과:
+2026-08-26 isolated Codex CLI 0.149.1 결과:
 
 | smoke | product/result | 판정 |
 |---|---|---|
 | terminal-only 1-agent | spawn 1, terminal/collected 1, manual wait/list/interrupt 0, terminal 뒤 completion/final | pass |
-| nonterminal 뒤 delayed terminal 1-agent | progress 뒤 parent가 terminal 전 final; child turn aborted. `multi_agent_v2` opt-in도 terminal 전 종료 | fail |
-| staggered terminal 2-agent | spawn 2 뒤 fast terminal만 받은 상태에서 parent가 terminal 전 blocked final; slow child 미수집 | fail |
+| nonterminal 뒤 delayed terminal 1-agent | nonterminal `MESSAGE`는 running 유지, 뒤이은 terminal/collected 1, manual wait/list/interrupt/recovery 0 | pass |
+| staggered terminal 2-agent | `fork_turns: none`; spawn 2 뒤 fast terminal 1개만 전달되고 slow terminal 없이 parent turn 종료 | fail |
 
-따라서 deterministic fixture는 모두 green이어도 deployed CLI profile은 `unsupported`, `team_execution_enabled: false`다. App/IDE는 같은 smoke 미수행으로 `unknown`이다. 보존 transcript와 hash는 `tests/runtime-behavior/evidence/codex-cli-0.147.0-20260819.json`에 기록한다.
+따라서 single-agent 두 case가 green이어도 필수 multi-agent barrier가 실패하므로 deployed CLI profile은 `unsupported`, `team_execution_enabled: false`다. App/IDE는 같은 smoke 미수행으로 `unknown`이다. 공개 가능한 count·ordering·artifact hash는 `tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json`에 기록하고 raw transcript는 커밋하지 않는다. 0.147.0 결과는 `tests/runtime-behavior/evidence/codex-cli-0.147.0-20260819.json`에 historical evidence로 보존한다.
+
+### 8.1 Supplemental topology and capacity probes
+
+0.149.1의 별도 maintainer probe는 result barrier와 독립된 다음 사실을 확인했다.
+
+| probe | 관측 |
+|---|---|
+| nested spawn | `root → child → grandchild` 실제 spawn과 terminal 완료 |
+| cumulative child fan-out | 한 child에서 short-lived grandchild 5개 모두 spawn 승인; 누적 상한 미확정 |
+| saturated child fan-out | root + child가 active일 때 grandchild 2개 승인, 다음 3개는 `agent thread limit reached` |
+| active capacity | limit 시 primary 포함 총 4 active threads |
+| depth under saturation | root 아래 descendant 3단계 승인, 4단계 spawn은 같은 limit 오류 |
+
+공식 OpenAI 문서의 `agents.max_concurrent_threads_per_session`은 primary를 제외한 concurrently open spawned-agent threads를 제한하며 unset이면 Codex가 default를 선택한다. Probe의 격리 설정은 unset이었다. 따라서 위 숫자는 0.149.1 default의 경험적 관측이지 모든 사용자 설정의 고정 상수가 아니다.
+
+이 관측으로 bounded pool candidate를 설계한다. Scheduler는 pending queue와 running identity map을 유지하고, slot exhaustion을 task failure나 retry attempt로 세지 않으며, terminal delivery로 slot이 해제된 뒤 pending task를 refill한다. Fixed sleep, 반복 `list_agents`, 무변화 snapshot polling은 정상 scheduler primitive가 아니다. 이 candidate는 release-qualified execution mode가 아니며, 모든 nonterminal/control qualification이 통과하기 전 deployed profile은 위 §1의 `unsupported`를 유지한다.
+
+첫 source-skill candidate smoke 결과는 다음과 같다.
+
+| candidate | requested/accepted/terminal/collected | pool wait | max running | 판정 |
+|---|---|---:|---:|---|
+| root-owned flat pool | 5/5/5/5 | 2 | 3 | pass |
+| nested pool owner의 worker queue | 5/5/5/5 | root 1 + owner 4 | workers 2 | pass |
+| capacity denial 뒤 refill | tasks 5 / attempts 6 / accepted 5 / terminal 5 / collected 5 | 2 | 3 | pass |
+
+세 candidate 모두 `list_agents`와 `interrupt_agent` 0회였다. Capacity denial은 failure/retry로 세지 않고 pending으로 복귀했으며 terminal 뒤 새 environment identity로 실제 refill됐다. Candidate source/install byte parity도 SHA-256 `bcfbdd0f0f7d066233155faebdec9aadb78de73fc2bfa057b3c7aec740eee146`로 일치했고 설치본 flat/nested/denial-refill 최소 회귀가 통과했다.
+
+후속 nonterminal/control qualification은 다음처럼 실패했다.
+
+| candidate | 핵심 관측 | 판정 |
+|---|---|---|
+| saturated nonterminal → terminal | 최초 비포화 run은 superseded. Rerun은 `MESSAGE`에서 running 3/pending 2, release/refill 0, 같은 child terminal까지 관측했으나 requested 5, attempts/accepted 3/3, terminal 3, collected 1, wait 2에서 두 번째 join이 멈춤; parent final 0 | fail |
+| wait 중 user steering | queue accepted 1, scheduler control delivery와 send/follow-up 0; requested/accepted 5/5, terminal/collected 4/4, wait 5, list/interrupt 0; parent final 0 | fail |
+| approval relay/continuation | interactive overlay가 child를 식별하고 reject decision 1을 relay; target은 `turn_aborted`, same-identity continuation과 target terminal 0; companion terminal 1, wait 2, parent final 0 | fail |
+| cancellation | running 3/pending 2에서 queue accepted 1이나 scheduler delivery 0; 이후 pending 두 task가 spawn돼 accepted 5, terminal/collected 4/4, wait 4, interrupt 0; parent final 0 | fail |
+
+A의 explicit-failed initial child는 실제 terminal 3건에 포함하지만 scheduler는 그 wake에서 result 하나만 collected했다. C의 harmless marker는 생성되지 않았다. D smoke를 종료하기 위한 harness 외부 정리는 scheduler cancellation/terminal confirmation으로 세지 않는다. 공식 OpenAI 문서가 interactive approval overlay와 queued control 동작을 설명하더라도 ATP의 capability 판정은 실제 active-wait delivery, identity continuation과 completion ordering을 우선한다.
+
+Qualification이 all-PASS가 아니므로 `bounded_pool_orchestration` capability 축과 execution mode를 배포 계약에 추가하지 않았고, version/release metadata도 전환하지 않았다. §1의 four-axis profile과 `team_execution_enabled: false`가 그대로 정본이며 built-in all-results P0도 open이다. 재검증은 (1) A에서 이미 배달된 terminal 전부를 소비한 뒤 terminal-triggered refill로 5/5를 수집하고, (2) active join에 steering/cancellation을 실제 전달해 pending dispatch를 닫으며, (3) approval reject 뒤 동일 child identity를 continuation해 terminalize해야 한다. 전체 sanitized count, ordering과 artifact hash는 `tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json`을 따른다.
+
+### 8.2 Hook-guarded candidate qualification
+
+2026-08-28 fresh source install에 bundled `hooks/hooks.json`, standard-library Python runner와
+exact-hash `SessionStart` marker를 추가한 격리 후보를 검증했다. T1 hook coverage, T2 saturated
+nonterminal terminal-triggered refill, T3 incomplete root Stop barrier, T5 interactive approve
+same-identity continuation과 T8 nested owner isolation은 pass였다. Untrusted hook과
+`features.hooks=false`에서도 marker가 없어 child spawn 0으로 닫혔다.
+
+전체 qualification은 fail이다.
+
+| smoke | 관측 | 판정 |
+|---|---|---|
+| T4 steering | active wait 중 queue accepted 1, `UserPromptSubmit` delivery와 send/follow-up 0 | fail |
+| T6 cancellation | active wait 중 queue accepted 1, cancel ledger/actual interrupt 0, synthetic terminal 0 | fail |
+| T7 capacity denial | logical tasks/attempts/accepted/terminal/collected `5/6/5/5/5`; parent denial 1, hook ledger denial 0 | fail |
+| T9 parity | source/install byte parity와 설치본 T1/T2는 pass, 필수 설치본 T7은 fail | fail |
+
+T7의 failed `spawn_agent` 호출에는 `PostToolUse`가 발생하지 않았다. 두 번째 Pre spawn만으로
+이전 attempt를 capacity denial로 추정하는 방식은 missing event를 synthetic PASS로 바꾸므로
+채택하지 않는다. Unix `python3` runner는 pass였지만 Windows `py -3`와
+`allow_managed_hooks_only`는 unknown이다. 공개 count/order/hash는
+`tests/runtime-behavior/evidence/codex-cli-0.149.1-hook-guarded-20260828.json`을 따른다.
+
+### 8.3 2026-08-31 축별 재판정과 A축 blocker 해소
+
+2026-08-28 판정은 이질적인 smoke 9개를 단일 promotion boolean으로 접었다. §3.2의 축 직교
+원칙에 맞춰 backlog Phase 3를 all-results barrier(A) / in-flight control delivery(B) /
+approval continuation(C) / packaging scope(D) 네 축으로 분해했다. 축 정의와 smoke 매핑은
+`docs/backlog/codex-cli-hook-guarded-bounded-pool.md` §Phase 3가 정본이다.
+
+축별 재판정에서 두 가지가 드러났다.
+
+**T7/T9(A축)는 host 제약이 아니라 candidate 구현 갭이었다.** Evidence 자체가
+`requested/attempts/accepted/terminal/collected = 5/6/5/5/5`와
+`parent_observed_capacity_denials: 1`을 기록한다. pool은 denial 감지, pending 복귀, refill,
+전원 수집까지 정상 동작했고 hook ledger 라벨만 `attempted`로 남았다. Parent는 그 error를
+`spawn_agent` 반환값으로 이미 authoritative하게 관측하므로(ADR-0020), scheduler가
+`update_plan`의 `ATP_POOL_DENIED <pool> <index>/<total> <token>` marker로 그 사실을 durable
+ledger에 재진술한다. `handle_pre_bind()`가 `ATP_POOL_BIND`로 이미 증명한 채널이며 새 host
+capability를 요구하지 않는다. Hook은 manifest 일치, `accepted_identity` 부재, 미해소
+`attempted` attempt 존재를 모두 검사한 뒤에만 수용하므로 synthetic denial 경로가 없다.
+`PostToolUse`를 내보내는 host에서는 기존 경로가 동작하고 이미 기록된 attempt는 재계수하지 않는다.
+
+**T4/T6(B축)은 통과 가능한 surface에서 측정되지 않았다.** 두 smoke의 artifact는 `root_jsonl`
+= 비대화형 `codex exec --json` run이다. PASS한 T5만 `tui_rollout` = interactive PTY다. 공식
+Subagents 문서와 `P2-codex-cli-controls.md`가 모두 running subagent의 live steer/stop을
+interactive CLI 경로로 설명하므로, 비대화형 `codex queue` 결과는 B축의 판정 근거가 아니다.
+B축은 `unsupported`가 아니라 `unknown`으로 기록한다.
+
+### 8.4 2026-08-31 A축 재실행 결과 — PASS
+
+같은 0.149.1에서 임시 `CODEX_HOME`, 임시 git workspace와 fresh source install로 A축을 재실행했다.
+공개 count/order/hash는 `tests/runtime-behavior/evidence/codex-cli-0.149.1-hook-guarded-20260831.json`이다.
+
+| 항목 | 2026-08-28 | 2026-08-31 |
+|---|---|---|
+| requested / attempts / accepted / terminal / collected | 5 / 6 / 5 / 5 / 5 | 5 / 6 / 5 / 5 / 5 |
+| `hook_ledger_capacity_denials` | **0** | **1** |
+| denial attestation | 없음 | `attested_by: parent_marker` |
+| `list_calls` / `interrupt_calls` | 0 / 0 | 0 / 0 |
+| 마지막 hook event | — | `Stop` (전원 collected 뒤) |
+| source/install byte parity | pass | pass |
+| 판정 | fail | **pass** |
+
+Ledger가 원인과 해소를 동시에 보여준다. 실패한 `spawn_agent`의 `PreToolUse`는 있고
+`PostToolUse`는 없다(spawn Pre 6 / Post 5). 그 결손 지점에서 scheduler가
+`update_plan`으로 `ATP_POOL_DENIED`를 기록해 durable ledger의 attempt가
+`capacity_denied` / `attested_by: parent_marker`로 확정됐고, denied task는 pending 복귀 후
+새 identity로 refill돼 전원 수집됐다.
+
+Host 실제 오류 원문은 `collab spawn failed: agent thread limit reached`로
+`CAPACITY_TEXT` 부분일치를 확인했다.
+
+부수적으로 같은 run들에서 H1(중복 wait 차단 + terminal delta 반환), H2(incomplete root
+Stop 차단 후 같은 turn continuation), H3(task_name/bind identity), H6(invalid terminal의
+same-identity continuation)이 실동작으로 재확인됐다.
+
+두 가지 관측을 함께 기록한다.
+
+- **기본 동시성 한계는 고정 상수가 아니다.** 기본 설정 run에서 spawn 4건이 모두 accepted됐다.
+  §8.1의 "primary 포함 총 4 active threads"는 관측 조건에 의존한다. Denial을 결정론적으로
+  재현하려면 `agents.max_concurrent_threads_per_session`을 명시 설정하고, child가 slot을
+  붙잡고 있는 동안 초과 spawn을 시도해야 한다. 짧은 child는 다음 spawn 전에 slot을 반납한다.
+- **`hooks/hooks.json`은 설치만으로 활성화된다.** manifest에 `hooks` 필드가 없어도 기본
+  discovery 경로로 번들 hook이 실행됐고, 도구를 쓰지 않는 프롬프트에서도 `PLUGIN_DATA`에
+  state/ledger row가 기록됐다. 이 packaging 부수효과는 §8.5의 add-on 분리로 base 번들에서 제거됐다.
+
+따라서 A축은 PASS다. §1 four-axis profile과 `team_execution_enabled: false`는 D축 scope
+선언과 위 packaging 결정이 끝날 때까지 유지한다. B축 결과는 그 결정과 독립이다.
+
+### 8.5 2026-09-08 D축 — candidate hook의 옵트인 add-on 분리
+
+TUI 최초 대면 측정(2026-09-08)에서 설치 직후 "Hooks need review / 8 hooks are new or changed /
+Hooks can run outside the sandbox after you trust them"가 뜨고, trust는 `config.toml`의
+`[hooks.state."<plugin>:hooks/hooks.json:<event>:0:0"] trusted_hash`로 항목 단위 영구 저장됨을
+확인했다. Trust는 **command 문자열에만** 묶여 runner `.py` 내용을 바꿔도 유지된다 — 즉
+`Trust all` 한 번이 이후 모든 릴리스의 runner 변경을 sandbox 밖에서 무확인 실행하는 동의가 된다.
+
+`team_execution_enabled: false`인 base 소비자가 얻을 기능 없이 이 동의를 요구받는 것은 부당하므로
+candidate hook을 base에서 빼 옵트인 add-on **`atp-codex-hooks`**(`plugins/atp-codex-hooks/`)로
+분리했다. Runner는 byte 무수정이고 `hooks.json`은 description만 바뀌어 `hooks_sha256`이 재생성됐다.
+`codex-team` §1 marker는 add-on 설치본 해시 기준이며, add-on 미설치 시 marker 부재 →
+spawn 0 fail-closed는 그대로다. `$atp:task`는 이를 `skip: no-codex-hooks`로 기록하고 배포 profile의
+mode로 차단 없이 계속한다. 이 분리는 packaging 형태 변경이며 §1 profile을 바꾸지 않는다.
+
+남은 D축: 옵트인 경계 안 `allow_managed_hooks_only` 측정, Windows `py -3` runner scope 결정.
+B축 T4는 interactive PTY 재측정 대기로 독립이다. 사용자 가이드는 add-on의
+`docs/codex-hooks-usage.md`.
 
 ## 9. 실행 체크리스트
 

@@ -86,6 +86,16 @@ A. `atp` base 가 먼저 설치돼 있어야 한다. `atp-graphify` 는 `atp` �
 
 ---
 
+## Codex hooks add-on
+
+### Q. Codex 에서 atp 를 설치했는데 "Hooks need review" 가 뜬다 / 안 뜬다.
+
+A. base `atp` 2.17.0 이후에는 hook 이 번들되지 않으므로 base 만 설치하면 뜨지 않는 것이 정상이다. 뜬다면 옵트인 add-on `atp-codex-hooks` 를 함께 설치한 경우다. 그 프롬프트는 add-on 의 8개 hook 이 trust 뒤 sandbox 밖에서 실행됨을 알리는 것이며, trust 는 명령 문자열에 묶여 이후 runner 코드 변경에도 유지된다. maintainer smoke 나 candidate 실험이 아니면 `codex plugin remove atp-codex-hooks` 로 제거한다. 상세는 [`../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md`](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
+
+### Q. `codex-team` 이 `skip: no-codex-hooks` 를 기록하고 spawn 0 으로 진행한다. 오류인가?
+
+A. 정상이다. add-on 미설치면 `ATP_HOOK_GUARD_READY` marker 가 없어 candidate bounded pool 이 fail-closed 로 닫히고, `$atp:task` 는 배포 profile 이 정한 mode(현재 `tier_b_sequential`) 로 차단 없이 계속한다. add-on 을 설치해도 배포 profile(`team_execution_enabled: false`) 은 바뀌지 않는다.
+
 ## 에이전트 팀 운영
 
 ### Q. `verification-advisor` 가 통합 검증 스크립트 없다고 실패한다.

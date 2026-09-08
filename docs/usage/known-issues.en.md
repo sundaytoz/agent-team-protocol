@@ -4,7 +4,7 @@ title: Known Issues
 description: Confirmed ATP platform limitations, user impact, workarounds, and exit criteria.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-20
+last_reviewed: 2026-08-26
 ---
 
 <p align="center">
@@ -18,17 +18,17 @@ This document tracks confirmed limitations that affect current user behavior. De
 
 | ID | Surface | Status | User impact |
 |---|---|---|---|
-| ATP-KI-001 | Codex CLI 0.147.0 | Open | Independent subagent team execution is disabled for the tested CLI |
+| ATP-KI-001 | Codex CLI 0.149.1 | Open | Independent subagent team execution is disabled for the tested CLI |
 | ATP-KI-002 | Codex App/IDE | Verification gap | Managed orchestration support is `unknown` because the same maintainer smoke has not been run |
 | ATP-KI-003 | Codex formal wait/wakeup | Upstream capability gap | A timeout-free targeted subscription cannot be used as ATP's formal scheduling mode |
 
-## ATP-KI-001 — Codex CLI managed all-results barrier not verified
+## ATP-KI-001 — Codex CLI managed all-results barrier failure
 
 ### Symptom and scope
 
-In the isolated ATP 2.15.0 smoke on Codex CLI 0.147.0, the terminal-only one-agent case passed, but the delayed terminal after a nonterminal update and the staggered two-agent case ended the parent before all terminal results were delivered. The deployed tested-CLI profile is therefore `host_managed_subagent_orchestration: unsupported`, `team_execution_enabled: false`.
+In the isolated Codex CLI 0.149.1 smoke, the terminal-only one-agent case and the delayed terminal after a nonterminal `MESSAGE` passed. The staggered two-agent case with `fork_turns: none` failed with `spawn_calls=2` and `terminal_deliveries=1`: only the fast child result was delivered before the parent turn ended. The queue→wait→refill bounded-pool candidate also passed the terminal-only flat, nested, denial-refill, and source/install parity checks, but failed the saturated nonterminal barrier, active-wait steering, approval same-identity continuation, and cancellation checks. The deployed tested-CLI profile therefore remains `formal_adapter_enabled: false`, `manual_wait_polling_supported: false`, `host_managed_subagent_orchestration: unsupported`, `team_execution_enabled: false`. No separate bounded-pool capability axis or execution mode was added.
 
-The [official OpenAI Subagents documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents) describes local Codex subagent workflows and says that the main thread collects requested results. This issue does not claim that the official feature is absent. It records an empirical gap between that product description and the full all-results correctness contract ATP 2.15.0 could verify in the isolated CLI 0.147.0 smoke.
+The [official OpenAI Subagents documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents) describes local Codex subagent workflows. This issue does not claim that the official feature is absent. It records an empirical gap between that product description and ATP's multi-child all-results correctness contract, reproduced on CLI 0.149.1.
 
 ### User impact
 
@@ -41,11 +41,25 @@ The [official OpenAI Subagents documentation](https://learn.chatgpt.com/docs/age
 - Continue with Tier B sequential self-checks when independence is not required.
 - When independence is required, rerun on a host where the orchestration contract is verified. Codex App/IDE are not treated as supported workarounds because ATP has not run the same smoke there.
 
+### Bounded-pool candidate qualification
+
+- The saturated A rerun kept running 3/pending 2 at `MESSAGE`, performed zero message-triggered slot releases/refills, and later received the same child's terminal. It nevertheless stopped at requested 5, attempts/accepted 3/3, terminal 3, collected 1, wait 2, with no parent final. The first unsaturated run was superseded and is not a PASS.
+- B accepted one steering queue request during an active wait but did not deliver it to the scheduler. It ended at requested/accepted 5/5, terminal/collected 4/4, wait 5, send/follow-up/list/interrupt 0, and no parent final.
+- C relayed an actual interactive approval overlay and one reject decision, but the target child ended as `turn_aborted`, without same-identity continuation or a target terminal. The companion delivered one terminal, wait count was 2, no parent final was emitted, and the harmless marker was absent.
+- D accepted a cancellation queue request at running 3/pending 2 but did not deliver it to the scheduler, which then spawned both pending tasks. It ended at accepted 5, terminal/collected 4/4, wait 4, interrupt 0, and no parent final. External smoke cleanup is not scheduler cancellation.
+- Source/install skill byte hash parity at `bcfbdd0f0f7d066233155faebdec9aadb78de73fc2bfa057b3c7aec740eee146` and the installed flat/nested/denial-refill regressions passed, but cannot offset the failures above.
+
+Although the official OpenAI documentation describes interactive approval overlays and queued control behavior, actual ATP qualification is authoritative. The bounded pool is not yet a supported workaround, and the built-in all-results P0 remains open.
+
 ### Exit criteria
 
 On the same Codex surface and version, the release maintainer's terminal-only one-agent, delayed nonterminal-plus-terminal one-agent, and staggered-terminal two-agent smokes must all pass. Requested, spawned, terminal, and collected counts must match, with zero manual wait/list/interrupt/recovery actions.
 
-Evidence: the [official OpenAI Subagents documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents), [2.15.0 Changes](../changes/2026-08-19-codex-managed-subagent-orchestration.md), [ADR-0024](../adr/ADR-0024-host-managed-subagent-orchestration.md), and the [sanitized evidence manifest](../../tests/runtime-behavior/evidence/codex-cli-0.147.0-20260819.json).
+Bounded-pool promotion is judged along the four independent axes defined in [the hook-guarded bounded pool backlog](../backlog/codex-cli-hook-guarded-bounded-pool.md) §Phase 3. The required axes are A (all-results barrier: consume every already-delivered terminal, refill only after a terminal, record capacity denials durably, and open the root Stop barrier only once every result is collected) and D (the declared packaging and runner scope). When A and D pass, the profile is promoted within the declared scope. B (steering and cancellation delivery into an active wait) and C (same-identity continuation after an approval decision) are independent axes recorded with their own values; an unknown or unsupported value on either does not block promotion of A and D. Instead, only requests that require those axes take the blocked or user-decision path.
+
+Current axis state (2026-09-08): A passed on the 2026-08-31 rerun, C is supported, B is unknown (not yet measured on an interactive PTY), and D was resolved by moving the candidate hook into the opt-in add-on `atp-codex-hooks`. A Codex consumer who installs only the base `atp` plugin receives no hook, so the "Hooks need review" trust prompt never appears; when the add-on is absent, `$atp:task` records `skip: no-codex-hooks` and continues. The deployed profile did not change with this split. See the [add-on guide](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) (Korean-first).
+
+Evidence: the [official OpenAI Subagents documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents), [upstream issue draft](../backlog/codex-cli-collaboration-await-v1.md), [ADR-0024](../adr/ADR-0024-host-managed-subagent-orchestration.md), and the [0.149.1 sanitized evidence manifest](../../tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json).
 
 ## ATP-KI-002 — Codex App/IDE capability status unknown
 

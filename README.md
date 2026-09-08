@@ -86,6 +86,12 @@ graphify 지식 그래프 기능은 옵트인 add-on 이다.
 /plugin install atp-graphify@agent-team-protocol
 ```
 
+Codex hook-guarded bounded-pool candidate 의 hook 은 Codex CLI 전용 옵트인 add-on 이다. maintainer smoke 나 candidate 실험 목적이 아니면 설치할 필요가 없다 — base 만 설치하면 hook 이 배포되지 않아 "Hooks need review" 프롬프트도 뜨지 않는다. 상세: [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
+
+```bash
+codex plugin add atp-codex-hooks@agent-team-protocol
+```
+
 **Antigravity IDE** 는 `/plugin` 시스템 없이 Skills 수동 복사로 설치한다:
 
 ```bash
@@ -123,7 +129,8 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 │   │   ├── skills/                       (/atp:task, /atp:init + host orchestration helper)
 │   │   ├── docs/development/             (런타임 레퍼런스 — agent 가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)
 │   │   └── templates/                    (/atp:init 스캐폴딩 원본)
-│   └── atp-graphify/                     (옵트인 add-on 플러그인)
+│   ├── atp-graphify/                     (옵트인 add-on 플러그인)
+│   └── atp-codex-hooks/                  (Codex 전용 옵트인 add-on — candidate hook runner)
 └── docs/                                 (사람용 문서 — 번들 제외: usage / development / architecture / adr / changes / backlog)
 ```
 
@@ -144,6 +151,7 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 | 구성 파일 맵 (트리) | [docs/architecture/file-map.md](docs/architecture/file-map.md) | 런타임 생성 디렉토리 포함 |
 | 탐색 도구 선택 매트릭스 | [plugins/atp/docs/development/search-tool-matrix.md](plugins/atp/docs/development/search-tool-matrix.md) | LSP/graphify/Grep/Glob/Read/WebFetch |
 | graphify add-on 설치·통합 | [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md) | 설치·에이전트 동작 |
+| Codex hooks add-on | [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md) | 설치·hook trust 의미·scope |
 | 초기화 스킬 | [plugins/atp/skills/init/SKILL.md](plugins/atp/skills/init/SKILL.md) | 멱등 생성 계약 |
 | 작업 진입 스킬 | [plugins/atp/skills/task/SKILL.md](plugins/atp/skills/task/SKILL.md) | 호출 방식 |
 | 문제 해결 / FAQ | [docs/usage/faq.md](docs/usage/faq.md) | 설치·init·graphify 트러블슈팅 |
