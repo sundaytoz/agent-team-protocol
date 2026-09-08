@@ -27,7 +27,7 @@ trigger: /task
 
 선택한 host orchestration skill의 capability profile과 result collection 계약을 실행 중 관측의 임의 추론으로 덮어쓰지 않는다. Host-specific skill이 제공하는 managed orchestration을 generic polling보다 우선한다. **첫 advisor를 포함해 어떤 child도 spawn하기 전에** skill 전문 로드와 mode 선택을 끝낸다.
 
-Host skill이 옵트인 add-on을 전제로 하는 경우(현재 Codex의 `codex-team` §1 — hook-guarded candidate는 add-on `atp-codex-hooks`가 번들) add-on 미설치는 오류가 아니다. 해당 skill이 요구하는 marker/자원이 없으면 `skip: no-codex-hooks`처럼 `skip: no-<addon>` 한 줄을 `Decisions`에 기록하고, 그 skill의 배포 profile이 정한 mode(현재 Codex는 `tier_b_sequential` 또는 `blocked_explicit_independence`)로 **차단 없이 계속**한다 — §9 종료조건 4항의 `skip: no-graphify`와 같은 형태다.
+Host skill의 `host_managed_subagent_orchestration: supported`가 **scope-gated**일 수 있다(현재 Codex의 `codex-team` §1·§7 — 옵트인 add-on `atp-codex-hooks`의 exact hook marker가 root context에 있는 세션만 scope 안). marker가 있으면 `host_managed_subagent_orchestration`으로 진행한다. marker/자원이 없으면 오류가 아니다 — `skip: no-codex-hooks`처럼 `skip: no-<addon>` 한 줄을 `Decisions`에 기록하고 그 세션은 `unsupported`로 취급해 `general_task`는 `tier_b_sequential`, `explicit_subagent_required`는 `blocked_explicit_independence`로 **차단 없이 계속**한다 — §9 종료조건 4항의 `skip: no-graphify`와 같은 형태다.
 
 동시에 요청을 다음 두 intent 중 하나로 분류한다.
 
@@ -94,6 +94,8 @@ mkdir -p ${CLAUDE_PROJECT_DIR}/.atp/work-session/<sid>/{research,implementation,
 ```
 
 **재개 규약**: 동일 sid 디렉토리가 이미 존재하면 이어쓰지 않고 새 sid 로 시작하되 `report.md` 에 `resumed_from: <이전 sid>` 필드를 기록한다. 이전 보고서의 미완료 섹션은 링크만 남기고 이번 세션에서 재수행.
+
+**같은 대화에서 `ended_at` 직후 후속 지시를 받은 경우**: 같은 sid 를 묵시적으로 이어쓰지 않는다. 같은 `user_request` 의 연속 단계(예: 분리 → 승격)면 `ended_at: null` 로 되돌리고 report 에 `## Phase N — <제목>` 하위로 Invocations/Decisions/verified_by_me 를 추가한 뒤 종료 시 `ended_at` 을 재기록한다. 별개 요청이면 위 재개 규약대로 새 sid + `resumed_from`. 어느 쪽이든 retrospective 재호출 전에 report 가 최신 phase 를 포함하는지 먼저 확인한다.
 
 ### 3. report.md 초기화
 

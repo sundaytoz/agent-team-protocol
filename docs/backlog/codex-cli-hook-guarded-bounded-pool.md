@@ -403,10 +403,11 @@ pending인 상태에서 root `Stop`을 실제로 차단하고 같은 root turn�
 #### 남은 승격 조건
 
 ```text
-A축: PASS (2026-08-31 재실행)
-B축: interactive PTY에서 T4/T6 재측정 필요 (비대화형 결과는 판정 근거 아님)
+A축: PASS (2026-08-31 재실행, 2026-09-08 add-on 빌드 재확인)
+B축: unknown — interactive PTY에서 T4 재측정은 승격과 독립 (실행 중 steering 요구 요청만 blocked)
 C축: PASS
-D축: Unix/python3 scope 선언 + allow_managed_hooks_only 측정 + packaging 부수효과 결정
+D축: 선언 완료 — 옵트인 add-on atp-codex-hooks + Unix/python3 + hook trust; Windows scope 밖
+승격: 2026-09-08 ADR-0025 — scope-gated supported/true (base 2.18.0)
 ```
 
 D축의 packaging 부수효과가 새로 확인됐다. `codex plugin add`만으로 `hooks/hooks.json`과
@@ -508,6 +509,28 @@ Candidate hook 두 파일을 base `plugins/atp/hooks/`에서 새 옵트인 add-o
 남은 D축 항목은 옵트인 경계 안의 `allow_managed_hooks_only` 측정과 Windows `py -3` runner
 scope 결정이다. 사용자 가이드는 `plugins/atp-codex-hooks/docs/codex-hooks-usage.md`.
 
+#### 승격 (2026-09-08) — scope-gated `supported` / `true`
+
+같은 날 add-on 빌드로 승격 qualification을 재실행했다(임시 `CODEX_HOME`, base 2.17.0 + add-on 1.0.0
+fresh install, TUI `Trust all`을 임시 home에만 부여, `codex exec --json`). 공개 evidence는
+[`codex-cli-0.149.1-hook-guarded-20260908.json`](../../tests/runtime-behavior/evidence/codex-cli-0.149.1-hook-guarded-20260908.json).
+
+| smoke | attempts / accepted / denials / terminal / collected | wait | 판정 |
+|---|---|---|---|
+| Q1 terminal-only 1-agent | 1 / 1 / 0 / 1 / 1 | 1 | pass |
+| Q2 delayed terminal 1-agent (`sleep 35`) | 1 / 1 / 0 / 1 / 1 | 2 (첫 wait 무결과 → running 유지) | pass |
+| Q3 staggered 2-agent | 2 / 2 / 0 / 2 / 2 | 2 | pass |
+| Q4 capacity-denial refill 5-agent (limit 1) | 9 / 5 / 4 (전건 `parent_marker`) / 5 / 5 | 5 | pass |
+
+`allow_managed_hooks_only`는 `-c` override와 `$CODEX_HOME/requirements.toml` 모두 효과가 없었다 —
+`ConfigRequirementsToml`(managed `/etc/codex`·MDM 계층) 키라 사용자 home에서 바인딩되지 않는다.
+managed 계층이 plugin hook을 배제하면 marker 부재 → fail-closed로 닫히므로 scope 밖 처리로 충분하다.
+
+A·C·D 충족으로 `codex-team` §7 profile을 scope-gated `host_managed_subagent_orchestration: supported`,
+`team_execution_enabled: true`로 전환했다(ADR-0025, base 2.18.0). B는 `unknown` 유지. 이 문서의
+qualification handoff 역할은 여기서 끝나며, 남은 항목은 B축 T4 interactive 재측정과 Windows runner
+(둘 다 승격 무관)이다.
+
 #### 소비자 비용 제거 (2026-09-01)
 
 Trust가 부여된 세션에서 측정된 per-tool 비용은 candidate 설계 결함이었고, 배포 형태와
@@ -581,9 +604,9 @@ T7에서 Codex CLI 0.149.1은 실패한 `spawn_agent` 호출에 `PostToolUse`를
 
 ## New-conversation continuation prompt
 
-> **2026-09-08 — 아래 add-on 분리 프롬프트는 실행 완료됐다** (§D축 add-on 분리 완료). 다음 작업
-> 후보는 B축 T4(interactive PTY steering) 재측정, `allow_managed_hooks_only` 측정, Windows runner
-> scope 결정이다. 아래 원문은 실행 기록으로 보존한다.
+> **2026-09-08 — 아래 add-on 분리 프롬프트는 실행 완료됐고, 같은 날 승격(ADR-0025)까지 끝났다**
+> (§D축 add-on 분리 완료, §승격). 남은 후속은 B축 T4(interactive PTY steering) 재측정과 Windows
+> runner scope — 둘 다 profile 변경 없이 축 값만 갱신하는 작업이다. 아래 원문은 실행 기록으로 보존한다.
 
 이 절은 다음 작업 세션의 첫 요청 정본이었다. 이전 판(2026-08-28 재검증용)은 A축 PASS와
 D축 결정으로 대체됐고, 이 판은 **candidate hook의 옵트인 add-on 분리**를 지시했다.
@@ -703,6 +726,13 @@ candidate hook 을 base `plugins/atp/` 에서 옵트인 add-on 으로 옮긴다.
   (`clear; codex` 가 로그인 메뉴에서 device-code 항목을 선택한 실증). 텍스트를 보내기 전 `read-screen` 으로
   셸 프롬프트인지 확인하고, TUI 면 `/quit`+Enter 또는 해당 PID 만 종료한 뒤 보낸다. `ctrl-c` 는 로그인 화면을
   닫지 않는다.
+- `codex exec` 비대화 실행은 `-s workspace-write -c approval_policy=never` 로 지정한다. `--full-auto` 는 0.149.1
+  `exec` 에서 인식되지 않는 플래그다.
+- hook 발화가 필요한 smoke(marker·bounded pool)는 임시 `CODEX_HOME` 에서 TUI 첫 대면의 "Hooks need review" 에
+  `Trust all` 을 **먼저** 부여한다. 미부여 상태는 fail-closed 로 spawn 0 이 되어 "hook 미설치" 와 같은 관측을
+  내므로 false negative 다. trust 는 임시 home 에만 남고 smoke 종료 시 home 을 삭제한다.
+- evidence manifest 는 수기 전사하지 않고 `tests/runtime-behavior/build_hook_evidence.py` 로 hook ledger 에서
+  생성한다(sanitization 포함). 다음 qualification 도 같은 스키마로 재생성한다.
 
 ## 완료 응답에 포함할 것
 

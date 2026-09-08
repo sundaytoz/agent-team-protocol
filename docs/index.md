@@ -35,7 +35,7 @@ last_reviewed: 2026-08-20
 
 graphify 기능은 옵트인 add-on 이다. 설치·운영·그래프 갱신 규칙은 [plugins/atp-graphify/docs/graphify-usage.md](../plugins/atp-graphify/docs/graphify-usage.md) 를 본다.
 
-Codex hook-guarded bounded-pool candidate 의 hook 은 Codex CLI 전용 옵트인 add-on `atp-codex-hooks` 에만 있다. base 만 설치하면 hook 이 배포되지 않는다. 설치·hook trust 의 의미·scope 는 [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) 를 본다.
+Codex 에서 실제 팀 실행을 켜는 hook 은 Codex CLI 전용 옵트인 add-on `atp-codex-hooks` 에만 있다(ADR-0025, scope-gated). base 만 설치하면 hook 이 배포되지 않고 Tier B 로 동작한다. 설치·hook trust 의 의미·scope 는 [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) 를 본다.
 
 ## 빠른 진입
 

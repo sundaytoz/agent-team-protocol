@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-08",
+  "surface": "codex-cli",
+  "version": "0.149.1",
+  "base_plugin_version": "2.17.0+codex.20260908152342",
+  "addon_plugin": "atp-codex-hooks",
+  "addon_plugin_version": "1.0.0",
+  "qualification": "hook_guarded_bounded_pool_promotion_within_declared_scope",
+  "workspace_isolation": "temporary Codex home and temporary git workspace; fresh source install of base and add-on; hook trust granted interactively in the temporary home only (Trust all); user Codex home unchanged",
+  "surface_details": {
+    "root": "codex exec --json (non-interactive) after interactive TUI trust grant",
+    "sandbox": "workspace-write",
+    "approval_policy": "never",
+    "event_ledger": "ATP_HOOK_EVENT_LEDGER=1"
+  },
+  "overall_result": "pass",
+  "declared_scope": {
+    "host": "codex-cli 0.149.1",
+    "os": "unix",
+    "runner": "python3 on PATH",
+    "packaging": "atp-codex-hooks add-on installed and hook-trusted",
+    "gate": "exact ATP_HOOK_GUARD_READY marker in root context",
+    "outside_scope_behavior": "marker absent -> child spawn 0 -> skip: no-codex-hooks -> tier_b_sequential or blocked_explicit_independence"
+  },
+  "deployed_profile": {
+    "formal_adapter_enabled": false,
+    "manual_wait_polling_supported": false,
+    "host_managed_subagent_orchestration": "supported",
+    "team_execution_enabled": true,
+    "execution_scope": "hook_guarded_bounded_pool",
+    "scope_gate": "atp_hook_guard_ready_marker"
+  },
+  "candidate_artifacts": {
+    "source_install_byte_parity": true,
+    "sha256": {
+      "hooks_json": "d7005171cb3d60c911d9310733b9db445f184b40024e57e870a64d2a62fa8bd7",
+      "hook_runner": "22b938537cce01251fc00d3c4e358018dbf2a656e2edd4ceded59b9d7ac621b0",
+      "codex_team_skill_before_promotion": "22c6d064646a6f361816beab72995832e688bae2d19d5eccbbd1369a1cde6595"
+    },
+    "marker_matches_installed_hashes": true
+  },
+  "hook_preflight": {
+    "base_only_install_ships_hooks": false,
+    "base_only_tui_hooks_review_prompt": false,
+    "addon_tui_hooks_review_prompt": true,
+    "addon_hook_count_reported": 8,
+    "trust_granted_in_temporary_home_only": true,
+    "allow_managed_hooks_only": {
+      "user_config_override_minus_c": "no effect — trusted add-on hook still ran (marker present, pool 1/1/1/1)",
+      "codex_home_requirements_toml": "no effect — same result",
+      "interpretation": "the key belongs to the managed requirements layer (ConfigRequirementsToml: /etc/codex/requirements.toml or MDM), which a user-level home cannot bind; its enforcement against plugin hooks is unmeasured in an isolated environment",
+      "fail_closed_coverage": "if a managed policy excludes plugin hooks the SessionStart marker is absent and the pool fails closed (same path verified for untrusted hooks and features.hooks=false on 2026-08-28)",
+      "result": "not_bindable_from_user_config; managed-layer effect unknown; covered by fail-closed"
+    }
+  },
+  "axes": {
+    "A_all_results_barrier": "pass",
+    "B_in_flight_control": "unknown (interactive PTY steering not measured; not required for promotion)",
+    "C_approval_continuation": "supported (2026-08-28 T5)",
+    "D_packaging_scope": "declared (add-on opt-in; unix python3; Windows out of scope)"
+  },
+  "smokes": [
+    {
+      "requested_tasks": 1,
+      "spawn_attempts": 1,
+      "accepted_spawns": 1,
+      "hook_ledger_capacity_denials": 0,
+      "denials_attested_by": {},
+      "spawn_pre_tool_use_events": 1,
+      "spawn_post_tool_use_events": 1,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "pool_wait_calls": 1,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "root_stop_first_decision": "allow",
+      "stop_blocked_count": 0,
+      "last_hook_event": "Stop",
+      "pool_disposition": "completed",
+      "parent_final_counts": {
+        "requested": "1",
+        "attempts": "1",
+        "accepted": "1",
+        "denied": "0",
+        "terminal": "1",
+        "collected": "1",
+        "waits": "1",
+        "lists": "0",
+        "interrupts": "0"
+      },
+      "elapsed_seconds": 44,
+      "hook_ledger_rows": 10,
+      "artifact_sha256": {
+        "state": "80f26fb87a03809dc2189f2addd14d7ff7fe0690cb046b8f3d358f827d2bc5e2",
+        "event_ledger": "0d44d3090229403dea72364df266233060c0018046e795b89053f5794ee18297",
+        "exec_events_jsonl": "91f173426a6eb43f528cef7d6b3b1a68a60aa0c90a16b4bd1864ba179f6a9ca8"
+      },
+      "id": "Q1-terminal-only-1-agent",
+      "maps_to": "ADR-0024 §3 terminal-only 1-agent",
+      "result": "pass"
+    },
+    {
+      "requested_tasks": 1,
+      "spawn_attempts": 1,
+      "accepted_spawns": 1,
+      "hook_ledger_capacity_denials": 0,
+      "denials_attested_by": {},
+      "spawn_pre_tool_use_events": 1,
+      "spawn_post_tool_use_events": 1,
+      "terminal_deliveries": 1,
+      "collected_results": 1,
+      "pool_wait_calls": 2,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "root_stop_first_decision": "allow",
+      "stop_blocked_count": 0,
+      "last_hook_event": "Stop",
+      "pool_disposition": "completed",
+      "parent_final_counts": {
+        "requested": "1",
+        "attempts": "1",
+        "accepted": "1",
+        "denied": "0",
+        "terminal": "1",
+        "collected": "1",
+        "waits": "2",
+        "lists": "0",
+        "interrupts": "0"
+      },
+      "elapsed_seconds": 90,
+      "hook_ledger_rows": 12,
+      "artifact_sha256": {
+        "state": "7e644383fce9c402916176774ab6fd57be1635b7b717460d4e1e27c2977128f7",
+        "event_ledger": "d9b448ff3bf12d810efa6ccdc74507d42ef05e45db52c87314d23fa139e64c4e",
+        "exec_events_jsonl": "34a6860b78fdd06237ae0d1411db4ba15efff517930db114adfe7a4e35241908"
+      },
+      "id": "Q2-delayed-terminal-1-agent",
+      "maps_to": "ADR-0024 §3 delayed terminal 1-agent",
+      "child_delay_seconds": 35,
+      "nonterminal_updates": 0,
+      "wait_returns_without_terminal": 1,
+      "result": "pass",
+      "note": "first wait_agent returned without a terminal; scheduler kept the task running and waited again instead of synthesizing completion; no MESSAGE-type nonterminal update was produced by the child in this run"
+    },
+    {
+      "requested_tasks": 2,
+      "spawn_attempts": 2,
+      "accepted_spawns": 2,
+      "hook_ledger_capacity_denials": 0,
+      "denials_attested_by": {},
+      "spawn_pre_tool_use_events": 2,
+      "spawn_post_tool_use_events": 2,
+      "terminal_deliveries": 2,
+      "collected_results": 2,
+      "pool_wait_calls": 2,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "root_stop_first_decision": "allow",
+      "stop_blocked_count": 0,
+      "last_hook_event": "Stop",
+      "pool_disposition": "completed",
+      "parent_final_counts": {
+        "requested": "2",
+        "attempts": "2",
+        "accepted": "2",
+        "denied": "0",
+        "terminal": "2",
+        "collected": "2",
+        "waits": "2",
+        "lists": "0",
+        "interrupts": "0"
+      },
+      "elapsed_seconds": 72,
+      "hook_ledger_rows": 18,
+      "artifact_sha256": {
+        "state": "0da3a0842979e2debf2987144f8def638d2ab6ec7351727ec7b4afb207a1ac13",
+        "event_ledger": "dd5eff2f104c0ead1f6bbbae9c20c8a6e90f46df1d18b73a77ebeab6392fe388",
+        "exec_events_jsonl": "120a24e03e5194e43221bf056cb36a6ae912a3dfd5aea175336c5bb8ce3c2c9f"
+      },
+      "id": "Q3-staggered-2-agent-all-results",
+      "maps_to": "ADR-0024 §3 staggered terminal 2-agent",
+      "slow_child_delay_seconds": 30,
+      "result": "pass",
+      "note": "both children dispatched before the first wait; the fast terminal was collected first, the slow terminal on the second wait; root Stop allowed only after both were collected"
+    },
+    {
+      "requested_tasks": 5,
+      "spawn_attempts": 9,
+      "accepted_spawns": 5,
+      "hook_ledger_capacity_denials": 4,
+      "denials_attested_by": {
+        "parent_marker": 4
+      },
+      "spawn_pre_tool_use_events": 9,
+      "spawn_post_tool_use_events": 5,
+      "terminal_deliveries": 5,
+      "collected_results": 5,
+      "pool_wait_calls": 5,
+      "list_calls": 0,
+      "interrupt_calls": 0,
+      "root_stop_first_decision": "allow",
+      "stop_blocked_count": 0,
+      "last_hook_event": "Stop",
+      "pool_disposition": "completed",
+      "parent_final_counts": {
+        "requested": "5",
+        "attempts": "9",
+        "accepted": "5",
+        "denied": "4",
+        "terminal": "5",
+        "collected": "5",
+        "waits": "5",
+        "lists": "0",
+        "interrupts": "0"
+      },
+      "elapsed_seconds": 239,
+      "hook_ledger_rows": 54,
+      "artifact_sha256": {
+        "state": "eaa2a2389f0b7abf435bd2d5b8612473be1fc54e52ef5761c49236b886b99c24",
+        "event_ledger": "4fb366a0cf75d580b78161108ec4b52f7cd6e094176534e70ca22710b25882b8",
+        "exec_events_jsonl": "e2bae5a198fbe4bb059cef652108273c9821f4cee435974cfa4a04a6d33f7bfe"
+      },
+      "id": "Q4-capacity-denial-refill-5-agent",
+      "maps_to": "axis A T7 rerun on the add-on build",
+      "pool_concurrency_limit": 1,
+      "child_delay_seconds": 20,
+      "missing_post_tool_use_for_failed_spawn": 4,
+      "result": "pass",
+      "note": "every denied attempt was re-stated through the ATP_POOL_DENIED update_plan marker and refilled only after a terminal"
+    }
+  ],
+  "not_measured": [
+    "T4 steering on interactive PTY",
+    "Windows py -3 runner",
+    "Codex App/IDE",
+    "allow_managed_hooks_only under a real managed (/etc/codex) requirements layer"
+  ],
+  "promotion": {
+    "host_managed_subagent_orchestration": "supported within declared scope",
+    "team_execution_enabled": true,
+    "version_changed": true,
+    "release_metadata_changed": true,
+    "adr": "ADR-0025"
+  }
+}

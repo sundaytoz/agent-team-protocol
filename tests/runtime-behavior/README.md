@@ -52,6 +52,11 @@ python3 tests/runtime-behavior/validate_codex_session.py \
 > TUI 포그라운드 입력 흡수)은 `docs/backlog/codex-cli-hook-guarded-bounded-pool.md` §"격리 검증이
 > 필요할 때의 함정"을 따른다.
 >
+> **Evidence manifest는 생성기로만 만든다.** 각 `codex exec` run 디렉토리(`state_dirs_before/after.txt`, `last_message.txt`,
+> `exit.txt`, `events.jsonl`)를 `python3 tests/runtime-behavior/build_hook_evidence.py --out <manifest> --run Q1=<dir> …
+> [--merge-into <기존 manifest>]` 에 넘기면 hook ledger에서 count/ordering/SHA-256만 뽑아 `smokes[]`를 채우고, 사용자명·절대 경로
+> 조각이 있으면 쓰기를 거부한다. scope·axes·deployed_profile 등 메타는 호출자가 채운다. 2026-09-08 승격 evidence가 이 스키마다.
+>
 > **Event ledger는 opt-in이다.** `PLUGIN_DATA/hook_guarded_pool/v1/<session>/events.jsonl`은 runner가 한 번도 읽지 않는 maintainer
 > 진단 산출물이므로 기본 비활성이다. Smoke evidence의 count/ordering을 수집하려면 실행 환경에
 > `ATP_HOOK_EVENT_LEDGER=1`을 설정한다. 설정하지 않으면 pool은 정상 동작하지만
@@ -77,6 +82,13 @@ manual_wait_polling_supported: false
 host_managed_subagent_orchestration: unsupported
 team_execution_enabled: false
 ```
+
+> **2026-09-08 갱신**: 위 네 값은 2026-08-26 built-in barrier 판정의 기록이다. 이후 hook-guarded bounded pool이
+> 4축 qualification을 통과해 배포 profile은 **scope-gated** `host_managed_subagent_orchestration: supported`,
+> `team_execution_enabled: true`(`execution_scope: hook_guarded_bounded_pool`, `scope_gate: atp_hook_guard_ready_marker`)다.
+> 승격 evidence는 `evidence/codex-cli-0.149.1-hook-guarded-20260908.json`(Q1 terminal-only / Q2 delayed / Q3 staggered /
+> Q4 capacity-denial refill 전부 pass). add-on `atp-codex-hooks` marker가 없는 세션은 여전히 위 네 값으로 동작한다.
+> 상세: `plugins/atp/docs/development/codex-lifecycle-routing.md` §8.6, ADR-0025.
 
 재검증하려면 A에서 한 wake에 이미 전달된 terminal을 모두 소비하고 terminal 뒤에만 refill해야 한다. B/D는 queued control을 active pool join에 실제 전달하는 host surface가 필요하고, C는 approval decision 뒤 같은 child identity가 continuation돼 terminal result를 내야 한다. 세 조건과 기존 baseline·source/install parity가 한 qualification에서 모두 PASS하기 전에는 candidate를 supported로 표현하지 않는다.
 

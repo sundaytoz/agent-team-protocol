@@ -24,6 +24,7 @@ last_reviewed: 2026-08-18
   - **(A) stale 머지-완료 브랜치** — HEAD 의 커밋들이 이미 `origin/main` 에 있다(내용 중복). 여기에 bump 하면 PR 머지 후에도 update 미도달이 반복된다. → **`origin/main` 기반으로 새 release 브랜치를 만든다.**
   - **(B) 미머지 릴리스 위 스택** — HEAD 가 `origin/main` 에 없는 **직전 bump 커밋**을 포함하고, 이번 작업이 그 커밋의 *내용* 에 의존한다(예: 직전 릴리스가 도입한 가드의 구멍을 이번 작업이 닫는다). 이 경우 스택이 **정당하며 `main` 기반 분기는 오히려 틀리다** — 직전 버전의 내용이 `main` 에 없으므로 그 위 버전만 올리면 **버전만 뛰고 내용이 비는** 상태가 된다. → **스택을 유지하고 PR 이 두 릴리스를 함께 머지함을 `open_items` 에 명시**한다. 버전 연속성(N-1 → N)은 PR 머지로 함께 확보된다.
   - 분기 기준은 "HEAD 가 main 보다 앞서 있는가" 가 아니라 **"직전 bump 커밋이 `origin/main` 에 있는가"** 다. (A) 는 있고 (B) 는 없다.
+  - **(B′) 직전 bump 가 PR 로 열려 있으나 미머지** — 같은 세션에서 minor bump 를 2회 하는 경우(예: 2.17.0 PR #32 위에 2.18.0). 스택을 유지하고 두 번째 PR 은 base=main 으로 열되, 본문과 `open_items` 에 "#32 먼저 머지 → 이 PR 자동 축소(또는 이 PR 단독 머지 = superset)" 순서를 `release-pending` 으로 명시한다.
   - **진단 전 `git fetch origin main` 필수** — 로컬 `origin/main` ref 는 세션 중에도 stale 해진다(다른 PR 이 머지되면). fetch 없이 판정하면 (B) 로 오진하고, 그 오진이 `open_items`·사용자 보고까지 전파된다. 2026-07-30 세션 실증: fetch 전 "미머지 스택(B)" 으로 진단·보고했으나 fetch 후 직전 릴리스가 이미 머지돼 있어 (A) 였다.
 
 검증 명령:
@@ -149,6 +150,8 @@ find docs plugins/atp/docs -mindepth 2 -maxdepth 2 -name '*.md' ! -name index.md
 기대값: 새 문서가 속한 카테고리 index 에서 링크된다. 런타임 문서(`plugins/atp/docs/development/`)는 번들 경량본 [plugins/atp/docs/development/index.md](../../plugins/atp/docs/development/index.md) 와 루트 풀본 [docs/development/index.md](./index.md) 양쪽을 갱신한다. 번들 경량 허브 2건(`plugins/atp/docs/index.md`, `plugins/atp/docs/development/index.md`)은 번들 외 문서를 링크하지 않는다(텍스트 언급만 허용 — 루트 허브 ↔ 번들 허브 정합).
 
 ## 7. 역이식(backport) 산출물 출처 식별자 잔류 0
+
+> **self-leak grep 표준 패턴 (2026-09-08)**: 로컬 사용자명·홈 경로 누출 검사는 **실제 로컬 사용자명 리터럴**(및 `/Users/<그 사용자명>`)만 검색한다. `/Users/` 광역 패턴은 redaction placeholder(`/Users/example`)와 부정 단언 테스트(`assertNotIn("/Users/", …)`)를 오탐한다. 허용 구역: `tests/**/*.py` 안의 needle 문자열, 문서의 `<user>`/`example` placeholder. 같은 세션에서 2회 재발한 false-positive 클래스(TEMPLATE_DEV G-ACTYPE1-1 n=5).
 
 이 절은 **ATP 소스 레포 자체의 backport** — self-dogfooding 으로 얻은 소비 프로젝트(세션·도메인 사례·코드 심볼) 경험을 ADR·런타임 정본(`agent-team-protocol.md`)·`TEMPLATE_DEV.md`·`agents/*.md` 등 범용 자산에 역이식하는 변경 — 에만 발동한다. 소비 프로젝트가 자기 식별자를 쓰는 것은 정상이며 이 게이트 대상이 아니다.
 
@@ -329,7 +332,8 @@ python3 tests/runtime-behavior/validate_codex_session.py \
 - §8의 끊긴 protocol 인용 검사를 재실행한다. 기존 §N을 재배열하지 않는다.
 - §4의 base manifest 4곳 version invariant를 확인하고 add-on version과 `.agents/plugins/marketplace.json`의 versionless 계약을 변경하지 않는다.
 - 2.15.0 release에서는 base manifest 4곳의 semantic version이 모두 `2.15.0`, add-on은 기존 버전, `.agents/plugins/marketplace.json`은 versionless인지 확인한다.
-- user-facing FAQ는 한국어/영어에서 current tested CLI formal/managed contract unsupported + team disabled, manual wait/list 0, explicit blocker UX, app/IDE unknown, report v2 의미가 동등한지 대조한다.
+- user-facing FAQ는 한국어/영어에서 current tested CLI formal/managed contract unsupported + team disabled, manual wait/list 0, explicit blocker UX, app/IDE unknown, report v2 의미가 동등한지 대조한다. (2.15.0 시점 기준)
+- 2.18.0 이후(ADR-0025): FAQ·known-issues·add-on 가이드 한/영이 **scope-gated** 의미를 동등하게 전달하는지 대조한다 — `atp-codex-hooks` 설치+hook trust 세션만 `supported`/`true`, marker 없는 세션은 `skip: no-codex-hooks` → Tier B/blocked, B축 unknown 은 실행 중 steering 요구 요청만 영향. routing appendix §1 배포 block 이 `execution_scope`/`scope_gate` 두 키를 유지하고 `test_codex_managed_contract.py` 가 2026-09-08 evidence 와 대조하는지 확인한다.
 - 카탈로그 confidence FAQ 한·영 모두에서 every axis/every item marker, `high|mixed|low` 결정 규칙, marker coverage와 aggregate derivation 두 self-check가 동등한지 대조한다.
 - ADR-0021·ADR-0022·ADR-0023·ADR-0024와 공개 릴리스인 2026-08-13·2026-08-19 change가 각각 자기 index에 정확히 한 번 등록되고 architecture/change/ADR 사이 교차 링크가 유효한지 확인한다. 미출시 2.14 중간 구현은 ADR-0023의 superseded history로만 보존하고 Changes index에 싣지 않는다.
 - Verification이 pending인 동안 architecture/change 문서가 current Codex end-to-end event-driven wake나 전체 validator PASS를 주장하지 않는지 확인한다. 실제 GREEN 후에만 상태를 갱신한다.

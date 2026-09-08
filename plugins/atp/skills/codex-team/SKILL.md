@@ -1,6 +1,6 @@
 ---
 name: codex-team
-description: Codex에서 ATP가 subagent를 spawn, delegate, steer, collect하기 전에 사용하는 orchestration skill. 배포 capability gate를 적용하고 maintainer candidate에서는 제한된 동시 슬롯을 queue→wait→refill하는 bounded pool을 실행한다.
+description: Codex에서 ATP가 subagent를 spawn, delegate, steer, collect하기 전에 사용하는 orchestration skill. 배포 capability gate를 적용하고, atp-codex-hooks add-on의 exact hook marker가 있는 세션에서는 제한된 동시 슬롯을 queue→wait→refill하는 hook-guarded bounded pool로 team execution을 실행한다.
 ---
 
 # Codex team orchestration
@@ -9,17 +9,17 @@ description: Codex에서 ATP가 subagent를 spawn, delegate, steer, collect하�
 
 ## 1. 실행 gate
 
-1. 아래 §7의 배포 profile을 먼저 적용한다.
-2. `team_execution_enabled: false`인 일반 소비 task는 child를 spawn하지 않고 `$atp:task`의 blocked/Tier B 계약으로 반환한다.
-3. Candidate hook은 base `atp` 번들에 없다. 옵트인 add-on **`atp-codex-hooks`**(`plugins/atp-codex-hooks/hooks/hooks.json` + `hooks/codex_pool_hook.py`)를 설치하고 TUI에서 hook trust를 부여한 세션에서만 `SessionStart` hook이 아래 marker를 만든다. 격리된 maintainer candidate smoke가 명시적으로 요청되고 이 exact hook marker가 현재 root context에 있을 때만 §2~§6의 bounded pool을 실행할 수 있다.
-4. Marker가 없거나 schema/hash가 다르면 add-on 미설치, hook untrusted, disabled, policy-excluded, dependency-missing 또는 source/install mismatch인 것으로 취급한다. 이 경우 child spawn은 0이며 profile을 올리지 않는다. Add-on 미설치는 오류가 아니다 — `$atp:task`는 이를 `skip: no-codex-hooks`로 기록하고 §1.2의 blocked/Tier B 계약으로 차단 없이 계속한다(graphify add-on의 `skip: no-graphify`와 같은 형태).
-5. Candidate smoke는 사용자 전역 설정, 설치된 사용자 plugin cache, hooks와 실제 소비 프로젝트를 변경하지 않는다.
+1. 아래 §7의 배포 profile을 먼저 적용한다. Profile은 **선언된 scope 안에서** `team_execution_enabled: true`이며, scope 안에 있는지는 오직 아래 exact hook marker의 존재로 판정한다.
+2. Hook은 base `atp` 번들에 없다. 옵트인 add-on **`atp-codex-hooks`**(`plugins/atp-codex-hooks/hooks/hooks.json` + `hooks/codex_pool_hook.py`)를 설치하고 TUI에서 hook trust를 부여한 세션에서만 `SessionStart` hook이 marker를 root context에 넣는다.
+3. **Marker가 현재 root context에 있으면** 이 세션은 scope 안이다. `host_managed_subagent_orchestration: supported`, `selected_mode: host_managed_subagent_orchestration`으로 §2~§6의 hook-guarded bounded pool을 실행한다. 이것이 Codex의 정상 team execution 경로다.
+4. **Marker가 없거나 schema/hash가 다르면** scope 밖이다 — add-on 미설치, hook untrusted, disabled, policy-excluded, dependency-missing(예: Windows `py -3` 미검증), source/install mismatch 중 어느 것이든 같게 취급한다. child spawn은 0이며 `$atp:task`는 `skip: no-codex-hooks`를 기록하고 `general_task`는 `tier_b_sequential`, `explicit_subagent_required`는 `blocked_explicit_independence`로 차단 없이 계속한다(graphify add-on의 `skip: no-graphify`와 같은 형태). Marker 부재는 오류가 아니라 기본 소비자 상태다.
+5. 어느 경로에서도 사용자 전역 설정, 설치된 사용자 plugin cache, hooks와 소비 프로젝트를 변경하지 않으며, marker를 prompt에 복사·합성해 scope 안으로 위장하지 않는다.
 
 ```text
 ATP_HOOK_GUARD_READY schema=1 hooks_sha256=d7005171cb3d60c911d9310733b9db445f184b40024e57e870a64d2a62fa8bd7 runner_sha256=22b938537cce01251fc00d3c4e358018dbf2a656e2edd4ceded59b9d7ac621b0
 ```
 
-Marker는 add-on `atp-codex-hooks`가 번들한 `SessionStart` hook만 만든다. 해시는 add-on 설치본의 `hooks/hooks.json`과 `hooks/codex_pool_hook.py` 바이트에 대한 SHA-256이다. Maintainer가 marker를 prompt에 복사하거나 hook trust 우회 없이 합성한 문자열은 capability evidence가 아니다. Candidate runner는 Unix의 `python3`, Windows의 `py -3`를 명시적으로 preflight하는 제한된 배포 가설이며, 이 dependency가 unknown인 surface는 qualification을 통과하지 않는다.
+Marker는 add-on `atp-codex-hooks`가 번들한 `SessionStart` hook만 만든다. 해시는 add-on 설치본의 `hooks/hooks.json`과 `hooks/codex_pool_hook.py` 바이트에 대한 SHA-256이다. Prompt에 복사되거나 hook trust 우회 없이 합성된 문자열은 marker가 아니다. 선언 scope는 Unix + `python3` on PATH + add-on 설치 + hook trust다. Windows `py -3`는 미검증이라 scope 밖이며, 그 surface에서는 marker가 생성되지 않아 같은 fail-closed 경로로 닫힌다.
 
 ## 2. Bounded pool 상태
 
@@ -98,16 +98,18 @@ Report에는 최소한 다음을 구분해 기록한다.
 
 ## 7. 배포된 capability profile
 
-현재 배포 판정은 다음과 같다.
+현재 배포 판정은 다음과 같다(2026-09-08, ADR-0025).
 
 ```yaml
 formal_adapter_enabled: false
 manual_wait_polling_supported: false
-host_managed_subagent_orchestration: unsupported
-team_execution_enabled: false
+host_managed_subagent_orchestration: supported
+team_execution_enabled: true
+execution_scope: hook_guarded_bounded_pool
+scope_gate: atp_hook_guard_ready_marker
 ```
 
-Codex CLI 0.149.1에서 single-child terminal delivery와 nested spawn은 관측됐지만 staggered 2-agent built-in all-results barrier는 `spawn_calls=2`, `terminal_deliveries=1`로 실패했다. Hook-guarded bounded pool의 queue→wait→refill 계약과 marker/ledger/Stop barrier도 아직 release qualification을 통과하지 않은 candidate다.
+`supported`/`true`는 **scope-gated**다 — §1의 exact marker가 있는 세션에만 적용되고, marker가 없는 세션은 `unsupported`/`false`로 동작한다. Codex built-in의 staggered 2-agent barrier는 `spawn_calls=2`, `terminal_deliveries=1`로 실패했으므로(2026-08-26) all-results barrier는 built-in wait가 아니라 §2~§6의 hook-guarded bounded pool이 제공한다. 승격 근거는 add-on 빌드에서 재실행한 2026-09-08 qualification(`tests/runtime-behavior/evidence/codex-cli-0.149.1-hook-guarded-20260908.json`)이다: terminal-only 1-agent, delayed terminal 1-agent(wait 2회, 합성 completion 0), staggered 2-agent all-results, capacity-denial refill 5-agent(attempts 9 / accepted 5 / denials 4 전건 `parent_marker` attested / terminal·collected 5) 전부 pass, list/interrupt 0, root Stop은 전원 collected 뒤에만 allow.
 
 ### 7.1 Candidate 축별 상태
 
@@ -121,14 +123,12 @@ control-surface gap을 all-results barrier 실패로 확대 해석하지 않는�
 | A. all-results barrier | PASS | 2026-08-31 재실행에서 requested/attempts/accepted/terminal/collected `5/6/5/5/5`, hook ledger capacity denial 1건(`attested_by: parent_marker`), list/interrupt 0, source/install parity 일치 |
 | B. in-flight control delivery | unknown | T4/T6는 비대화형 `codex exec`에서만 측정됨 — 통과 가능한 interactive surface 미측정 |
 | C. approval continuation | supported | T5 PASS — 실제 interactive decision 뒤 같은 child identity가 terminal까지 continuation |
-| D. packaging and runner scope | 옵트인 add-on `atp-codex-hooks`로 분리 완료 (2026-09-08) | 번들 hook은 TUI에서 1회 "hooks can run outside the sandbox" 신뢰를 요구하고, trust는 command 문자열에만 묶여 이후 runner 변경을 무확인 실행한다. 기능을 켜는 사람만 그 동의를 지도록 base 번들에서 제거하고 add-on으로 옮겼다. base만 설치한 Codex 소비자에게는 hook이 배포되지 않는다. 경계 안에서 Unix `python3` scope 선언과 `allow_managed_hooks_only` 측정이 남는다 |
+| D. packaging and runner scope | 선언 완료 — 옵트인 add-on `atp-codex-hooks`, Unix `python3`, hook trust (2026-09-08) | 번들 hook은 TUI에서 1회 "hooks can run outside the sandbox" 신뢰를 요구하고, trust는 command 문자열에만 묶여 이후 runner 변경을 무확인 실행한다. 기능을 켜는 사람만 그 동의를 지도록 base 번들에서 제거하고 add-on으로 옮겼다. Windows `py -3`는 scope 밖(marker 미생성 → fail-closed). `allow_managed_hooks_only` 측정 결과는 appendix §8.6 |
 
-A는 필수 축이고 B/C/D는 서로 독립이다. B가 `unknown | unsupported`여도 A와 D가 충족되면
-선언된 scope 안에서 team execution을 열 수 있으며, 그 경우 mid-flight steering/취소를 요구하는
-요청만 blocked/user-decision 경로로 보낸다.
+A는 필수 축이고 B/C/D는 서로 독립이다. A와 D가 충족돼 선언된 scope 안에서 team execution을
+열었다(ADR-0025). B는 `unknown`으로 남으며, 이는 **실행 중 steering/취소를 요구하는 요청만**
+blocked/user-decision 경로로 보낸다는 뜻이다 — ATP 정상 흐름(spawn → wait → collect)은 mid-flight
+steering을 요구하지 않고, 사용자 취소는 host 인터럽트가 상위 계층에서 처리한다.
 
-따라서 일반 소비 task는 이 profile을 실행 중 임의로 올리지 않는다. A축은 2026-08-31 재실행으로
-PASS했고, D축은 candidate hook을 base 번들에서 빼 옵트인 add-on `atp-codex-hooks`로 분리하는
-것으로 결정·완료됐다(2026-09-08). 남은 경계 안 scope 선언(`allow_managed_hooks_only`, Windows
-runner)이 끝난 뒤 별도 배포 결정으로 `team_execution_enabled`를 변경한다. 이 add-on 분리 자체는
-profile을 바꾸지 않는다. B와 C는 그 결정과 독립적으로 각자의 축 값으로 기록한다.
+일반 소비 task는 이 profile을 실행 중 임의로 올리거나 내리지 않는다. scope 판정은 marker 존재
+하나로만 한다. B와 C는 그 결정과 독립적으로 각자의 축 값으로 기록한다.

@@ -43,7 +43,7 @@ last_reviewed: 2026-08-20
    /plugin install atp-graphify@agent-team-protocol
    ```
 
-   Codex CLI 전용 `atp-codex-hooks` add-on 은 maintainer smoke·candidate 실험용이다. 일반 사용자는 설치하지 않는다 — [faq.md](./faq.md#codex-hooks-add-on).
+   Codex CLI 에서 실제 팀 실행을 켜려면 `atp-codex-hooks` add-on 도 설치하고 TUI 에서 hook trust 를 부여한다(옵트인, sandbox 밖 실행 동의 필요) — [faq.md](./faq.md#codex-hooks-add-on).
 
 4. 초기화 — 프로젝트에 docs 골격 + CLAUDE.md 안내 블록 생성
 

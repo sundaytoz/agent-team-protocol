@@ -25,16 +25,14 @@ plugins/atp-codex-hooks/
 base `atp` 번들에는 hook 이 **없다**. base 만 설치한 Codex 소비자는 "Hooks need review" 신뢰
 프롬프트를 보지 않으며, hook 이 없으므로 `codex-team` §1 의 `ATP_HOOK_GUARD_READY` marker 도
 생성되지 않아 candidate bounded pool 은 spawn 0 으로 닫힌다(fail-closed). 이것은 오류가 아니라
-기본 상태다 — `$atp:task` 는 `skip: no-codex-hooks` 를 기록하고 배포 profile 이 정한 mode 로 계속한다.
+기본 상태다 — `$atp:task` 는 `skip: no-codex-hooks` 를 기록하고 Tier B(또는 독립성 필수 요청이면 blocked) 로 계속한다.
 
 ## 1. 누가 설치하나
 
-- **release maintainer** — 격리된 `CODEX_HOME` 에서 candidate qualification smoke 를 돌릴 때.
-- **candidate 를 직접 실험하려는 사용자** — 아래 §3 의 신뢰 범위를 이해하고 동의하는 경우에만.
+- **Codex 에서 ATP 팀 실행(advisor/worker 실제 spawn)을 원하는 사용자** — 2026-09-08 ADR-0025 이후 이 add-on 의 hook marker 가 있는 세션만 `team_execution_enabled: true` 로 동작한다. 아래 §3 의 신뢰 범위를 이해하고 동의하는 경우에만 설치한다.
+- **release maintainer** — 격리된 `CODEX_HOME` 에서 qualification smoke 를 돌릴 때.
 
-일반 소비 프로젝트는 설치할 이유가 없다. 배포 profile 은 add-on 을 설치해도 바뀌지 않는다
-(`team_execution_enabled: false` 유지 — `codex-team` §7). Add-on 은 실행 가능성을 열 뿐,
-승격은 별도 배포 결정이다.
+설치하지 않은 소비 프로젝트는 그대로 동작한다 — `$atp:task` 가 `skip: no-codex-hooks` 를 기록하고 Tier B 순차 self-check 로 계속한다. 즉 add-on 은 "팀 실행 켜기" 스위치이고, 켜지 않으면 2.17.0 이전과 같다.
 
 ## 2. 설치
 
@@ -68,14 +66,16 @@ Hooks can run outside the sandbox after you trust them.
 - 비대화형 `codex exec` 는 신뢰 프롬프트를 띄우지 않고 조용히 hook 을 건너뛴다.
   `--dangerously-bypass-hook-trust` 는 격리 smoke 전용이며 소비 환경에서 쓰지 않는다.
 
-## 4. 지원 scope
+## 4. 지원 scope (ADR-0025 선언 scope)
 
 | 항목 | 상태 |
 |---|---|
-| Codex CLI 0.149.1, Unix, `python3` on PATH | 검증됨 (A축 PASS 2026-08-31) |
-| Windows `py -3` | 미검증 — scope 밖. marker 가 생성되지 않으면 fail-closed |
-| `allow_managed_hooks_only` policy | 미측정 |
-| Codex App / IDE | `unknown` |
+| Codex CLI 0.149.1, Unix, `python3` on PATH, add-on 설치 + hook trust | **scope 안** — `supported` / `team_execution_enabled: true` (qualification 2026-09-08 pass) |
+| Windows `py -3` | 미검증 — scope 밖. marker 미생성 → fail-closed → Tier B |
+| managed `allow_managed_hooks_only` 정책 계층 | 사용자 config 에서 바인딩 안 됨. managed 계층이 plugin hook 을 배제하면 marker 미생성 → fail-closed |
+| Codex App / IDE | `unknown` — scope 밖 |
+
+**B축(실행 중 steering/취소 delivery)은 `unknown`** 이다. ATP 정상 흐름은 이를 요구하지 않으며, 실행 중 steering 을 명시적으로 요구하는 요청만 blocked/user-decision 으로 반환된다. 사용자 취소는 Codex 인터럽트가 상위에서 처리한다.
 
 ## 5. 비용
 

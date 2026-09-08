@@ -873,6 +873,8 @@ blocked_on: <기다리는 것>
 
 ## 8. 보고서 스키마 (v2)
 
+> 한 세션이 같은 대화에서 `ended_at` 직후 연속 단계를 이어갈 때는 `ended_at: null` 로 되돌리고 `## Phase N — <제목>` 하위 섹션(Invocations/Decisions/verified_by_me)을 추가하는 것을 허용한다. Phase 섹션은 스키마 필드를 늘리지 않으며 top-level 필드의 의미를 바꾸지 않는다(task SKILL §2 재개 규약).
+
 ```yaml
 ---
 schema_version: 2

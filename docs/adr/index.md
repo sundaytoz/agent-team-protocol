@@ -32,3 +32,4 @@
 | [ADR-0022](./ADR-0022-pre-spawn-wait-wakeup-capability-gate.md) | Codex wait/wakeup capability 판정을 first advisor spawn 전 absolute preflight로 이동하고 runtime behavior gate 추가 | accepted (zero-child와 blocked convergence는 ADR-0023이 부분 supersede) | 2026-08-18 |
 | [ADR-0023](./ADR-0023-host-native-cooperative-execution.md) | Formal scheduling과 team execution 분리 — host-native cooperative mode, transparent Tier B와 다른 host topology 불변 | superseded by ADR-0024 | 2026-08-18 |
 | [ADR-0024](./ADR-0024-host-managed-subagent-orchestration.md) | Codex product-managed subagent orchestration, release-time capability evidence와 no-polling result barrier (ADR-0023 supersede) | accepted | 2026-08-19 |
+| [ADR-0025](./ADR-0025-codex-scope-gated-team-execution.md) | Codex team execution 승격 — atp-codex-hooks add-on marker에 gate된 hook-guarded bounded pool을 선언 scope 안 `supported`/`true`로 (ADR-0024 확장) | accepted | 2026-09-08 |
