@@ -83,11 +83,11 @@ A. Yes, it is idempotent. Existing files are not overwritten, and the `<!-- atp:
 
 ### Q. I installed atp in Codex and the "Hooks need review" prompt appears (or does not).
 
-A. Since base `atp` 2.17.0 no hook ships in the base bundle, so a base-only install never shows the prompt. If it appears, you also installed the opt-in add-on `atp-codex-hooks`. The prompt says its 8 hooks will run outside the sandbox once trusted, and trust is bound to the command string, so it survives later runner code changes. Unless you run maintainer smokes or experiment with the candidate, remove it with `codex plugin remove atp-codex-hooks`. Details: [`../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md`](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) (Korean-first).
+A. Since base `atp` 2.17.0 no hook ships in the base bundle, so a base-only install never shows the prompt. If it appears, you also installed the opt-in add-on `atp-codex-hooks`. The prompt says its 8 hooks will run outside the sandbox once trusted, and trust is bound to the command string, so it survives later runner code changes. If you want ATP team execution in Codex (real advisor/worker spawns), choose `Trust all` (2.18.0, ADR-0025). Otherwise choose `Continue without trusting` or run `codex plugin remove atp-codex-hooks`. Details: [`../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md`](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) (Korean-first).
 
 ### Q. `codex-team` records `skip: no-codex-hooks` and proceeds with zero spawns. Is that an error?
 
-A. No. Without the add-on there is no `ATP_HOOK_GUARD_READY` marker, the candidate bounded pool fails closed, and `$atp:task` continues in the mode the deployed profile dictates (currently `tier_b_sequential`). Installing the add-on does not change the deployed profile (`team_execution_enabled: false`).
+A. No. Without the add-on (or with untrusted hooks) there is no `ATP_HOOK_GUARD_READY` marker, the bounded pool fails closed, and `$atp:task` continues as `tier_b_sequential` (or `blocked_explicit_independence` when independence is required). To turn team execution on, run `codex plugin add atp-codex-hooks@agent-team-protocol`, grant hook trust in the TUI, and start a new session — that session runs with `team_execution_enabled: true` (scope-gated, ADR-0025).
 
 ## graphify add-on
 

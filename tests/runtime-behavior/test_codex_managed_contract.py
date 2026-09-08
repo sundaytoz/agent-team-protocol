@@ -22,6 +22,10 @@ EVIDENCE = (
     ROOT
     / "tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json"
 )
+PROMOTION_EVIDENCE = (
+    ROOT
+    / "tests/runtime-behavior/evidence/codex-cli-0.149.1-hook-guarded-20260908.json"
+)
 
 
 class CodexManagedContractTests(unittest.TestCase):
@@ -308,7 +312,9 @@ class CodexManagedContractTests(unittest.TestCase):
         self.assertIn("unknown telemetry", (result.stdout + result.stderr).lower())
 
     def test_deployed_profile_matches_empirical_smoke_outcome(self) -> None:
-        evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+        """The deployed block must equal the promotion evidence profile, and that
+        evidence must show every qualification smoke passing on the add-on build."""
+        evidence = json.loads(PROMOTION_EVIDENCE.read_text(encoding="utf-8"))
         appendix = (
             ROOT / "plugins/atp/docs/development/codex-lifecycle-routing.md"
         ).read_text(encoding="utf-8")
@@ -329,9 +335,40 @@ class CodexManagedContractTests(unittest.TestCase):
                 True if value == "true" else False if value == "false" else value
             )
         self.assertEqual(evidence["deployed_profile"], deployed)
-        self.assertTrue(any(item["result"] == "fail" for item in evidence["smokes"]))
-        self.assertEqual("unsupported", deployed["host_managed_subagent_orchestration"])
-        self.assertFalse(deployed["team_execution_enabled"])
+        self.assertTrue(all(item["result"] == "pass" for item in evidence["smokes"]))
+        self.assertEqual("supported", deployed["host_managed_subagent_orchestration"])
+        self.assertTrue(deployed["team_execution_enabled"])
+        self.assertEqual("hook_guarded_bounded_pool", deployed["execution_scope"])
+        self.assertEqual("atp_hook_guard_ready_marker", deployed["scope_gate"])
+        ids = {item["id"] for item in evidence["smokes"]}
+        self.assertTrue({"Q1-terminal-only-1-agent", "Q2-delayed-terminal-1-agent",
+                         "Q3-staggered-2-agent-all-results",
+                         "Q4-capacity-denial-refill-5-agent"} <= ids)
+        denial = next(i for i in evidence["smokes"] if i["id"].startswith("Q4"))
+        self.assertEqual(denial["spawn_attempts"] - denial["accepted_spawns"],
+                         denial["hook_ledger_capacity_denials"])
+        self.assertEqual({"parent_marker": denial["hook_ledger_capacity_denials"]},
+                         denial["denials_attested_by"])
+        for item in evidence["smokes"]:
+            self.assertEqual(item["requested_tasks"], item["accepted_spawns"])
+            self.assertEqual(item["requested_tasks"], item["terminal_deliveries"])
+            self.assertEqual(item["requested_tasks"], item["collected_results"])
+            self.assertEqual(0, item["list_calls"])
+            self.assertEqual(0, item["interrupt_calls"])
+            self.assertEqual("Stop", item["last_hook_event"])
+        # the 2026-08-26 built-in barrier evidence is unchanged history: it still fails
+        built_in = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+        self.assertTrue(any(item["result"] == "fail" for item in built_in["smokes"]))
+        self.assertFalse(built_in["deployed_profile"]["team_execution_enabled"])
+
+    def test_promotion_evidence_is_sanitized(self) -> None:
+        text = PROMOTION_EVIDENCE.read_text(encoding="utf-8")
+        for needle in ("/Users/", "/private/tmp/", "wemadeplay"):
+            self.assertNotIn(needle, text)
+        evidence = json.loads(text)
+        for item in evidence["smokes"]:
+            for value in item["artifact_sha256"].values():
+                self.assertRegex(value, r"^[0-9a-f]{64}$")
 
     def test_bounded_pool_candidate_evidence_is_not_promoted(self) -> None:
         evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))

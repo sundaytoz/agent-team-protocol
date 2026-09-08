@@ -90,11 +90,11 @@ A. `atp` base 가 먼저 설치돼 있어야 한다. `atp-graphify` 는 `atp` �
 
 ### Q. Codex 에서 atp 를 설치했는데 "Hooks need review" 가 뜬다 / 안 뜬다.
 
-A. base `atp` 2.17.0 이후에는 hook 이 번들되지 않으므로 base 만 설치하면 뜨지 않는 것이 정상이다. 뜬다면 옵트인 add-on `atp-codex-hooks` 를 함께 설치한 경우다. 그 프롬프트는 add-on 의 8개 hook 이 trust 뒤 sandbox 밖에서 실행됨을 알리는 것이며, trust 는 명령 문자열에 묶여 이후 runner 코드 변경에도 유지된다. maintainer smoke 나 candidate 실험이 아니면 `codex plugin remove atp-codex-hooks` 로 제거한다. 상세는 [`../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md`](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
+A. base `atp` 2.17.0 이후에는 hook 이 번들되지 않으므로 base 만 설치하면 뜨지 않는 것이 정상이다. 뜬다면 옵트인 add-on `atp-codex-hooks` 를 함께 설치한 경우다. 그 프롬프트는 add-on 의 8개 hook 이 trust 뒤 sandbox 밖에서 실행됨을 알리는 것이며, trust 는 명령 문자열에 묶여 이후 runner 코드 변경에도 유지된다. Codex 에서 ATP 팀 실행(실제 advisor/worker spawn)을 원하면 `Trust all` 을 선택한다(2.18.0, ADR-0025). 원하지 않으면 `Continue without trusting` 또는 `codex plugin remove atp-codex-hooks`. 상세는 [`../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md`](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
 
 ### Q. `codex-team` 이 `skip: no-codex-hooks` 를 기록하고 spawn 0 으로 진행한다. 오류인가?
 
-A. 정상이다. add-on 미설치면 `ATP_HOOK_GUARD_READY` marker 가 없어 candidate bounded pool 이 fail-closed 로 닫히고, `$atp:task` 는 배포 profile 이 정한 mode(현재 `tier_b_sequential`) 로 차단 없이 계속한다. add-on 을 설치해도 배포 profile(`team_execution_enabled: false`) 은 바뀌지 않는다.
+A. 정상이다. add-on 미설치(또는 untrusted)면 `ATP_HOOK_GUARD_READY` marker 가 없어 bounded pool 이 fail-closed 로 닫히고, `$atp:task` 는 `tier_b_sequential`(독립성 필수 요청이면 `blocked_explicit_independence`) 로 차단 없이 계속한다. 팀 실행을 켜려면 `codex plugin add atp-codex-hooks@agent-team-protocol` 후 TUI 에서 hook trust 를 부여하고 새 세션을 시작한다 — 그 세션은 `team_execution_enabled: true`(scope-gated, ADR-0025) 로 동작한다.
 
 ## 에이전트 팀 운영
 

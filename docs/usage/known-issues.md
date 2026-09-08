@@ -18,11 +18,13 @@ last_reviewed: 2026-08-26
 
 | ID | Surface | 상태 | 사용자 영향 |
 |---|---|---|---|
-| ATP-KI-001 | Codex CLI 0.149.1 | Open | tested CLI에서 독립 subagent team execution disabled |
+| ATP-KI-001 | Codex CLI 0.149.1 | Resolved within declared scope (2026-09-08) | add-on `atp-codex-hooks` 설치·신뢰 세션은 hook-guarded bounded pool로 team execution 가능. 미설치·Windows·App/IDE 는 계속 Tier B |
 | ATP-KI-002 | Codex App/IDE | Verification gap | 동일한 maintainer smoke 미수행으로 managed orchestration 지원 여부 `unknown` |
 | ATP-KI-003 | Codex formal wait/wakeup | Upstream capability gap | timeout-free targeted subscription을 formal scheduling mode로 사용할 수 없음 |
 
 ## ATP-KI-001 — Codex CLI managed all-results barrier 실패
+
+> **2026-09-08 상태 갱신 (ADR-0025)**: built-in barrier 실패는 그대로지만, 옵트인 add-on `atp-codex-hooks`의 hook-guarded bounded pool이 all-results barrier를 제공하는 것으로 qualification을 통과해 **선언 scope 안에서 해소**됐다. add-on을 설치하고 TUI에서 hook trust를 부여한 Unix/`python3` 세션은 `host_managed_subagent_orchestration: supported`, `team_execution_enabled: true`로 실제 team execution을 수행한다. add-on 미설치·untrusted·Windows·App/IDE 세션은 marker가 없어 아래 원문의 Tier B/blocked 동작이 그대로 적용된다. 아래 증상·영향·우회책 절은 **scope 밖 세션**에 대한 기술로 읽는다.
 
 ### 증상과 범위
 

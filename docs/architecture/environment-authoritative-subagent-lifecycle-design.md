@@ -359,7 +359,7 @@ Codex appendix는 collaboration runtime이 실제 보장하는 상태와 control
 | approval subscription, failure/interruption detail, coalescing | unknown | 공개 API가 structured guarantee를 제공하지 않음 |
 | scheduler/watchdog registration | unsupported | event-only resume와 health/cancel 계약 없음 |
 
-따라서 tested Codex CLI profile은 `formal_adapter_enabled: false`, `manual_wait_polling_supported: false`, `host_managed_subagent_orchestration: unsupported`, `team_execution_enabled: false`다. ATP는 첫 collaboration action 전에 Codex orchestration skill을 전문 로드하고 unsupported이면 explicit blocked/user-decision 경로를 사용한다. App/IDE는 `unknown`이다. 적용 surface/version과 공식·경험적 근거는 Codex appendix와 release evidence manifest에 한정한다.
+따라서 (2026-08 시점) tested Codex CLI profile은 `formal_adapter_enabled: false`, `manual_wait_polling_supported: false`, `host_managed_subagent_orchestration: unsupported`, `team_execution_enabled: false`였다. **2026-09-08 갱신(ADR-0025)**: 옵트인 add-on `atp-codex-hooks`의 hook-guarded bounded pool이 qualification을 통과해 `host_managed_subagent_orchestration: supported`, `team_execution_enabled: true`로 전환됐다 — 단 `ATP_HOOK_GUARD_READY` marker가 있는 세션에 gate된 값이며, marker 없는 세션은 아래 서술 그대로 동작한다. ATP는 첫 collaboration action 전에 Codex orchestration skill을 전문 로드하고 unsupported이면 explicit blocked/user-decision 경로를 사용한다. App/IDE는 `unknown`이다. 적용 surface/version과 공식·경험적 근거는 Codex appendix와 release evidence manifest에 한정한다.
 
 ## 구현 파일 영향 맵
 

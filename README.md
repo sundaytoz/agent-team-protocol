@@ -86,7 +86,7 @@ graphify 지식 그래프 기능은 옵트인 add-on 이다.
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-Codex hook-guarded bounded-pool candidate 의 hook 은 Codex CLI 전용 옵트인 add-on 이다. maintainer smoke 나 candidate 실험 목적이 아니면 설치할 필요가 없다 — base 만 설치하면 hook 이 배포되지 않아 "Hooks need review" 프롬프트도 뜨지 않는다. 상세: [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
+**Codex 에서 실제 팀 실행(advisor/worker spawn)을 켜려면** Codex CLI 전용 옵트인 add-on 을 설치하고 TUI 에서 hook trust 를 부여한다(2.18.0, ADR-0025 — scope-gated). base 만 설치하면 hook 이 배포되지 않아 "Hooks need review" 프롬프트가 뜨지 않고 `/atp:task` 는 Tier B 순차 모드로 동작한다. 상세: [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
 
 ```bash
 codex plugin add atp-codex-hooks@agent-team-protocol

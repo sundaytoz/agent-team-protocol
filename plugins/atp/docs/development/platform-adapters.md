@@ -148,6 +148,8 @@ Scheduling 기록은 lifecycle ledger와 분리된 phase-local `wait-wakeup-even
 
 별도 축 `manual_wait_polling_supported`는 generic model-visible polling이 correctness primitive인지 나타내며, managed mode에서는 반드시 `false`다. 이 값은 formal adapter capability와 host-managed capability를 합성하지 않는다.
 
+Host skill은 `supported`를 **선언된 scope에 gate**할 수 있다 — 예: 옵트인 add-on hook이 세션 시작 시 넣는 exact marker의 존재. 그 경우 scope 판정은 그 skill이 정한 단일 신호로만 하고, marker 부재는 오류가 아니라 `unsupported`로 취급해 `general_task`는 Tier B로 투명하게 계속한다. Runtime 관측·시간·probe로 scope 안팎을 재추론하지 않는다.
+
 1. 요청된 child를 만들고 environment identity를 report identity에 연결할 수 있다.
 2. Host가 follow-up routing, 결과 대기와 terminal delivery를 관리한다.
 3. 요청한 모든 child terminal result가 준비된 뒤 parent result collection barrier를 연다.

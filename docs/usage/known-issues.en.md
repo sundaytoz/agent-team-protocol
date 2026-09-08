@@ -18,11 +18,13 @@ This document tracks confirmed limitations that affect current user behavior. De
 
 | ID | Surface | Status | User impact |
 |---|---|---|---|
-| ATP-KI-001 | Codex CLI 0.149.1 | Open | Independent subagent team execution is disabled for the tested CLI |
+| ATP-KI-001 | Codex CLI 0.149.1 | Resolved within declared scope (2026-09-08) | Sessions with the `atp-codex-hooks` add-on installed and trusted run team execution through the hook-guarded bounded pool; without the add-on, on Windows, or in App/IDE the Tier B behavior remains |
 | ATP-KI-002 | Codex App/IDE | Verification gap | Managed orchestration support is `unknown` because the same maintainer smoke has not been run |
 | ATP-KI-003 | Codex formal wait/wakeup | Upstream capability gap | A timeout-free targeted subscription cannot be used as ATP's formal scheduling mode |
 
 ## ATP-KI-001 — Codex CLI managed all-results barrier failure
+
+> **Status update 2026-09-08 (ADR-0025)**: the built-in barrier failure stands, but the hook-guarded bounded pool shipped in the opt-in add-on `atp-codex-hooks` passed qualification as the all-results barrier provider, so this issue is **resolved within the declared scope**. A Unix/`python3` session with the add-on installed and hook trust granted in the TUI runs with `host_managed_subagent_orchestration: supported` and `team_execution_enabled: true`. Sessions without the add-on, with untrusted hooks, on Windows, or in App/IDE have no marker and keep the Tier B / blocked behavior described below. Read the symptom, impact, and workaround sections as describing **out-of-scope sessions**.
 
 ### Symptom and scope
 
