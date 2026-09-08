@@ -43,6 +43,8 @@ This category collects documents written from the perspective of a **user instal
    /plugin install atp-graphify@agent-team-protocol
    ```
 
+   The Codex-CLI-only `atp-codex-hooks` add-on is for maintainer smokes and candidate experiments; regular users do not install it — see [faq.en.md](./faq.en.md#codex-hooks-add-on).
+
 4. Initialize — generates the docs skeleton plus the `CLAUDE.md` guidance block in your project
 
    ```

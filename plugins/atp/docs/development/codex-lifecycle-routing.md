@@ -5,7 +5,7 @@ description: ATP의 host-neutral lifecycle과 result barrier를 Codex built-in m
 owner: template-maintainer
 stability: draft
 host_scope: codex
-last_reviewed: 2026-08-31
+last_reviewed: 2026-09-08
 ---
 
 # Codex managed subagent orchestration and lifecycle routing appendix
@@ -300,10 +300,29 @@ same-identity continuation)이 실동작으로 재확인됐다.
   붙잡고 있는 동안 초과 spawn을 시도해야 한다. 짧은 child는 다음 spawn 전에 slot을 반납한다.
 - **`hooks/hooks.json`은 설치만으로 활성화된다.** manifest에 `hooks` 필드가 없어도 기본
   discovery 경로로 번들 hook이 실행됐고, 도구를 쓰지 않는 프롬프트에서도 `PLUGIN_DATA`에
-  state/ledger row가 기록됐다. 배포 범위 결정 전까지 packaging 부수효과로 남긴다.
+  state/ledger row가 기록됐다. 이 packaging 부수효과는 §8.5의 add-on 분리로 base 번들에서 제거됐다.
 
 따라서 A축은 PASS다. §1 four-axis profile과 `team_execution_enabled: false`는 D축 scope
 선언과 위 packaging 결정이 끝날 때까지 유지한다. B축 결과는 그 결정과 독립이다.
+
+### 8.5 2026-09-08 D축 — candidate hook의 옵트인 add-on 분리
+
+TUI 최초 대면 측정(2026-09-08)에서 설치 직후 "Hooks need review / 8 hooks are new or changed /
+Hooks can run outside the sandbox after you trust them"가 뜨고, trust는 `config.toml`의
+`[hooks.state."<plugin>:hooks/hooks.json:<event>:0:0"] trusted_hash`로 항목 단위 영구 저장됨을
+확인했다. Trust는 **command 문자열에만** 묶여 runner `.py` 내용을 바꿔도 유지된다 — 즉
+`Trust all` 한 번이 이후 모든 릴리스의 runner 변경을 sandbox 밖에서 무확인 실행하는 동의가 된다.
+
+`team_execution_enabled: false`인 base 소비자가 얻을 기능 없이 이 동의를 요구받는 것은 부당하므로
+candidate hook을 base에서 빼 옵트인 add-on **`atp-codex-hooks`**(`plugins/atp-codex-hooks/`)로
+분리했다. Runner는 byte 무수정이고 `hooks.json`은 description만 바뀌어 `hooks_sha256`이 재생성됐다.
+`codex-team` §1 marker는 add-on 설치본 해시 기준이며, add-on 미설치 시 marker 부재 →
+spawn 0 fail-closed는 그대로다. `$atp:task`는 이를 `skip: no-codex-hooks`로 기록하고 배포 profile의
+mode로 차단 없이 계속한다. 이 분리는 packaging 형태 변경이며 §1 profile을 바꾸지 않는다.
+
+남은 D축: 옵트인 경계 안 `allow_managed_hooks_only` 측정, Windows `py -3` runner scope 결정.
+B축 T4는 interactive PTY 재측정 대기로 독립이다. 사용자 가이드는 add-on의
+`docs/codex-hooks-usage.md`.
 
 ## 9. 실행 체크리스트
 

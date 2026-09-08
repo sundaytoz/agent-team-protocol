@@ -434,7 +434,7 @@ retrospective 가 승격 판정한 후보 8건 중 **번들(`plugins/`) 변경�
 **제안**: `agent-team-protocol.md` §4.7 에 3번째 축 신설 — "**판별력**: 이 불변식이 *정상* 상태를 위반으로 판정할 경우가 있는가? 위반으로 잡힐 대상을 3개 열거해보고 그중 정상인 것이 있으면 판별 키를 좁힌다(예: label → (label, 정의파일)). 검사 범위가 산출물 표면을 넘어 이력·메타 문서까지 가는지도 확인한다." `design-advisor.md` 의 self-audit 절 제목도 (시점·표현·**판별력**) 3축으로 갱신.
 - 태그: [self] · P1 · 번들 → base manifest 4곳 bump + changes 1건
 - docs_sync_target: `plugins/atp/docs/development/agent-team-protocol.md` §4.7 + `plugins/atp/agents/design-advisor.md`
-- 재현성 근거: 동일 세션 n=3, 메커니즘 상이, 축 직교성 논증 확보
+- 재현성 근거: 동일 세션 n=3, 메커니즘 상이, 축 직교성 논증 확보. **+2 (2026-09-08 세션 20260908-152238, n=5)**: AC7 — `git grep 'plugins/atp/hooks'` 가 "base 에 hooks 없음" 을 단언하는 테스트의 assertion 메시지(부정 단언의 자기언급)를 매치 / AC9 — `/Users/` 광역 패턴이 redaction placeholder `/Users/example` fixture 를 매치. 둘 다 orchestrator 가 design 스킵 후 직접 저술한 AC 이며 §4.7 게이트 실행 주체 공백이 함께 드러났다(같은 세션에 task SKILL §5.1 + §4.7 서두에 "저술 주체 무관 적용" 1줄씩 반영). 판별력 열거의 기본 false-positive 후보 2종 명시 권장: (a) 금지 대상을 이름으로 단언하는 테스트·이력 문서, (b) 의도적 placeholder/redaction fixture. 해소는 산출물 재문구보다 pathspec/패턴 협소화 우선.
 
 ### G-UNIVCLAIM-1 — 전칭 부정 주장의 확증 표면 병기 (P1) `release-pending`
 

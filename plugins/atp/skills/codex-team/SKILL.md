@@ -11,15 +11,15 @@ description: Codex에서 ATP가 subagent를 spawn, delegate, steer, collect하�
 
 1. 아래 §7의 배포 profile을 먼저 적용한다.
 2. `team_execution_enabled: false`인 일반 소비 task는 child를 spawn하지 않고 `$atp:task`의 blocked/Tier B 계약으로 반환한다.
-3. 격리된 maintainer candidate smoke가 명시적으로 요청되고 아래 exact hook marker가 현재 root context에 있을 때만 §2~§6의 bounded pool을 실행할 수 있다.
-4. Marker가 없거나 schema/hash가 다르면 hook이 untrusted, disabled, policy-excluded, dependency-missing 또는 source/install mismatch인 것으로 취급한다. 이 경우 child spawn은 0이며 profile을 올리지 않는다.
+3. Candidate hook은 base `atp` 번들에 없다. 옵트인 add-on **`atp-codex-hooks`**(`plugins/atp-codex-hooks/hooks/hooks.json` + `hooks/codex_pool_hook.py`)를 설치하고 TUI에서 hook trust를 부여한 세션에서만 `SessionStart` hook이 아래 marker를 만든다. 격리된 maintainer candidate smoke가 명시적으로 요청되고 이 exact hook marker가 현재 root context에 있을 때만 §2~§6의 bounded pool을 실행할 수 있다.
+4. Marker가 없거나 schema/hash가 다르면 add-on 미설치, hook untrusted, disabled, policy-excluded, dependency-missing 또는 source/install mismatch인 것으로 취급한다. 이 경우 child spawn은 0이며 profile을 올리지 않는다. Add-on 미설치는 오류가 아니다 — `$atp:task`는 이를 `skip: no-codex-hooks`로 기록하고 §1.2의 blocked/Tier B 계약으로 차단 없이 계속한다(graphify add-on의 `skip: no-graphify`와 같은 형태).
 5. Candidate smoke는 사용자 전역 설정, 설치된 사용자 plugin cache, hooks와 실제 소비 프로젝트를 변경하지 않는다.
 
 ```text
-ATP_HOOK_GUARD_READY schema=1 hooks_sha256=aa090cd23967d9f8ace9e7d8fb634d39d62ba2f37f86e9b6a2d90c0db193c530 runner_sha256=22b938537cce01251fc00d3c4e358018dbf2a656e2edd4ceded59b9d7ac621b0
+ATP_HOOK_GUARD_READY schema=1 hooks_sha256=d7005171cb3d60c911d9310733b9db445f184b40024e57e870a64d2a62fa8bd7 runner_sha256=22b938537cce01251fc00d3c4e358018dbf2a656e2edd4ceded59b9d7ac621b0
 ```
 
-Marker는 plugin-bundled `SessionStart` hook만 만든다. Maintainer가 marker를 prompt에 복사하거나 hook trust 우회 없이 합성한 문자열은 capability evidence가 아니다. Candidate runner는 Unix의 `python3`, Windows의 `py -3`를 명시적으로 preflight하는 제한된 배포 가설이며, 이 dependency가 unknown인 surface는 qualification을 통과하지 않는다.
+Marker는 add-on `atp-codex-hooks`가 번들한 `SessionStart` hook만 만든다. 해시는 add-on 설치본의 `hooks/hooks.json`과 `hooks/codex_pool_hook.py` 바이트에 대한 SHA-256이다. Maintainer가 marker를 prompt에 복사하거나 hook trust 우회 없이 합성한 문자열은 capability evidence가 아니다. Candidate runner는 Unix의 `python3`, Windows의 `py -3`를 명시적으로 preflight하는 제한된 배포 가설이며, 이 dependency가 unknown인 surface는 qualification을 통과하지 않는다.
 
 ## 2. Bounded pool 상태
 
@@ -121,13 +121,14 @@ control-surface gap을 all-results barrier 실패로 확대 해석하지 않는�
 | A. all-results barrier | PASS | 2026-08-31 재실행에서 requested/attempts/accepted/terminal/collected `5/6/5/5/5`, hook ledger capacity denial 1건(`attested_by: parent_marker`), list/interrupt 0, source/install parity 일치 |
 | B. in-flight control delivery | unknown | T4/T6는 비대화형 `codex exec`에서만 측정됨 — 통과 가능한 interactive surface 미측정 |
 | C. approval continuation | supported | T5 PASS — 실제 interactive decision 뒤 같은 child identity가 terminal까지 continuation |
-| D. packaging and runner scope | 옵트인 add-on 경계로 결정 | 번들 hook은 TUI에서 1회 "hooks can run outside the sandbox" 신뢰를 요구하고, trust는 command 문자열에만 묶여 이후 runner 변경을 무확인 실행한다. 기능을 켜는 사람만 그 동의를 지도록 base 번들에서 분리한다. 경계 안에서 Unix `python3` scope 선언과 `allow_managed_hooks_only`가 남는다 |
+| D. packaging and runner scope | 옵트인 add-on `atp-codex-hooks`로 분리 완료 (2026-09-08) | 번들 hook은 TUI에서 1회 "hooks can run outside the sandbox" 신뢰를 요구하고, trust는 command 문자열에만 묶여 이후 runner 변경을 무확인 실행한다. 기능을 켜는 사람만 그 동의를 지도록 base 번들에서 제거하고 add-on으로 옮겼다. base만 설치한 Codex 소비자에게는 hook이 배포되지 않는다. 경계 안에서 Unix `python3` scope 선언과 `allow_managed_hooks_only` 측정이 남는다 |
 
 A는 필수 축이고 B/C/D는 서로 독립이다. B가 `unknown | unsupported`여도 A와 D가 충족되면
 선언된 scope 안에서 team execution을 열 수 있으며, 그 경우 mid-flight steering/취소를 요구하는
 요청만 blocked/user-decision 경로로 보낸다.
 
 따라서 일반 소비 task는 이 profile을 실행 중 임의로 올리지 않는다. A축은 2026-08-31 재실행으로
-PASS했고, D축은 candidate hook을 base 번들에서 빼고 옵트인 add-on으로 분리하는 방향으로
-결정됐다. Add-on 분리와 그 경계 안의 scope 선언이 끝난 뒤 별도 배포 결정으로
-`team_execution_enabled`를 변경한다. B와 C는 그 결정과 독립적으로 각자의 축 값으로 기록한다.
+PASS했고, D축은 candidate hook을 base 번들에서 빼 옵트인 add-on `atp-codex-hooks`로 분리하는
+것으로 결정·완료됐다(2026-09-08). 남은 경계 안 scope 선언(`allow_managed_hooks_only`, Windows
+runner)이 끝난 뒤 별도 배포 결정으로 `team_execution_enabled`를 변경한다. 이 add-on 분리 자체는
+profile을 바꾸지 않는다. B와 C는 그 결정과 독립적으로 각자의 축 값으로 기록한다.

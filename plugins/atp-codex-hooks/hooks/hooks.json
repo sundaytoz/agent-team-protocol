@@ -1,5 +1,5 @@
 {
-  "description": "ATP Codex hook-guarded bounded-pool candidate. Matchers stay limited to the collaboration and plan tools the pool actually needs; unrelated tool calls never invoke the runner.",
+  "description": "ATP Codex hook-guarded bounded-pool candidate, shipped only in the opt-in atp-codex-hooks add-on (never in the atp base bundle). Matchers stay limited to the collaboration and plan tools the pool actually needs; unrelated tool calls never invoke the runner.",
   "hooks": {
     "SessionStart": [
       {

@@ -27,6 +27,8 @@ trigger: /task
 
 선택한 host orchestration skill의 capability profile과 result collection 계약을 실행 중 관측의 임의 추론으로 덮어쓰지 않는다. Host-specific skill이 제공하는 managed orchestration을 generic polling보다 우선한다. **첫 advisor를 포함해 어떤 child도 spawn하기 전에** skill 전문 로드와 mode 선택을 끝낸다.
 
+Host skill이 옵트인 add-on을 전제로 하는 경우(현재 Codex의 `codex-team` §1 — hook-guarded candidate는 add-on `atp-codex-hooks`가 번들) add-on 미설치는 오류가 아니다. 해당 skill이 요구하는 marker/자원이 없으면 `skip: no-codex-hooks`처럼 `skip: no-<addon>` 한 줄을 `Decisions`에 기록하고, 그 skill의 배포 profile이 정한 mode(현재 Codex는 `tier_b_sequential` 또는 `blocked_explicit_independence`)로 **차단 없이 계속**한다 — §9 종료조건 4항의 `skip: no-graphify`와 같은 형태다.
+
 동시에 요청을 다음 두 intent 중 하나로 분류한다.
 
 - `general_task`: `$atp:task`로 팀 작업을 요청했지만 실제 독립 subagent/advisor 의견 자체가 필수 산출물은 아님
@@ -158,6 +160,7 @@ requirements-advisor
 - 기존 문서로 충분하면 research 스킵
 - 마이크로 편집(한 파일 몇 줄) 은 **advisor 전체 스킵 + orchestrator 직접 수행** 허용 (프로토콜 예외 조항)
 - 설계 산출물이 **파일 영향 맵 + 계약 + 시퀀스** 까지 확정적이면 `implementation-advisor` 스킵 + orchestrator 직접 구현 허용
+- `design-advisor` 를 스킵해 **AC 를 orchestrator 가 직접 저술**하면 프로토콜 §4.7 AC self-audit 게이트도 orchestrator 가 수행한다 — 게이트는 역할이 아니라 AC 저술 주체에 묶인다. 결과 1~2줄을 acceptance-criteria 산출물 머리에 남긴다.
 
 **스킵 불가 (항상 실행)**:
 

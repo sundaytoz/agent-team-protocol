@@ -16,9 +16,15 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins/atp"
-RUNNER = PLUGIN / "hooks/codex_pool_hook.py"
-HOOKS = PLUGIN / "hooks/hooks.json"
+ADDON = ROOT / "plugins/atp-codex-hooks"
+RUNNER = ADDON / "hooks/codex_pool_hook.py"
+HOOKS = ADDON / "hooks/hooks.json"
 SKILL = PLUGIN / "skills/codex-team/SKILL.md"
+MARKETPLACES = (
+    ROOT / ".claude-plugin/marketplace.json",
+    ROOT / ".codex-plugin/marketplace.json",
+    ROOT / ".agents/plugins/marketplace.json",
+)
 
 
 def digest(path: Path) -> str:
@@ -40,7 +46,7 @@ class HookHarness:
         event = {"session_id": self.session, **payload}
         env = os.environ.copy()
         env["PLUGIN_DATA"] = str(self.root)
-        env["PLUGIN_ROOT"] = str(PLUGIN)
+        env["PLUGIN_ROOT"] = str(ADDON)
         # The event ledger is maintainer diagnostics and ships disabled; the
         # fixtures assert on it, so they opt in the same way a smoke does.
         env.setdefault("ATP_HOOK_EVENT_LEDGER", self.ledger_mode)
@@ -158,6 +164,41 @@ class CodexHookGuardTests(unittest.TestCase):
         self.assertIn("child spawn은 0", skill)
         manifest = json.loads((PLUGIN / ".codex-plugin/plugin.json").read_text())
         self.assertNotIn("hooks", manifest)
+
+    def test_base_bundle_ships_no_hooks(self) -> None:
+        """Only the opt-in add-on may carry the hook; a base-only Codex install
+        must never surface the "Hooks need review" trust prompt."""
+        self.assertFalse(
+            (PLUGIN / "hooks").exists(),
+            "the base bundle must not contain a hooks/ directory (add-on only)",
+        )
+        for manifest_path in (
+            PLUGIN / ".claude-plugin/plugin.json",
+            PLUGIN / ".codex-plugin/plugin.json",
+        ):
+            manifest = json.loads(manifest_path.read_text())
+            self.assertNotIn("hooks", manifest, manifest_path.name)
+        self.assertTrue(HOOKS.is_file())
+        self.assertTrue(RUNNER.is_file())
+        self.assertIn("atp-codex-hooks", SKILL.read_text(encoding="utf-8"))
+
+    def test_addon_manifests_and_marketplaces_are_consistent(self) -> None:
+        claude = json.loads((ADDON / ".claude-plugin/plugin.json").read_text())
+        codex = json.loads((ADDON / ".codex-plugin/plugin.json").read_text())
+        self.assertEqual("atp-codex-hooks", claude["name"])
+        self.assertEqual(claude["name"], codex["name"])
+        self.assertEqual(claude["version"], codex["version"])
+        self.assertEqual(["atp"], claude["dependencies"])
+        self.assertEqual(["atp"], codex["dependencies"])
+        for marketplace in MARKETPLACES:
+            plugins = json.loads(marketplace.read_text())["plugins"]
+            entry = next(
+                (item for item in plugins if item["name"] == "atp-codex-hooks"), None
+            )
+            self.assertIsNotNone(entry, f"{marketplace} must list atp-codex-hooks")
+            source = entry["source"]
+            path = source["path"] if isinstance(source, dict) else source
+            self.assertEqual("./plugins/atp-codex-hooks", path, str(marketplace))
 
     def test_terminal_delta_refills_and_root_stop_opens_only_when_complete(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

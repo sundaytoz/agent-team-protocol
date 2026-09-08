@@ -4,7 +4,7 @@ title: Codex CLI 0.149.1 hook-guarded bounded pool qualification handoff
 status: proposal
 date: 2026-08-27
 owner: template-maintainer
-last_reviewed: 2026-08-31
+last_reviewed: 2026-09-08
 ---
 
 # Codex CLI 0.149.1 hook-guarded bounded pool qualification handoff
@@ -487,6 +487,27 @@ sandbox 밖에서 실행된다.
 채택한다. 옵트인 경계 안에서는 Unix/`python3` scope 선언과 `allow_managed_hooks_only` 측정만
 남는다.
 
+#### D축 add-on 분리 완료 (2026-09-08)
+
+Candidate hook 두 파일을 base `plugins/atp/hooks/`에서 새 옵트인 add-on
+`plugins/atp-codex-hooks/hooks/`로 옮겼다(`git mv`, runner byte 무수정 —
+`runner_sha256` `22b93853…`은 2026-08-31 evidence와 동일). base 번들에는 hook이 남지 않는다.
+
+- add-on manifest 2곳(`.claude-plugin`/`.codex-plugin`, version `1.0.0`, `dependencies: ["atp"]`)과
+  marketplace 정본 3곳에 `atp-codex-hooks`를 등재했다.
+- `hooks.json`은 description만 add-on 표기로 바뀌어 `hooks_sha256`이 `d7005171…`로 재생성됐고,
+  `codex-team/SKILL.md` §1 marker를 새 해시로 갱신했다. add-on 미설치면 marker가 없어 기존
+  fail-closed(spawn 0)가 그대로 동작하며, `$atp:task`는 `skip: no-codex-hooks`로 기록하고 차단 없이
+  계속한다.
+- 회귀 2건 추가 — `test_base_bundle_ships_no_hooks`,
+  `test_addon_manifests_and_marketplaces_are_consistent`. 기존 19건은 add-on 경로로 상수만 바꿔
+  전부 통과.
+- 배포 profile은 변경하지 않았다(`team_execution_enabled: false` 유지). base는 hook 미배포라는
+  소비자 가시 변경으로 `2.16.0 → 2.17.0`.
+
+남은 D축 항목은 옵트인 경계 안의 `allow_managed_hooks_only` 측정과 Windows `py -3` runner
+scope 결정이다. 사용자 가이드는 `plugins/atp-codex-hooks/docs/codex-hooks-usage.md`.
+
 #### 소비자 비용 제거 (2026-09-01)
 
 Trust가 부여된 세션에서 측정된 per-tool 비용은 candidate 설계 결함이었고, 배포 형태와
@@ -560,8 +581,12 @@ T7에서 Codex CLI 0.149.1은 실패한 `spawn_agent` 호출에 `PostToolUse`를
 
 ## New-conversation continuation prompt
 
-이 절은 다음 작업 세션의 첫 요청 정본이다. 이전 판(2026-08-28 재검증용)은 A축 PASS와
-D축 결정으로 대체됐다. 현재 다음 작업은 **candidate hook의 옵트인 add-on 분리**다.
+> **2026-09-08 — 아래 add-on 분리 프롬프트는 실행 완료됐다** (§D축 add-on 분리 완료). 다음 작업
+> 후보는 B축 T4(interactive PTY steering) 재측정, `allow_managed_hooks_only` 측정, Windows runner
+> scope 결정이다. 아래 원문은 실행 기록으로 보존한다.
+
+이 절은 다음 작업 세션의 첫 요청 정본이었다. 이전 판(2026-08-28 재검증용)은 A축 PASS와
+D축 결정으로 대체됐고, 이 판은 **candidate hook의 옵트인 add-on 분리**를 지시했다.
 
 권장 host는 Claude Code다. 이 레포의 배포 profile에서 Codex CLI는
 `team_execution_enabled: false`이므로 Codex에서 `$atp:task`를 부르면 `tier_b_sequential`로
@@ -664,13 +689,20 @@ candidate hook 을 base `plugins/atp/` 에서 옵트인 add-on 으로 옮긴다.
 - 기존 evidence manifest(08-19, 08-26, 08-28, 08-31)는 원본 관측 기록이므로 수정하지 않는다.
   재해석은 backlog / routing 문서에만 쓴다.
 
-## 격리 검증이 필요할 때의 함정 2건
+## 격리 검증이 필요할 때의 함정
 
 - `codex exec` 는 stdin 을 읽으려 블록한다. `< /dev/null` 없으면 10분 넘게 이벤트 0건으로 멈춘다.
 - PATH 의 `codex` 는 cmux shim 이라 자체 hook set 을 주입한다. maintainer smoke 는
   `~/.local/bin/codex` 를 직접 호출한다.
 - capacity denial 을 재현하려면 `agents.max_concurrent_threads_per_session=1` 설정 +
   "연속 spawn" 명시가 둘 다 필요하다. trivial child 는 다음 spawn 전에 slot 을 반납한다.
+- fresh 임시 `CODEX_HOME` 은 `auth.json` 이 없어 TUI 첫 대면이 **로그인 화면**이다(hook 신뢰 프롬프트는
+  로그인·디렉토리 신뢰 뒤에 온다). 로그인 flow 를 밟지 말고 `ln -s ~/.codex/auth.json "$CODEX_HOME/auth.json"`
+  으로만 잠깐 연결하고 smoke 종료 시 링크를 제거한다. 복사·커밋 금지. (2026-09-08 실증)
+- cmux surface 에 TUI 가 포그라운드인 상태로 셸 텍스트를 보내면 문자열이 TUI 메뉴 입력으로 흡수된다
+  (`clear; codex` 가 로그인 메뉴에서 device-code 항목을 선택한 실증). 텍스트를 보내기 전 `read-screen` 으로
+  셸 프롬프트인지 확인하고, TUI 면 `/quit`+Enter 또는 해당 PID 만 종료한 뒤 보낸다. `ctrl-c` 는 로그인 화면을
+  닫지 않는다.
 
 ## 완료 응답에 포함할 것
 

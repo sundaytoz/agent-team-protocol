@@ -57,6 +57,8 @@ Codex CLI 0.149.1 격리 smoke에서 terminal-only 1-agent와 nonterminal `MESSA
 
 Bounded-pool 승격 판정은 [hook-guarded bounded pool backlog](../backlog/codex-cli-hook-guarded-bounded-pool.md) §Phase 3의 4개 독립 축을 따른다. 필수 축은 A(all-results barrier: 이미 전달된 terminal 전부 소비, terminal 뒤에만 refill, capacity denial의 durable 기록, 전원 수집 뒤 root Stop 개방)와 D(선언된 packaging/runner scope)다. A와 D가 PASS하면 선언 scope 안에서 profile을 승격한다. B(active wait의 steering/cancellation delivery)와 C(approval decision 뒤 same-identity continuation)는 독립 축으로 각자 값을 기록하며, 이 두 축의 unknown/unsupported가 A·D 승격을 막지 않는다. 대신 해당 축을 요구하는 요청만 blocked/user-decision 경로로 보낸다.
 
+현재 축 상태(2026-09-08): A PASS(2026-08-31 재실행), C supported, B unknown(interactive PTY 미측정), D는 candidate hook을 옵트인 add-on `atp-codex-hooks`로 분리 완료. base `atp`만 설치한 Codex 소비자에게는 hook이 배포되지 않아 "Hooks need review" 신뢰 프롬프트가 뜨지 않으며, add-on 미설치 시 `$atp:task`는 `skip: no-codex-hooks`로 기록하고 계속한다. 배포 profile은 add-on 분리로 바뀌지 않았다. 상세는 [add-on 가이드](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
+
 근거: [공식 OpenAI Subagents 문서](https://learn.chatgpt.com/docs/agent-configuration/subagents), [upstream issue draft](../backlog/codex-cli-collaboration-await-v1.md), [ADR-0024](../adr/ADR-0024-host-managed-subagent-orchestration.md), [0.149.1 sanitized evidence manifest](../../tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json).
 
 ## ATP-KI-002 — Codex App/IDE capability 상태 미확인

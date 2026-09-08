@@ -25,19 +25,19 @@ last_reviewed: 2026-08-20
 agent-team-protocol/                      (레포 루트 = 마켓플레이스 agent-team-protocol)
 │
 ├── .claude-plugin/
-│   └── marketplace.json                  ← Claude Code 마켓플레이스 정본 (plugins: [atp→./plugins/atp, atp-graphify→./plugins/atp-graphify])
+│   └── marketplace.json                  ← Claude Code 마켓플레이스 정본 (plugins: [atp→./plugins/atp, atp-graphify→./plugins/atp-graphify, atp-codex-hooks→./plugins/atp-codex-hooks])
 │
 ├── .codex-plugin/
 │   └── marketplace.json                  ← Claude 미러 (Codex 는 읽지 않음)
 │
 ├── .agents/
 │   └── plugins/
-│       └── marketplace.json              ← Codex marketplace 정본 (객체형 source: atp→./plugins/atp, atp-graphify→./plugins/atp-graphify)
+│       └── marketplace.json              ← Codex marketplace 정본 (객체형 source: atp→./plugins/atp, atp-graphify→./plugins/atp-graphify, atp-codex-hooks→./plugins/atp-codex-hooks)
 │
 ├── plugins/
 │   ├── atp/                              ← base 플러그인 루트 (설치 시 이 서브트리만 캐시로 복사)
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, release 2.15.0)
+│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, release 2.17.0 — hooks/ 없음: candidate hook은 add-on)
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json               ← base 플러그인 정의 (skills: "./skills/")
 │   │   ├── agents/                       ← base 에이전트 10개 (graphify 3종 제외)
@@ -83,6 +83,13 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │       │   └── graphify-update-advisor.md
 │       └── docs/
 │           └── graphify-usage.md         ← graphify add-on 설치·통합 가이드
+│
+│   └── atp-codex-hooks/                  ← Codex 전용 옵트인 add-on (hook-guarded bounded-pool candidate runner)
+│       ├── .claude-plugin/plugin.json    ← add-on 정의 (name: atp-codex-hooks, version 1.0.0, dependencies: ["atp"])
+│       ├── .codex-plugin/plugin.json     ← 동일 add-on 정의
+│       ├── hooks/hooks.json              ← Codex hook 8항목 (SessionStart marker · spawn/wait/Stop ledger)
+│       ├── hooks/codex_pool_hook.py      ← stdlib-only Python 3 runner
+│       └── docs/codex-hooks-usage.md     ← 설치·hook trust 의미·scope 가이드
 │
 ├── docs/                                 ← 사람용 문서 (번들 제외 — GitHub 독자·기여자 대상)
     ├── index.md (+ index.en.md)          ← docs-first 풀 허브 (한/영)

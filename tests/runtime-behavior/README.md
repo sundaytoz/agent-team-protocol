@@ -43,7 +43,16 @@ python3 tests/runtime-behavior/validate_codex_session.py \
 
 ## Maintainer smoke
 
-> **Event ledger는 opt-in이다.** `hooks/events.jsonl`은 runner가 한 번도 읽지 않는 maintainer
+> **Candidate hook은 옵트인 add-on `atp-codex-hooks`에만 있다.** Smoke 전 임시 `CODEX_HOME`에
+> base `atp`와 함께 `plugins/atp-codex-hooks`를 fresh install한다. `test_codex_hook_guard.py`의
+> `RUNNER`/`HOOKS` 상수도 `plugins/atp-codex-hooks/hooks/`를 가리킨다. base만 설치한 세션은 hook이
+> 없어 marker 부재 → spawn 0이 정상이다.
+>
+> TUI 격리 smoke의 환경 함정(stdin 블록, cmux shim, capacity denial 재현, fresh home의 로그인 화면,
+> TUI 포그라운드 입력 흡수)은 `docs/backlog/codex-cli-hook-guarded-bounded-pool.md` §"격리 검증이
+> 필요할 때의 함정"을 따른다.
+>
+> **Event ledger는 opt-in이다.** `PLUGIN_DATA/hook_guarded_pool/v1/<session>/events.jsonl`은 runner가 한 번도 읽지 않는 maintainer
 > 진단 산출물이므로 기본 비활성이다. Smoke evidence의 count/ordering을 수집하려면 실행 환경에
 > `ATP_HOOK_EVENT_LEDGER=1`을 설정한다. 설정하지 않으면 pool은 정상 동작하지만
 > `events.jsonl`이 생성되지 않아 ledger 기반 판정을 만들 수 없다. 소비자 환경에서는 설정하지

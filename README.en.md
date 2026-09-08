@@ -106,7 +106,8 @@ agent-team-protocol/
 │   │   ├── skills/                       atp:init, atp:task, and host orchestration helpers
 │   │   ├── docs/development/             runtime reference docs
 │   │   └── templates/                    atp:init scaffolding sources
-│   └── atp-graphify/                     optional atp-graphify add-on
+│   ├── atp-graphify/                     optional atp-graphify add-on
+│   └── atp-codex-hooks/                  Codex-CLI-only opt-in add-on (candidate hook runner)
 └── docs/                                 human-facing docs — excluded from the bundle
 ```
 
@@ -126,6 +127,7 @@ agent-team-protocol/
 | Init skill | [plugins/atp/skills/init/SKILL.md](plugins/atp/skills/init/SKILL.md) |
 | Task skill | [plugins/atp/skills/task/SKILL.md](plugins/atp/skills/task/SKILL.md) |
 | graphify add-on | [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md) |
+| Codex hooks add-on | [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md) |
 
 The English README is an entry point. Linked canonical documents may currently be Korean-first.
 
