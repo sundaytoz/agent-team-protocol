@@ -560,106 +560,124 @@ T7에서 Codex CLI 0.149.1은 실패한 `spawn_agent` 호출에 `PostToolUse`를
 
 ## New-conversation continuation prompt
 
-아래 prompt는 A축 재실행(T7/T9), B축 interactive 재측정(T4/T6) 또는 D축 scope 확정 중 하나를
-수행할 때 새 Codex 대화의 첫 요청으로 사용한다.
+이 절은 다음 작업 세션의 첫 요청 정본이다. 이전 판(2026-08-28 재검증용)은 A축 PASS와
+D축 결정으로 대체됐다. 현재 다음 작업은 **candidate hook의 옵트인 add-on 분리**다.
 
-시작 전에 다음 세 가지를 전제로 둔다. 이미 확인된 사실이므로 다시 실패로 재도출하지 않는다.
-
-1. **T7/T9의 원인은 host 제약이 아니라 ledger writer 갭이었고 해소됐다.** Parent는 capacity
-   error를 `spawn_agent` 반환값으로 이미 authoritative하게 관측하며(ADR-0020), scheduler가
-   `update_plan`의 `ATP_POOL_DENIED <pool> <index>/<total> <token>` marker로 그 사실을 durable
-   ledger에 기록한다. `handle_pre_denial()`은 manifest 일치·`accepted_identity` 부재·미해소
-   `attempted` attempt 존재를 모두 검사한 뒤에만 수용한다. 필요한 것은 **재실행 1회**다.
-2. **T4/T6은 비대화형 `codex exec`에서 측정됐다.** PASS한 T5만 interactive PTY였다. 공식
-   Subagents 문서와 `P2-codex-cli-controls.md`가 live steer/stop을 interactive CLI 경로로
-   설명하므로, 비대화형 `codex queue` 결과를 B축 판정 근거로 재사용하지 않는다. B축을
-   재측정하려면 PTY 세션에서 수행한다. 같은 비대화형 surface를 반복해 다시 fail로 기록하는 것은
-   진전이 아니다.
-3. **Promotion 판정은 축별이다.** B축이 `unknown | unsupported`여도 A와 D가 충족되면 선언된
-   scope 안에서 `team_execution_enabled`를 전환할 수 있다. 축 하나의 결손을 전 축 disabled로
-   확대하지 않는다.
+권장 host는 Claude Code다. 이 레포의 배포 profile에서 Codex CLI는
+`team_execution_enabled: false`이므로 Codex에서 `$atp:task`를 부르면 `tier_b_sequential`로
+격하되어 advisor 병렬 실행이 없다. 또한 이 레포는 사용자 Codex의 local marketplace source로
+등록돼 있어, Codex에서 작업하면 방금 커밋된 `plugins/atp/hooks/`가 전역 설치본으로 들어와
+"Hooks need review" 신뢰 다이얼로그를 반복해 밟게 된다. Codex CLI 자체는 Claude Code에서
+`codex plugin` / `codex exec`로 도구처럼 구동해 검증할 수 있다 — 2026-08-31 A축 재실행이
+그 방식으로 수행됐다. Interactive TUI 확인만 사람이 직접 해야 한다.
 
 ```text
-$atp:task 현재 working directory의 agent-team-protocol 레포에서 기존
-hook_guarded_bounded_pool_orchestration candidate와 2026-08-28 FAIL evidence를 읽고,
-새로 준비된 authoritative surface로 남은 blocker를 재검증해줘. 새 surface가 없다면 기존
-T4/T6/T7/H8을 반복하거나 synthetic PASS로 바꾸지 말고 blocked 상태를 유지한다.
+/atp:task agent-team-protocol 레포에서 Codex hook-guarded bounded pool candidate 를
+base 번들에서 분리해 옵트인 add-on 으로 만들어줘. D축 결정은 이미 끝났고 근거도 커밋돼 있다.
+설계와 구현 계획을 먼저 보여준 뒤 진행해.
 
-이 요청은 일반 소비 task가 아니라 격리된 release maintainer candidate hook smoke를
-명시적으로 승인한다. 사용자 전역 ~/.codex 설정, 사용자 plugin cache, hooks와 실제 소비
-프로젝트는 변경하지 않는다. 임시 CODEX_HOME, 임시 workspace와 fresh source plugin
-install만 사용한다. 설치 cache skill을 정본으로 사용하지 말고 repository source skill을
-직접 읽는다.
+## 시작 전 필수 확인
 
-가장 먼저 다음을 수행한다.
+1. `git log --oneline -3` — HEAD 가 `feat(atp): decompose Codex hook-guarded qualification
+   into orthogonal axes` 인지 확인. 브랜치는 `feat/claude-code-managed-orchestration`.
+2. `git status --short` — 미추적 `docs/changes/2026-08-18-pre-spawn-capability-gate.md` 는
+   사용자 파일이다. 읽기·수정·이동·삭제·stage 하지 않는다.
+3. `docs/index.md` → `docs/backlog/index.md` →
+   `docs/backlog/codex-cli-hook-guarded-bounded-pool.md` 전문을 읽는다.
+   §Phase 3 의 4축 gate, "축별 재판정", "A축 blocker 해소", "소비자 비용 제거",
+   "Interactive TUI 최초 대면 동작", "D축 결론" 절이 이 작업의 전제다.
+4. 함께 읽는다: `plugins/atp/docs/development/codex-lifecycle-routing.md` §8.2~§8.4,
+   `plugins/atp/skills/codex-team/SKILL.md`, `plugins/atp/docs/development/platform-adapters.md`
+   §3.2~§3.3, `docs/adr/ADR-0024-host-managed-subagent-orchestration.md`,
+   `docs/development/release-checklist.md` §0 와 §4,
+   `tests/runtime-behavior/README.md`, `tests/runtime-behavior/test_codex_hook_guard.py`.
+5. add-on 선례를 읽는다: `plugins/atp-graphify/` 전체 구조와
+   `plugins/atp/skills/task/SKILL.md` 의 graphify 옵트인 분기(§9 종료조건 4항의
+   "skip: no-graphify" 처리).
 
-1. git status --short와 git diff를 확인해 기존 변경을 보존한다. reset/checkout/overwrite하지
-   않는다.
-2. 기존 미추적 사용자 파일
-   docs/changes/2026-08-18-pre-spawn-capability-gate.md 는 읽기·수정·이동·삭제·stage하지 않는다.
-3. docs/index.md → docs/backlog/index.md →
-   docs/backlog/codex-cli-hook-guarded-bounded-pool.md 전체를 읽는다.
-4. docs/backlog/codex-cli-collaboration-await-v1.md,
-   docs/adr/ADR-0022-pre-spawn-wait-wakeup-capability-gate.md,
-   docs/adr/ADR-0024-host-managed-subagent-orchestration.md,
-   plugins/atp/docs/development/platform-adapters.md,
-   plugins/atp/docs/development/codex-lifecycle-routing.md,
-   plugins/atp/skills/task/SKILL.md,
-   plugins/atp/skills/codex-team/SKILL.md,
-   plugins/atp/docs/development/documentation-guidelines.md,
-   docs/development/release-checklist.md §0 및 Codex 관련 항목,
-   tests/runtime-behavior/README.md,
-   tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json,
-   tests/runtime-behavior/test_codex_managed_contract.py와 lifecycle validator 관련 부분을 읽는다.
-5. 공식 OpenAI Hooks와 Subagents 문서를 최신 상태로 확인한다.
-   - https://learn.chatgpt.com/docs/hooks
-   - https://learn.chatgpt.com/docs/agent-configuration/subagents
+## 확정된 사실 — 다시 검증하지 않는다
 
-문서의 Confirmed facts만 사실로 채택하고 Hypotheses H1–H8은 runtime PASS 전까지 가설로
-유지한다. 특히 다음 사실은 이미 isolated 0.149.1 probe에서 확인됐다.
+아래는 실측 완료 사항이다. 재측정하거나 fail 로 재도출하지 않는다.
 
-- Pre/PostToolUse가 collaborationspawn_agent와 collaborationwait_agent를 관측한다.
-- SubagentStart/Stop이 stable agent_id와 last_assistant_message를 제공한다.
-- SubagentStop decision:block은 같은 agent_id/turn continuation에 성공했다.
-- Root Stop decision:block은 같은 root turn continuation에 성공했다.
-- Spawn tool_input message는 hook에서 encrypted이고 task_name은 보인다.
-- Plugin hooks는 hooks/hooks.json으로 번들 가능하지만 install만으로 trusted가 되지 않는다.
+- **A축 PASS.** codex-cli 0.149.1 격리 재실행에서
+  requested/attempts/accepted/terminal/collected `5/6/5/5/5`,
+  spawn PreToolUse 6 / PostToolUse 5(실패 spawn 에 Post 미발생),
+  hook ledger capacity denial 1건 `attested_by: parent_marker`,
+  list/interrupt 0, 마지막 hook event `Stop`. source/install byte parity 일치.
+  evidence: `tests/runtime-behavior/evidence/codex-cli-0.149.1-hook-guarded-20260831.json`
+- **C축 PASS** (2026-08-28 T5, interactive approval same-identity continuation).
+- **B축은 T4(steering) 하나만 남는다.** T6(cancellation) 은 범위 밖 재분류 대상이다 —
+  CLI 에 target-child cancel command 가 없고 호스트 인터럽트가 상위 계층에서 전체를 끊으므로
+  ATP 가 지킬 불변식(terminal confirmation 없는 합성 금지)은 이미 충족된다.
+  T4/T6 의 기존 FAIL 은 비대화형 `codex exec` + `codex queue` 에서 측정된 것이고,
+  통과 가능한 surface 는 interactive PTY 다. 비대화형 결과를 판정 근거로 재사용하지 않는다.
+- **hooks feature 는 기본 ON.** `config.toml` 에 `[features]` 없이도 bypass 만 주면
+  marker 가 뜬다. 유일한 관문은 hook trust 다.
+- **TUI 최초 대면**: "Hooks need review / 8 hooks are new or changed / Hooks can run outside
+  the sandbox after you trust them" + 선택지 3개(Review / Trust all and continue /
+  Continue without trusting). `Trust all` 후 재시작 시 재확인 없음.
+  trust 는 `config.toml` 의 `[hooks.state."<plugin>:hooks/hooks.json:<event>:0:0"]`
+  `trusted_hash` 로 항목 단위 영구 저장.
+- **trust 는 command 문자열에만 묶인다.** runner `.py` 내용을 바꿔도 trust 가 유지되어
+  바뀐 코드가 sandbox 밖에서 그대로 실행된다. 해당 event 의 `command` 문자열을 바꿀 때만
+  무효화된다. 이것이 add-on 분리의 결정적 근거다.
+- **소비자 per-tool 비용은 제거 완료.** `Bash|apply_patch` matcher 제거, filesystem fast
+  path, `ATP_HOOK_EVENT_LEDGER=1` opt-in ledger. pool 없는 세션의 매칭 도구는 49ms
+  (python 시동 28 + stdlib import 19 + 처리 2), 파일시스템 접근 0.
+  회귀 3건이 이를 고정한다 — `test_consumer_session_without_a_pool_writes_nothing`,
+  `test_event_ledger_is_off_unless_explicitly_enabled`,
+  `test_unrelated_tools_are_not_matched_by_the_hook_config`.
 
-먼저 기존 hook candidate의 최소 설계와 source/install hash를 audit한다.
+## 이번 작업 범위
 
-- plugin-bundled hook config와 runner
-- PLUGIN_DATA의 session-isolated concurrency-safe pool manifest/event ledger
-- visible task_name 또는 별도 안전한 correlation을 통한 logical task ↔ environment identity
-- Pre/Post spawn/wait, SubagentStart/Stop, PermissionRequest, UserPromptSubmit, root Stop mapping
-- missing terminal delta를 wait 결과 context에 전달하는 방법
-- incomplete Stop block / complete Stop allow barrier
-- hook disabled/untrusted/hash mismatch에서 spawn 0 fail-closed marker
-- Python 3를 모든 사용자 환경의 암묵 dependency로 가정하지 않는 portable packaging 결정
+candidate hook 을 base `plugins/atp/` 에서 옵트인 add-on 으로 옮긴다.
 
-필요한 deterministic fixture를 보완하고 fresh 임시 설치본으로 영향을 받는 smoke와
-T1/T2/T3/T5/T8 회귀를 실행한다. 이전 D처럼 queue에 cancel 문자열을 넣는 것을
-cancellation PASS로 세지 않는다.
-Actual TUI/background-agent stop, interrupt_agent 또는 동등한 authoritative interrupt를
-사용한다. Steering도 queue acceptance가 아니라 delivered event와 same-identity 적용을
-확인한다. Approval은 arbitrary action을 hook으로 자동 승인하지 말고 실제 interactive
-decision과 continuation을 기록한다.
+1. **add-on 플러그인 신설** — 이름은 `atp-graphify` 패턴을 따라 정한다(예: `atp-codex-hooks`).
+   `plugins/<addon>/.claude-plugin/plugin.json` 과 `.codex-plugin/plugin.json`,
+   `hooks/hooks.json`, `hooks/codex_pool_hook.py` 를 둔다.
+   marketplace 정본 3곳(`.claude-plugin/marketplace.json`, `.codex-plugin/marketplace.json`,
+   `.agents/plugins/marketplace.json`)에 등재한다.
+2. **base 에서 제거** — `plugins/atp/hooks/` 를 옮기고, base 번들에 hook 이 남지 않게 한다.
+   base 만 설치한 Codex 소비자에게 "Hooks need review" 가 뜨지 않아야 한다.
+3. **경로·marker 재정합** — `hooks.json` 의 `$PLUGIN_ROOT` 는 add-on 루트를 가리키게 된다.
+   `codex-team/SKILL.md` §1 의 `ATP_HOOK_GUARD_READY` marker 해시를 새 파일 위치 기준으로
+   재생성하고, add-on 미설치 시 marker 가 없어 spawn 0 으로 닫히는 기존 fail-closed 를 유지한다.
+4. **skill 분기** — `codex-team/SKILL.md` 와 `plugins/atp/skills/task/SKILL.md` 에
+   add-on 미설치 시의 처리를 명시한다. graphify 의 "skip: no-graphify" 와 같이
+   차단 없이 계속 진행하는 형태를 따른다.
+5. **테스트 경로 갱신** — `tests/runtime-behavior/test_codex_hook_guard.py` 의
+   `PLUGIN` / `RUNNER` / `HOOKS` / `SKILL` 상수를 새 위치로 맞추고 19건 전부 통과시킨다.
+6. **문서 갱신** — backlog §Phase 3 D축 절에 분리 완료를 기록하고,
+   `codex-lifecycle-routing.md`, `known-issues.md`/`.en.md` 를 정합화한다.
+   `tests/runtime-behavior/README.md` 의 `ATP_HOOK_EVENT_LEDGER=1` 안내 경로도 확인한다.
+7. **release-checklist §4 invariant** — add-on 을 새로 만들면 그 manifest 버전과 등재 4곳을
+   점검한다. base atp 버전 bump 이 필요한지 §0 기준으로 판단한다.
 
-Fixed sleep, 반복 list_agents, shell status polling을 scheduler primitive로 사용하지 않는다.
-Hook timeout/error, missing event, unknown dependency나 control delivery를 synthetic PASS로
-처리하지 않는다. Raw hook/JSONL transcript는 커밋하지 않고 sanitized count, ordering과
-SHA-256만 public evidence에 넣는다. Auth, 사용자 대화, 로컬 사용자명과 절대 경로를
-공개 evidence에 넣지 않는다.
+## 제약
 
-Promotion은 §Phase 3의 축별 판정을 따른다. A축(T1/T2/T3/T7/T8/T9)과 D축(선언 scope)이 모두
-PASS면 선언된 scope 안에서 새 execution mode/capability, ADR, task/codex-team/platform
-adapter/ledger/validator 통합, team_execution_enabled=true, semver bump와 release metadata
-변경을 진행한다. B축이 unknown/unsupported라는 이유만으로 A/D 승격을 막지 않는다. A축이
-하나라도 fail이면 현재 four-axis disabled profile과 버전을 유지하고 exact
-blocker/count/order/hash/다음 검증 방법만 문서화한다.
+- `team_execution_enabled` 를 이 작업에서 true 로 바꾸지 않는다. add-on 분리는 배포 형태
+  변경이고, 승격은 별도 결정이다.
+- 사용자 전역 `~/.codex`, 사용자 plugin cache, 실제 소비 프로젝트 설정을 변경하지 않는다.
+  격리 검증이 필요하면 임시 `CODEX_HOME` + 임시 workspace + fresh source install 만 쓴다.
+- raw hook event, JSONL transcript, 인증 정보, 로컬 사용자명, 절대 경로를 커밋하지 않는다.
+  공개 evidence 에는 sanitized count / ordering / SHA-256 만 둔다.
+- 기존 evidence manifest(08-19, 08-26, 08-28, 08-31)는 원본 관측 기록이므로 수정하지 않는다.
+  재해석은 backlog / routing 문서에만 쓴다.
 
-완료 응답에는 readiness, Confirmed facts와 새로 검증된 hypotheses, T1–T9 counts/order/result,
-hook trust/dependency 결과, source/install parity, 최종 capability profile, 변경 파일,
-검증 명령, version/release 변경 여부와 남은 blocker를 포함한다.
+## 격리 검증이 필요할 때의 함정 2건
+
+- `codex exec` 는 stdin 을 읽으려 블록한다. `< /dev/null` 없으면 10분 넘게 이벤트 0건으로 멈춘다.
+- PATH 의 `codex` 는 cmux shim 이라 자체 hook set 을 주입한다. maintainer smoke 는
+  `~/.local/bin/codex` 를 직접 호출한다.
+- capacity denial 을 재현하려면 `agents.max_concurrent_threads_per_session=1` 설정 +
+  "연속 spawn" 명시가 둘 다 필요하다. trivial child 는 다음 spawn 전에 slot 을 반납한다.
+
+## 완료 응답에 포함할 것
+
+변경 파일, base 설치본에 hook 이 남지 않았음을 보인 검증, add-on 설치 시 marker 정합,
+테스트 결과(19 + 15 + 6 + lifecycle-contract), marketplace 등재 4곳,
+version/release metadata 변경 여부와 근거, 남은 blocker(B축 T4, Windows runner,
+`allow_managed_hooks_only`).
 ```
 
 ## References
