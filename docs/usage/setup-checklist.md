@@ -118,12 +118,10 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 $atp:task 서브에이전트 1명을 실제로 가동해 연결 상태를 확인해줘
 ```
 
-- [ ] 현재 root context에 add-on hook이 생성한 exact marker가 있는가? Marker를 직접 복사하거나 합성하지 않는다.
 - [ ] 실제 spawn 응답과 terminal 결과 수집 근거로 `requested=accepted=terminal=collected=1`인가? Skill 로드 확인이나 중간 `MESSAGE`는 terminal이 아니다.
 - [ ] child의 연결 상태와 작업 디렉토리 일치를 확인하고, 파일 변경 없이 결과를 수집했는가?
-- [ ] `update_plan` 미노출 등 concern과 실행하지 못한 bind 절차를 결과에 명시했는가?
 
-이 스모크는 한 child의 연결·결과 전달만 확인한다. Bind, approval continuation, capacity denial, 다중 child all-results qualification을 증명하지 않으며 배포 profile을 승격하지 않는다. App/IDE·Windows는 여전히 선언 scope 밖이고 in-flight steering/cancellation delivery는 `unknown`이다. 2026-09-08의 확인 결과와 한계는 [Codex 연결 스모크](./codex-connection-smoke.md)에 기록한다.
+이 스모크는 한 child의 연결·결과 전달만 확인한다. approval continuation, 다중 child 결과 취합을 증명하지 않는다. App/IDE 검증 상태와 in-flight steering/cancellation delivery는 `unknown`이다. 확인 결과와 한계는 [Codex 연결 스모크](./codex-connection-smoke.md)에 기록한다.
 
 ---
 
