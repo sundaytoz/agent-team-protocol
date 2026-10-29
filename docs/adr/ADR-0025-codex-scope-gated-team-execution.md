@@ -2,7 +2,9 @@
 kind: adr
 adr_number: "0025"
 title: Codex team execution을 atp-codex-hooks add-on marker에 gate된 hook-guarded bounded pool로 승격
-status: accepted
+status: superseded
+superseded_by:
+  - ADR-0026
 date: 2026-09-08
 deciders:
   - template-maintainer
@@ -14,6 +16,8 @@ extends:
 # ADR-0025: Codex scope-gated team execution (hook-guarded bounded pool)
 
 ## 상태
+
+> **Superseded by [ADR-0026](./ADR-0026-codex-builtin-subagents-without-marker.md)** (2026-10-29) — marker gate와 `atp-codex-hooks` add-on 제거, Codex built-in subagent를 기본 경로로.
 
 **Accepted** — 2026-09-08. ADR-0024의 execution mode·authority 경계·release-time evidence 원칙을 유지하고, tested Codex CLI profile을 `unsupported`/`team_execution_enabled: false`에서 **선언된 scope 안의 `supported`/`true`**로 전환한다. ADR-0024를 supersede하지 않고 확장한다.
 
@@ -81,4 +85,4 @@ Codex built-in wait가 아니라 `codex-team` §2~§6의 queue→wait→refill s
 - [Codex orchestration skill](../../plugins/atp/skills/codex-team/SKILL.md) §1·§7
 - [Codex lifecycle appendix](../../plugins/atp/docs/development/codex-lifecycle-routing.md) §1·§8.6
 - [Backlog — qualification handoff](../backlog/codex-cli-hook-guarded-bounded-pool.md) §Phase 3
-- [atp-codex-hooks 사용 가이드](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md)
+- [ADR-0026 (add-on 제거)](./ADR-0026-codex-builtin-subagents-without-marker.md)

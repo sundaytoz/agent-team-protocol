@@ -4,7 +4,7 @@ title: Usage Category Index (English)
 description: English index for plugin installation, initialization, and operation guides.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 <p align="center">
@@ -44,7 +44,7 @@ This category collects documents written from the perspective of a **user instal
    /plugin install atp-graphify@agent-team-protocol
    ```
 
-   To turn on real team execution in Codex CLI, also install the `atp-codex-hooks` add-on and grant hook trust in the TUI (opt-in; consents to out-of-sandbox hook execution) — see [faq.en.md](./faq.en.md#codex-hooks-add-on).
+   Codex CLI team execution needs no extra add-on: the base alone uses Codex built-in subagents (2.19.0, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md), Korean-first).
 
 4. Initialize — generates the docs skeleton plus the `CLAUDE.md` guidance block in your project
 

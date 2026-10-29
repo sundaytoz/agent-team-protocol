@@ -4,7 +4,7 @@ title: Troubleshooting / FAQ (English)
 description: Common issues during plugin install, init, and daily use.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 <p align="center">
@@ -79,19 +79,15 @@ A. Yes, it is idempotent. Existing files are not overwritten, and the `<!-- atp:
 
 ---
 
-## Codex hooks add-on
+## Codex team execution
 
 ### Q. Does a real subagent response validate all ATP functionality?
 
-A. A one-child connection smoke checks spawn acceptance, terminal delivery, and collection. On 2026-09-08, requested, accepted, terminal, and collected counts were each 1, but the child lacked `update_plan`, so it did not call `ATP_POOL_BIND`. Receiving a terminal delta alone does not prove bind-hook validation, approval, cancellation, or capacity refill. See the [Codex connection smoke](./codex-connection-smoke.en.md) for observations and reproduction steps. Never claim a missing tool was called or synthesize a marker.
+A. A one-child connection smoke checks spawn acceptance, terminal delivery, and collection. On 2026-09-08, requested, accepted, terminal, and collected counts were each 1. Receiving one result alone does not prove multi-child result collection, approval, or cancellation. A 2026-08-26 Codex CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results; this did not reproduce on 0.165.0 (2026-10-29). See the [Codex connection smoke](./codex-connection-smoke.en.md) for observations and reproduction steps.
 
-### Q. I installed atp in Codex and the "Hooks need review" prompt appears (or does not).
+### Q. What do I do with the `atp-codex-hooks` add-on I installed earlier?
 
-A. Since base `atp` 2.17.0 no hook ships in the base bundle, so a base-only install never shows the prompt. If it appears, you also installed the opt-in add-on `atp-codex-hooks`. The prompt says its 8 hooks will run outside the sandbox once trusted, and trust is bound to the command string, so it survives later runner code changes. If you want ATP team execution in Codex (real advisor/worker spawns), choose `Trust all` (2.18.0, ADR-0025). Otherwise choose `Continue without trusting` or run `codex plugin remove atp-codex-hooks`. Details: [`../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md`](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) (Korean-first).
-
-### Q. `codex-team` records `skip: no-codex-hooks` and proceeds with zero spawns. Is that an error?
-
-A. No. Without the add-on (or with untrusted hooks) there is no `ATP_HOOK_GUARD_READY` marker, the bounded pool fails closed, and `$atp:task` continues as `tier_b_sequential` (or `blocked_explicit_independence` when independence is required). To turn team execution on, run `codex plugin add atp-codex-hooks@agent-team-protocol`, grant hook trust in the TUI, and start a new session — that session runs with `team_execution_enabled: true` (scope-gated, ADR-0025).
+A. It was removed in 2.19.0. Codex team execution uses Codex built-in subagents with the base `atp` alone and needs no hook or marker ([ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md), Korean-first). If you already installed it, uninstall with `codex plugin remove atp-codex-hooks`.
 
 ## graphify add-on
 
@@ -143,7 +139,7 @@ A. Don't build an integrated script; register multiple strategies in `verificati
 
 A. Formal scheduling still requires a timeout-free subscription. On hosts that provide all twelve formal capabilities, the environment suspends the root model until an event of interest and owns event deduplication, completion coalescing, compact deltas, user steering, and cancellation delivery.
 
-ATP does not compensate for missing formal capabilities or managed-orchestration errors with manual wait/list polling or automatic retry, interrupt, or fallback. The current tested Codex CLI status, general Tier B and independent-subagent blocker behavior, the App/IDE `unknown` status, and exit criteria are tracked separately in [Known Issues](./known-issues.en.md). See [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md) for common lifecycle semantics and [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md) for the Codex mapping.
+ATP does not compensate for missing formal capabilities or managed-orchestration errors with manual wait/list polling or automatic retry, interrupt, or fallback. The current tested Codex CLI status and the built-in result-collection caveat, the App/IDE `unknown` status, and exit criteria are tracked separately in [Known Issues](./known-issues.en.md). See [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md) for common lifecycle semantics and [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md) for the Codex mapping.
 
 ### Q. An advisor stays `running` without an error or any first activity.
 

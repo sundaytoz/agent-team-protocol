@@ -99,12 +99,12 @@ Claude, Codex, marketplace 정본의 plugin 이름·버전·source 경로가 같
 검증 명령:
 
 ```bash
-rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|atp-codex-hooks|agent-team-protocol' .claude-plugin .codex-plugin .agents/plugins plugins/atp/.claude-plugin plugins/atp/.codex-plugin plugins/atp-graphify/.claude-plugin plugins/atp-graphify/.codex-plugin plugins/atp-codex-hooks/.claude-plugin plugins/atp-codex-hooks/.codex-plugin
+rg -n '"name"|"version"|"plugins"|"source"|atp-graphify|agent-team-protocol' .claude-plugin .codex-plugin .agents/plugins plugins/atp/.claude-plugin plugins/atp/.codex-plugin plugins/atp-graphify/.claude-plugin plugins/atp-graphify/.codex-plugin
 ```
 
-기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다. 모든 marketplace 의 atp source 는 `./plugins/atp`, atp-graphify source 는 `./plugins/atp-graphify`, atp-codex-hooks source 는 `./plugins/atp-codex-hooks`.
+기대값: `.agents/plugins/marketplace.json` 이 Codex marketplace 정본이고, `.claude-plugin/marketplace.json` / `.codex-plugin/marketplace.json` 은 그 의도와 충돌하지 않는다. 모든 marketplace 의 atp source 는 `./plugins/atp`, atp-graphify source 는 `./plugins/atp-graphify`.
 
-버전 invariant: base atp 매니페스트 4개(`plugins/atp/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/atp/.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`plugins/atp-graphify/.claude-plugin/plugin.json`, `plugins/atp-graphify/.codex-plugin/plugin.json`)와 add-on atp-codex-hooks 매니페스트 2개(`plugins/atp-codex-hooks/.claude-plugin/plugin.json`, `plugins/atp-codex-hooks/.codex-plugin/plugin.json`)도 각각 서로 같아야 한다. base 와 각 add-on 은 독립 버저닝(불일치 정상). **base `plugins/atp/` 에는 `hooks/` 가 없어야 한다** — candidate hook 은 `atp-codex-hooks` 에만 있다(회귀 `test_base_bundle_ships_no_hooks`). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
+버전 invariant: base atp 매니페스트 4개(`plugins/atp/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/atp/.codex-plugin/plugin.json`, `.codex-plugin/marketplace.json`)는 버전이 서로 같아야 하고, add-on atp-graphify 매니페스트 2개(`plugins/atp-graphify/.claude-plugin/plugin.json`, `plugins/atp-graphify/.codex-plugin/plugin.json`)도 서로 같아야 한다. base 와 add-on 은 독립 버저닝(불일치 정상). **base `plugins/atp/` 에는 `hooks/` 가 없어야 한다** — Codex team execution 은 hook 없이 built-in subagent 로 동작한다(ADR-0026). `.agents/plugins/marketplace.json` 에는 version 필드가 없는 것이 정상이다.
 
 ### 4.1 Codex manifest와 skill invocation policy
 
@@ -333,7 +333,7 @@ python3 tests/runtime-behavior/validate_codex_session.py \
 - §4의 base manifest 4곳 version invariant를 확인하고 add-on version과 `.agents/plugins/marketplace.json`의 versionless 계약을 변경하지 않는다.
 - 2.15.0 release에서는 base manifest 4곳의 semantic version이 모두 `2.15.0`, add-on은 기존 버전, `.agents/plugins/marketplace.json`은 versionless인지 확인한다.
 - user-facing FAQ는 한국어/영어에서 current tested CLI formal/managed contract unsupported + team disabled, manual wait/list 0, explicit blocker UX, app/IDE unknown, report v2 의미가 동등한지 대조한다. (2.15.0 시점 기준)
-- 2.18.0 이후(ADR-0025): FAQ·known-issues·add-on 가이드 한/영이 **scope-gated** 의미를 동등하게 전달하는지 대조한다 — `atp-codex-hooks` 설치+hook trust 세션만 `supported`/`true`, marker 없는 세션은 `skip: no-codex-hooks` → Tier B/blocked, B축 unknown 은 실행 중 steering 요구 요청만 영향. routing appendix §1 배포 block 이 `execution_scope`/`scope_gate` 두 키를 유지하고 `test_codex_managed_contract.py` 가 2026-09-08 evidence 와 대조하는지 확인한다.
+- 2.19.0 이후(ADR-0026): FAQ·known-issues·setup 한/영이 marker gate·`atp-codex-hooks` add-on 없이 Codex built-in subagent로 team execution 이 열린다는 의미를 동등하게 전달하는지 대조한다. routing appendix §1 배포 block 은 `execution_scope: codex_builtin_subagents` 이고 `scope_gate` 키가 없어야 한다.
 - 카탈로그 confidence FAQ 한·영 모두에서 every axis/every item marker, `high|mixed|low` 결정 규칙, marker coverage와 aggregate derivation 두 self-check가 동등한지 대조한다.
 - ADR-0021·ADR-0022·ADR-0023·ADR-0024와 공개 릴리스인 2026-08-13·2026-08-19 change가 각각 자기 index에 정확히 한 번 등록되고 architecture/change/ADR 사이 교차 링크가 유효한지 확인한다. 미출시 2.14 중간 구현은 ADR-0023의 superseded history로만 보존하고 Changes index에 싣지 않는다.
 - Verification이 pending인 동안 architecture/change 문서가 current Codex end-to-end event-driven wake나 전체 validator PASS를 주장하지 않는지 확인한다. 실제 GREEN 후에만 상태를 갱신한다.

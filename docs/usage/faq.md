@@ -4,7 +4,7 @@ title: 문제 해결 / FAQ
 description: plugin 설치·init·사용 중 흔한 문제와 대응.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 # 문제 해결 / FAQ
@@ -86,19 +86,15 @@ A. `atp` base 가 먼저 설치돼 있어야 한다. `atp-graphify` 는 `atp` �
 
 ---
 
-## Codex hooks add-on
+## Codex 팀 실행
 
 ### Q. 실제 subagent가 응답했으면 전체 ATP 기능이 검증된 것인가?
 
-A. 단일 연결 스모크는 spawn 수락과 terminal 결과 수신·취합을 확인한다. 2026-09-08에는 요청·수락·terminal·취합이 각각 1건이었지만 child의 `update_plan` 도구가 없어 `ATP_POOL_BIND` 호출은 수행되지 않았다. Terminal delta 수신만으로 bind hook의 검증 성공이나 승인·취소·capacity refill까지 입증할 수 없다. 상세 결과와 재현 절차는 [Codex 연결 스모크](./codex-connection-smoke.md)를 본다. 미제공 도구를 호출했다고 기록하거나 marker를 합성해서는 안 된다.
+A. 단일 연결 스모크는 spawn 수락과 terminal 결과 수신·취합을 확인한다. 2026-09-08에는 요청·수락·terminal·취합이 각각 1건이었다. 단일 결과 수신만으로 여러 child의 결과 취합이나 승인·취소까지 입증할 수 없다. 2026-08-26 Codex CLI 0.149.1 스모크에서는 내장 barrier 가 시차 결과 2건 중 1건만 전달했고, 2026-10-29 0.165.0에서는 재현되지 않았다. 상세 결과와 재현 절차는 [Codex 연결 스모크](./codex-connection-smoke.md)를 본다.
 
-### Q. Codex 에서 atp 를 설치했는데 "Hooks need review" 가 뜬다 / 안 뜬다.
+### Q. 이전에 설치한 `atp-codex-hooks` add-on 은 어떻게 하나?
 
-A. base `atp` 2.17.0 이후에는 hook 이 번들되지 않으므로 base 만 설치하면 뜨지 않는 것이 정상이다. 뜬다면 옵트인 add-on `atp-codex-hooks` 를 함께 설치한 경우다. 그 프롬프트는 add-on 의 8개 hook 이 trust 뒤 sandbox 밖에서 실행됨을 알리는 것이며, trust 는 명령 문자열에 묶여 이후 runner 코드 변경에도 유지된다. Codex 에서 ATP 팀 실행(실제 advisor/worker spawn)을 원하면 `Trust all` 을 선택한다(2.18.0, ADR-0025). 원하지 않으면 `Continue without trusting` 또는 `codex plugin remove atp-codex-hooks`. 상세는 [`../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md`](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
-
-### Q. `codex-team` 이 `skip: no-codex-hooks` 를 기록하고 spawn 0 으로 진행한다. 오류인가?
-
-A. 정상이다. add-on 미설치(또는 untrusted)면 `ATP_HOOK_GUARD_READY` marker 가 없어 bounded pool 이 fail-closed 로 닫히고, `$atp:task` 는 `tier_b_sequential`(독립성 필수 요청이면 `blocked_explicit_independence`) 로 차단 없이 계속한다. 팀 실행을 켜려면 `codex plugin add atp-codex-hooks@agent-team-protocol` 후 TUI 에서 hook trust 를 부여하고 새 세션을 시작한다 — 그 세션은 `team_execution_enabled: true`(scope-gated, ADR-0025) 로 동작한다.
+A. 2.19.0 에서 제거됐다. Codex 팀 실행은 base `atp` 만으로 Codex 내장 subagent 를 사용하며 hook·marker 가 필요 없다([ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md)). 이미 설치했다면 `codex plugin remove atp-codex-hooks` 로 삭제한다.
 
 ## 에이전트 팀 운영
 
@@ -138,7 +134,7 @@ A. 통합 스크립트를 만들지 말고 `verification-strategies.md` (소비 
 
 A. Formal scheduling은 timeout-free subscription만 인정한다. Formal capability 12개를 모두 제공하는 host에서는 관심 event까지 root model을 suspend하고 event deduplication, completion coalescing, compact delta, user steering과 cancellation 전달을 environment가 소유한다.
 
-ATP는 formal capability 부족이나 managed orchestration 오류를 manual wait/list polling, automatic retry·interrupt·fallback으로 보상하지 않는다. Tested Codex CLI의 현재 상태, 일반 Tier B와 독립 subagent blocker 동작, App/IDE의 `unknown` 판정과 해소 조건은 [Known Issues](./known-issues.md)에 분리해 추적한다. 공통 lifecycle 의미는 [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md), Codex mapping은 [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md)를 본다.
+ATP는 formal capability 부족이나 managed orchestration 오류를 manual wait/list polling, automatic retry·interrupt·fallback으로 보상하지 않는다. Tested Codex CLI의 현재 상태와 내장 결과 취합 caveat, App/IDE의 `unknown` 판정과 해소 조건은 [Known Issues](./known-issues.md)에 분리해 추적한다. 공통 lifecycle 의미는 [`agent-team-protocol.md` §2.5](../../plugins/atp/docs/development/agent-team-protocol.md), Codex mapping은 [`codex-lifecycle-routing.md`](../../plugins/atp/docs/development/codex-lifecycle-routing.md)를 본다.
 
 ### Q. Advisor가 오류 없이 `running` 상태에서 첫 활동을 보이지 않는다.
 

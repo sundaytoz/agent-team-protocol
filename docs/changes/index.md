@@ -4,7 +4,7 @@ title: Changes 카테고리 인덱스
 description: 실제 구현 변경 이력(changelog). 런타임 동작·설치 경로·외부 인터페이스가 바뀐 경우.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 # Changes — 런타임 동작 변경 이력
@@ -35,6 +35,7 @@ last_reviewed: 2026-09-08
 | [2026-08-25-claude-code-managed-orchestration.md](./2026-08-25-claude-code-managed-orchestration.md) | Claude Code 전용 claude-code-team skill + lifecycle appendix 신설 — turn-end await barrier 정본화, advisor no-op 틱·transcript 폴링 제거, smoke 3건 pass — base 2.16.0 | 2026-08-25 |
 | [2026-09-08-codex-hooks-addon-split.md](./2026-09-08-codex-hooks-addon-split.md) | Codex hook-guarded candidate hook을 base에서 제거하고 Codex CLI 전용 옵트인 add-on `atp-codex-hooks` 1.0.0으로 분리 — base 소비자 "Hooks need review" 제거, marker 재정합, 회귀 2건 추가, 배포 profile 무변경 — base 2.17.0 | 2026-09-08 |
 | [2026-09-08-codex-team-execution-promotion.md](./2026-09-08-codex-team-execution-promotion.md) | Codex team execution 승격 — atp-codex-hooks marker 에 gate 된 hook-guarded bounded pool 을 4-smoke qualification PASS 로 `supported`/`true` 전환(ADR-0025), marker 없는 세션 Tier B 유지 — base 2.18.0 | 2026-09-08 |
+| [2026-10-29-codex-remove-marker-gate.md](./2026-10-29-codex-remove-marker-gate.md) | Codex hook marker gate·`atp-codex-hooks` add-on 제거 — built-in subagent 로 team execution (ADR-0026) — 2.18.0→2.19.0 | 2026-10-29 |
 
 ## 관련 카테고리
 

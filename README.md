@@ -19,7 +19,7 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | 플랫폼 | 상태 | 호출 | 지침파일 | 검증 수준 |
 |---|---|---|---|---|
 | Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
-| Codex CLI | ✅ 선언 scope 내 팀 실행 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | CLI 0.149.1·Unix·`python3`·`atp-codex-hooks` 설치 및 hook trust 조건에서 hook-guarded bounded pool 검증 통과(2026-09-08). exact marker가 없으면 일반 요청은 Tier B, 독립 subagent 필수 요청은 blocked |
+| Codex CLI | ✅ 팀 실행 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | Codex 내장 subagent 로 팀 실행(2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)) — marker·add-on 불필요. 2026-08-26 CLI 0.149.1 에서 시차 결과 1건 누락 관측, 2026-10-29 0.165.0 에서 미재현 |
 | Antigravity IDE | ✅ 지원 | `/atp-task` | `GEMINI.md` | 정식 task PASS (verified 2026-06-30, Antigravity 2.2.1): advisor 체인 전수 + TC 10/10. 설치 = Skills 수동 복사 → `~/.gemini/config/skills/` |
 | opencode | ✅ 지원 (어댑터) | `opencode run --command atp-task "..."` | 생성형 emit (CLAUDE.md형 지침파일 없음) | 정식 스모크 PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
@@ -29,7 +29,7 @@ opencode 는 마켓플레이스 plugin 이 아니라 별도 npm 어댑터다 —
 
 Codex의 현재 제한·영향·우회책과 해소 조건은 [Known Issues](docs/usage/known-issues.md)에서 추적한다. App/IDE surface는 동일한 maintainer smoke를 거치지 않아 현재 `unknown`이다.
 
-실제 가동 확인은 [Codex 연결 스모크](docs/usage/codex-connection-smoke.md)를 따른다. 단일 child의 결과 수신과 전체 pool·승인·취소 검증을 구분하며, 2026-09-08 관측의 `update_plan` 미제공 제한도 기록했다.
+실제 가동 확인은 [Codex 연결 스모크](docs/usage/codex-connection-smoke.md)를 따른다. 단일 child의 spawn 수락과 결과 수신을 확인하며, 2026-09-08 관측의 `update_plan` 미제공 제한도 기록했다.
 
 capability tier 정의·호스트 자가판정 규칙의 정본은 [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md) 다. 위 표의 플랫폼별 호출 문법·실측 마커의 동결 이력 정본은 [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) 부록이다 — 번들 런타임은 플랫폼을 열거하지 않고 capability 자가판정으로 동작하므로, 표에 없는 호스트 CLI 에서도 사용할 수 있다.
 
@@ -75,9 +75,15 @@ Orchestrator  ← 사용자 유일 창구. 직접 작업 금지. 위임·중재�
 자세한 초기화 절차와 스모크 테스트는 [docs/usage/setup-checklist.md](docs/usage/setup-checklist.md) 를 따른다. 핵심 명령만 요약하면 다음과 같다.
 
 ```bash
+# Claude Code
 /plugin marketplace add sundaytoz/agent-team-protocol
 /plugin install atp@agent-team-protocol
 /atp:init
+
+# Codex (셸에서 설치 후, Codex 세션에서 $atp:init)
+codex plugin marketplace add sundaytoz/agent-team-protocol
+codex plugin add atp@agent-team-protocol
+$atp:init
 ```
 
 플랫폼별 설치 명령과 호출 문법은 [지원 플랫폼](#지원-플랫폼) 표 및 [setup-checklist.md](docs/usage/setup-checklist.md) 를 따른다.
@@ -88,11 +94,7 @@ graphify 지식 그래프 기능은 옵트인 add-on 이다.
 /plugin install atp-graphify@agent-team-protocol
 ```
 
-**Codex 에서 실제 팀 실행(advisor/worker spawn)을 켜려면** Codex CLI 전용 옵트인 add-on 을 설치하고 TUI 에서 hook trust 를 부여한다(2.18.0, ADR-0025 — scope-gated). base 만 설치하면 hook 이 배포되지 않아 "Hooks need review" 프롬프트가 뜨지 않고 `/atp:task` 는 Tier B 순차 모드로 동작한다. 상세: [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md).
-
-```bash
-codex plugin add atp-codex-hooks@agent-team-protocol
-```
+**Codex** 에서는 base 만 설치하면 Codex 내장 subagent 로 팀 실행(advisor/worker spawn)이 동작한다 — 별도 add-on·hook trust 가 필요 없다(2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)). 이전 버전에서 설치한 hooks add-on 은 2.19.0 에서 제거됐으며 `codex plugin remove atp-codex-hooks` 로 삭제할 수 있다.
 
 **Antigravity IDE** 는 `/plugin` 시스템 없이 Skills 수동 복사로 설치한다:
 
@@ -131,8 +133,7 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 │   │   ├── skills/                       (/atp:task, /atp:init + host orchestration helper)
 │   │   ├── docs/development/             (런타임 레퍼런스 — agent 가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)
 │   │   └── templates/                    (/atp:init 스캐폴딩 원본)
-│   ├── atp-graphify/                     (옵트인 add-on 플러그인)
-│   └── atp-codex-hooks/                  (Codex 전용 옵트인 add-on — candidate hook runner)
+│   └── atp-graphify/                     (옵트인 add-on 플러그인)
 └── docs/                                 (사람용 문서 — 번들 제외: usage / development / architecture / adr / changes / backlog)
 ```
 
@@ -153,7 +154,7 @@ agent-team-protocol/                      (레포 = 마켓플레이스 agent-tea
 | 구성 파일 맵 (트리) | [docs/architecture/file-map.md](docs/architecture/file-map.md) | 런타임 생성 디렉토리 포함 |
 | 탐색 도구 선택 매트릭스 | [plugins/atp/docs/development/search-tool-matrix.md](plugins/atp/docs/development/search-tool-matrix.md) | LSP/graphify/Grep/Glob/Read/WebFetch |
 | graphify add-on 설치·통합 | [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md) | 설치·에이전트 동작 |
-| Codex hooks add-on | [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md) | 설치·hook trust 의미·scope |
+| Codex 팀 실행 결정 | [docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md) | 내장 subagent·marker 제거 근거 |
 | 초기화 스킬 | [plugins/atp/skills/init/SKILL.md](plugins/atp/skills/init/SKILL.md) | 멱등 생성 계약 |
 | 작업 진입 스킬 | [plugins/atp/skills/task/SKILL.md](plugins/atp/skills/task/SKILL.md) | 호출 방식 |
 | 문제 해결 / FAQ | [docs/usage/faq.md](docs/usage/faq.md) | 설치·init·graphify 트러블슈팅 |
