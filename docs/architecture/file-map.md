@@ -4,7 +4,7 @@ title: 구성 파일 맵
 description: 플러그인 레이아웃(레포 루트), init 이 소비 프로젝트에 생성하는 산출물, 런타임 디렉토리를 한 장으로 정리.
 owner: template-maintainer
 stability: stable
-last_reviewed: 2026-08-20
+last_reviewed: 2026-10-29
 ---
 
 # 구성 파일 맵
@@ -25,19 +25,19 @@ last_reviewed: 2026-08-20
 agent-team-protocol/                      (레포 루트 = 마켓플레이스 agent-team-protocol)
 │
 ├── .claude-plugin/
-│   └── marketplace.json                  ← Claude Code 마켓플레이스 정본 (plugins: [atp→./plugins/atp, atp-graphify→./plugins/atp-graphify, atp-codex-hooks→./plugins/atp-codex-hooks])
+│   └── marketplace.json                  ← Claude Code 마켓플레이스 정본 (plugins: [atp→./plugins/atp, atp-graphify→./plugins/atp-graphify])
 │
 ├── .codex-plugin/
 │   └── marketplace.json                  ← Claude 미러 (Codex 는 읽지 않음)
 │
 ├── .agents/
 │   └── plugins/
-│       └── marketplace.json              ← Codex marketplace 정본 (객체형 source: atp→./plugins/atp, atp-graphify→./plugins/atp-graphify, atp-codex-hooks→./plugins/atp-codex-hooks)
+│       └── marketplace.json              ← Codex marketplace 정본 (객체형 source: atp→./plugins/atp, atp-graphify→./plugins/atp-graphify)
 │
 ├── plugins/
 │   ├── atp/                              ← base 플러그인 루트 (설치 시 이 서브트리만 캐시로 복사)
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, release 2.17.0 — hooks/ 없음: candidate hook은 add-on)
+│   │   │   └── plugin.json               ← base 플러그인 정의 (name: atp, release 2.19.0 — hooks/ 없음)
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json               ← base 플러그인 정의 (skills: "./skills/")
 │   │   ├── agents/                       ← base 에이전트 10개 (graphify 3종 제외)
@@ -54,7 +54,7 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │   │   ├── skills/
 │   │   │   ├── task/SKILL.md             ← /atp:task 명령 진입점
 │   │   │   ├── init/SKILL.md             ← /atp:init 명령 진입점
-│   │   │   └── codex-team/SKILL.md       ← Codex host orchestration preflight·result barrier 계약
+│   │   │   └── codex-team/SKILL.md       ← Codex 내장 subagent 팀 실행 계약 (marker gate 없음, ADR-0026)
 │   │   ├── docs/                         ← 번들 런타임 레퍼런스 (읽기전용, ${CLAUDE_PLUGIN_ROOT} 로 Read)
 │   │   │   ├── index.md                  ← 번들 전용 경량 허브
 │   │   │   └── development/
@@ -83,13 +83,6 @@ agent-team-protocol/                      (레포 루트 = 마켓플레이스 ag
 │       │   └── graphify-update-advisor.md
 │       └── docs/
 │           └── graphify-usage.md         ← graphify add-on 설치·통합 가이드
-│
-│   └── atp-codex-hooks/                  ← Codex 전용 옵트인 add-on (hook-guarded bounded-pool candidate runner)
-│       ├── .claude-plugin/plugin.json    ← add-on 정의 (name: atp-codex-hooks, version 1.0.0, dependencies: ["atp"])
-│       ├── .codex-plugin/plugin.json     ← 동일 add-on 정의
-│       ├── hooks/hooks.json              ← Codex hook 8항목 (SessionStart marker · spawn/wait/Stop ledger)
-│       ├── hooks/codex_pool_hook.py      ← stdlib-only Python 3 runner
-│       └── docs/codex-hooks-usage.md     ← 설치·hook trust 의미·scope 가이드
 │
 ├── docs/                                 ← 사람용 문서 (번들 제외 — GitHub 독자·기여자 대상)
     ├── index.md (+ index.en.md)          ← docs-first 풀 허브 (한/영)

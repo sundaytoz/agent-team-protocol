@@ -1,13 +1,15 @@
 ---
 kind: backlog
 title: Codex CLI 0.149.1 hook-guarded bounded pool qualification handoff
-status: proposal
+status: closed
 date: 2026-08-27
 owner: template-maintainer
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 # Codex CLI 0.149.1 hook-guarded bounded pool qualification handoff
+
+> **Closed (2026-10-29, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md))** — hook marker gate와 `atp-codex-hooks` add-on을 제거하고 Codex built-in subagent를 기본 경로로 전환했다. 이 문서는 이력으로만 보존한다.
 
 ## Summary
 

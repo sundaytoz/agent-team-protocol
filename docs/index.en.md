@@ -4,7 +4,7 @@ title: Agent Team Protocol Documentation Index (English)
 description: English entry point for the bundled reference docs. Korean docs remain canonical unless an English page exists.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-08-20
+last_reviewed: 2026-10-29
 ---
 
 <p align="center">
@@ -35,7 +35,7 @@ This is the English entry point for the agent-team-protocol docs. English docs a
 
 The graphify feature is an opt-in add-on. Installation, operation, and graph refresh rules are documented in [plugins/atp-graphify/docs/graphify-usage.md](../plugins/atp-graphify/docs/graphify-usage.md) (Korean-first/canonical).
 
-The hook that turns on real team execution in Codex ships only in the Codex-CLI-only opt-in add-on `atp-codex-hooks` (ADR-0025, scope-gated); a base-only install receives no hook and runs in Tier B. Installation, what hook trust means, and scope are in [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) (Korean-first/canonical).
+Codex team execution needs no add-on: the base alone uses Codex built-in subagents (2.19.0). See [ADR-0026](./adr/ADR-0026-codex-builtin-subagents-without-marker.md) (Korean-first/canonical) for the rationale.
 
 ## Quick Links
 

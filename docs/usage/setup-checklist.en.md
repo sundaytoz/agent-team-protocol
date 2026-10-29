@@ -4,7 +4,7 @@ title: Post-install Setup Checklist (English)
 description: 3-step checklist after /plugin install — run /atp:init, fill placeholders, then smoke-test /atp:task.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 <p align="center">
@@ -101,7 +101,7 @@ Platform-specific invocation:
 
 > opencode installs via an npm adapter, not the marketplace: `npx @atp-opencode/opencode install` (the marketplace/install steps in section 0 are not needed). See [faq.en.md](./faq.en.md) and [`../../adapters/opencode/README.md`](../../adapters/opencode/README.md).
 
-> The current Codex profile (ADR-0025) supports real team execution through a hook-guarded bounded pool within the declared scope when the exact `atp-codex-hooks` marker is present. The verified scope is Codex CLI 0.149.1, Unix, `python3` on PATH, the installed add-on, and TUI hook trust. An absent marker or schema/hash mismatch means zero spawns: ATP records `skip: no-codex-hooks`, selects `tier_b_sequential` for general requests, and blocks explicit independent-subagent requirements as `blocked_explicit_independence`. The basic smoke above checks skill loading and execution mode. See the [add-on guide](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md) for installation and trust implications, and [known-issues.en.md](./known-issues.en.md) for current limits.
+> The current Codex profile (2.19.0, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md)) supports real team execution with the base install alone, using Codex built-in subagents (`host_managed_subagent_orchestration`; no extra add-on or hook trust). Result collection is delegated to Codex's built-in behavior; a 2026-08-26 Codex CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results. The basic smoke above checks skill loading and execution mode. See [codex-connection-smoke.en.md](./codex-connection-smoke.en.md) for an actual child connection check and [known-issues.en.md](./known-issues.en.md) for current limits.
 
 - [ ] Did the orchestrator read the bundled `agent-team-protocol.md` core and the applicable host orchestration skill?
 - [ ] Was the `.atp/work-session/<sid>/` directory created?

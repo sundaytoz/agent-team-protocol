@@ -19,7 +19,7 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 | Platform | Status | Invocation | Instruction file | Verification level |
 |---|---|---|---|---|
 | Claude Code | Supported | `/atp:task` | `CLAUDE.md` | Reference implementation; continuously used and verified |
-| Codex CLI | Team execution supported within declared scope | `$atp:task` or `$task` | `AGENTS.md` | Hook-guarded bounded pool qualified on CLI 0.149.1 with Unix, `python3`, and the installed and trusted `atp-codex-hooks` add-on (2026-09-08). Without the exact marker, general requests use Tier B and requests requiring independent subagents are blocked |
+| Codex CLI | Team execution supported | `$atp:task` or `$task` | `AGENTS.md` | Team execution via Codex built-in subagents (2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)); no marker or add-on required. Result collection is delegated to Codex's built-in behavior; a 2026-08-26 CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results |
 | Antigravity IDE | Supported | `/atp-task` | `GEMINI.md` | Full task PASS (verified 2026-06-30, Antigravity 2.2.1): complete advisor chain and TC 10/10; install by copying Skills into `~/.gemini/config/skills/` |
 | opencode | Supported (adapter) | `opencode run --command atp-task "..."` | Generated emit (no CLAUDE.md-style instruction file) | Formal smoke PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
@@ -29,7 +29,7 @@ opencode is not a marketplace plugin but a separate npm adapter — see [3. Inst
 
 Current Codex limitations, impact, workarounds, and exit criteria are tracked in [Known Issues](docs/usage/known-issues.en.md). Codex App/IDE surfaces remain `unknown` because the same maintainer smoke has not been run there.
 
-Use the [Codex connection smoke](docs/usage/codex-connection-smoke.en.md) to check actual execution. It separates one-child result delivery from full pool, approval, and cancellation validation, and records the missing `update_plan` tool observed on 2026-09-08.
+Use the [Codex connection smoke](docs/usage/codex-connection-smoke.en.md) to check actual execution. It checks one child's spawn acceptance and result delivery, and records the missing `update_plan` tool observed on 2026-09-08.
 
 The canonical capability-tier definitions and host self-assessment rules live in [plugins/atp/docs/development/platform-adapters.md](plugins/atp/docs/development/platform-adapters.md). The per-platform invocation syntax and verification markers in the table above are frozen as history in the appendices of [docs/adr/ADR-0009](docs/adr/ADR-0009-bundle-runtime-platform-neutralization.md) — the bundled runtime no longer enumerates platforms and works by capability self-assessment, so ATP can also run on host CLIs not listed here.
 
@@ -82,6 +82,8 @@ Use [docs/usage/setup-checklist.en.md](docs/usage/setup-checklist.en.md) for the
 
 For this repository's self-dogfooding flow, see [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md). The graphify knowledge graph integration is an optional add-on; see [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md).
 
+In **Codex**, installing the base alone enables team execution (advisor/worker spawn) through Codex built-in subagents; no separate add-on or hook trust is needed (2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)). The hooks add-on from earlier versions was removed in 2.19.0 and can be uninstalled with `codex plugin remove atp-codex-hooks`.
+
 opencode installs as an npm adapter, not via the marketplace (a separate host from Claude Code/Codex):
 
 ```bash
@@ -108,8 +110,7 @@ agent-team-protocol/
 │   │   ├── skills/                       atp:init, atp:task, and host orchestration helpers
 │   │   ├── docs/development/             runtime reference docs
 │   │   └── templates/                    atp:init scaffolding sources
-│   ├── atp-graphify/                     optional atp-graphify add-on
-│   └── atp-codex-hooks/                  Codex-CLI-only opt-in add-on (candidate hook runner)
+│   └── atp-graphify/                     optional atp-graphify add-on
 └── docs/                                 human-facing docs — excluded from the bundle
 ```
 
@@ -129,7 +130,7 @@ agent-team-protocol/
 | Init skill | [plugins/atp/skills/init/SKILL.md](plugins/atp/skills/init/SKILL.md) |
 | Task skill | [plugins/atp/skills/task/SKILL.md](plugins/atp/skills/task/SKILL.md) |
 | graphify add-on | [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md) |
-| Codex hooks add-on | [plugins/atp-codex-hooks/docs/codex-hooks-usage.md](plugins/atp-codex-hooks/docs/codex-hooks-usage.md) |
+| Codex team execution decision | [docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md) |
 
 The English README is an entry point. Linked canonical documents may currently be Korean-first.
 

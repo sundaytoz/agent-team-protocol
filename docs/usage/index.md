@@ -4,7 +4,7 @@ title: Usage 카테고리 인덱스
 description: plugin 설치·초기화·운영 관련 사용 가이드 인덱스.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 <p align="center">
@@ -44,7 +44,7 @@ last_reviewed: 2026-09-08
    /plugin install atp-graphify@agent-team-protocol
    ```
 
-   Codex CLI 에서 실제 팀 실행을 켜려면 `atp-codex-hooks` add-on 도 설치하고 TUI 에서 hook trust 를 부여한다(옵트인, sandbox 밖 실행 동의 필요) — [faq.md](./faq.md#codex-hooks-add-on).
+   Codex CLI 팀 실행에는 추가 add-on 이 필요 없다 — base 만으로 Codex 내장 subagent 를 사용한다(2.19.0, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md)).
 
 4. 초기화 — 프로젝트에 docs 골격 + CLAUDE.md 안내 블록 생성
 

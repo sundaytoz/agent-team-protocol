@@ -311,9 +311,9 @@ class CodexManagedContractTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("unknown telemetry", (result.stdout + result.stderr).lower())
 
-    def test_deployed_profile_matches_empirical_smoke_outcome(self) -> None:
-        """The deployed block must equal the promotion evidence profile, and that
-        evidence must show every qualification smoke passing on the add-on build."""
+    def test_deployed_profile_uses_builtin_subagents_without_marker(self) -> None:
+        """ADR-0026: the deployed block enables Codex built-in subagents with no
+        hook marker gate. The 2026-09-08 hook-guarded evidence stays as history."""
         evidence = json.loads(PROMOTION_EVIDENCE.read_text(encoding="utf-8"))
         appendix = (
             ROOT / "plugins/atp/docs/development/codex-lifecycle-routing.md"
@@ -334,12 +334,22 @@ class CodexManagedContractTests(unittest.TestCase):
             deployed[key] = (
                 True if value == "true" else False if value == "false" else value
             )
-        self.assertEqual(evidence["deployed_profile"], deployed)
+        self.assertEqual(
+            {
+                "formal_adapter_enabled": False,
+                "manual_wait_polling_supported": False,
+                "host_managed_subagent_orchestration": "supported",
+                "team_execution_enabled": True,
+                "execution_scope": "codex_builtin_subagents",
+            },
+            deployed,
+        )
+        skill = CODEX_TEAM_SKILL.read_text(encoding="utf-8")
+        for term in ("ATP_HOOK_GUARD_READY", "ATP_POOL_", "atp-codex-hooks",
+                     "no-codex-hooks", "scope_gate"):
+            self.assertNotIn(term, skill)
+            self.assertNotIn(term, TASK_SKILL.read_text(encoding="utf-8"))
         self.assertTrue(all(item["result"] == "pass" for item in evidence["smokes"]))
-        self.assertEqual("supported", deployed["host_managed_subagent_orchestration"])
-        self.assertTrue(deployed["team_execution_enabled"])
-        self.assertEqual("hook_guarded_bounded_pool", deployed["execution_scope"])
-        self.assertEqual("atp_hook_guard_ready_marker", deployed["scope_gate"])
         ids = {item["id"] for item in evidence["smokes"]}
         self.assertTrue({"Q1-terminal-only-1-agent", "Q2-delayed-terminal-1-agent",
                          "Q3-staggered-2-agent-all-results",

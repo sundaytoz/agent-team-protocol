@@ -1,6 +1,6 @@
 # agent-team-protocol (플러그인 소스 레포)
 
-이 레포는 Claude Code/Codex 플러그인 **`atp`** (base), **`atp-graphify`** (옵트인 add-on), **`atp-codex-hooks`** (Codex 팀 실행용 옵트인 add-on)의 소스다. 마켓플레이스명은 레포명과 같은 `agent-team-protocol`.
+이 레포는 Claude Code/Codex 플러그인 **`atp`** (base) 와 **`atp-graphify`** (옵트인 add-on)의 소스다. 마켓플레이스명은 레포명과 같은 `agent-team-protocol`.
 
 > 소비 프로젝트의 CLAUDE.md 에 삽입되는 안내 블록·placeholder 템플릿은 `plugins/atp/templates/` 와 `plugins/atp/skills/init/SKILL.md` 에 있다. 이 파일(레포 루트 CLAUDE.md)은 **이 레포 자체를 개발하는 기여자용** 가이드다.
 
@@ -20,7 +20,6 @@ agent-team-protocol/
 │   ├── docs/development/    (런타임 레퍼런스 — 에이전트가 ${CLAUDE_PLUGIN_ROOT}/docs/... 로 Read)
 │   └── templates/           (/atp:init 스캐폴딩 원본)
 ├── plugins/atp-graphify/    (옵트인 add-on — graphify 에이전트 3개 + docs/graphify-usage.md)
-├── plugins/atp-codex-hooks/ (Codex 옵트인 add-on — hook runner + 설치·trust 가이드)
 └── docs/                    (사람용 문서 — 번들 제외: usage / development / architecture / adr)
 ```
 
@@ -56,9 +55,9 @@ agent-team-protocol/
 
 작은 작업은 메인 에이전트가 직접 처리한다. 3-tier 팀 모드는 `/atp:task` 명시 호출 시에만 진입한다.
 
-Codex의 실제 팀 실행은 별도 `atp-codex-hooks` 설치·hook trust와 exact marker가 필요하다. Claude Code에는 이 add-on을 설치하지 않는다. Codex 안내는 [AGENTS.md](AGENTS.md), [add-on 가이드](plugins/atp-codex-hooks/docs/codex-hooks-usage.md), [단일 연결 스모크](docs/usage/codex-connection-smoke.md)를 따른다.
+Codex의 팀 실행은 base `atp`만으로 Codex built-in subagent를 사용한다(ADR-0026 — hook marker gate·add-on 없음). Codex 안내는 [AGENTS.md](AGENTS.md), [단일 연결 스모크](docs/usage/codex-connection-smoke.md)를 따른다.
 
-**에이전트 정의를 편집했으면 세션 종료 전에 그 에이전트를 1회 실호출한다.** 정의 파일은 실행되지 않는 산문이라 자기모순·미해소 참조가 정적 검토를 통과한다 — 실호출만이 새 규약이 실제로 적용되는지 보여준다. 비용은 거의 0이고, 세션 종료 조건이 이미 요구하는 호출(예: `graph-refresh-checker`)로 갈음되는 경우도 많다. 실증: 2026-07-30 세션에서 `graph-refresh-checker` 의 판정 키를 바꾼 뒤 종료 조건 호출이 그 규약을 실제로 적용해 오탐을 피하는 것을 확인했다.
+**에이전트 정의(또는 `skills/*/SKILL.md`)를 편집했으면 세션 종료 전에 그 에이전트/스킬을 1회 실호출한다** — 실호출 불가(stale 캐시·타 host 전용 skill)면 아래 캐비트의 dry-run 대리검증을 수행하거나 skip 사유를 report 에 남긴다. 정의 파일은 실행되지 않는 산문이라 자기모순·미해소 참조가 정적 검토를 통과한다 — 실호출만이 새 규약이 실제로 적용되는지 보여준다. 비용은 거의 0이고, 세션 종료 조건이 이미 요구하는 호출(예: `graph-refresh-checker`)로 갈음되는 경우도 많다. 실증: 2026-07-30 세션에서 `graph-refresh-checker` 의 판정 키를 바꾼 뒤 종료 조건 호출이 그 규약을 실제로 적용해 오탐을 피하는 것을 확인했다.
 
 > **캐비트 — 설치 캐시가 stale 하면 실호출은 거짓 PASS 다.** 이 규약은 호출이 **편집한 정의**를 태운다고 가정한다. 그런데 로컬 enable 은 `~/.claude/plugins/cache/agent-team-protocol/atp/<version>/` 의 스냅샷을 쓰므로, 같은 세션에서 소스를 편집하고 bump 까지 한 상태(= 캐시 version < 소스 version)에서 `atp:<agent>` 를 호출하면 **편집 전 정의**가 실행된다. 검증했다는 기록만 남고 실제로는 무관한 스펙을 검증한다.
 >

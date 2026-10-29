@@ -4,7 +4,7 @@ title: plugin 설치 후 설정 체크리스트
 description: /plugin install 후 /atp:init 실행 → placeholder 채우기 → /atp:task 스모크까지 3단계 체크리스트.
 owner: template-maintainer
 stability: living
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-29
 ---
 
 # plugin 설치 후 설정 체크리스트
@@ -96,7 +96,7 @@ init 이 append 한 atp 안내 블록 외에, CLAUDE.md 나머지 섹션(기술 
 
 > opencode 는 마켓플레이스 plugin 이 아니라 npm 어댑터로 설치한다: `npx @atp-opencode/opencode install` (위 0단계의 marketplace/install 단계 불필요). 상세는 [faq.md](./faq.md) · [`../../adapters/opencode/README.md`](../../adapters/opencode/README.md).
 
-> 현재 Codex profile(ADR-0025)은 `atp-codex-hooks` add-on의 exact hook marker가 있는 선언 scope에서 hook-guarded bounded pool로 실제 team execution을 지원한다. 검증 범위는 Codex CLI 0.149.1, Unix, PATH의 `python3`, add-on 설치와 TUI hook trust다. Marker가 없거나 schema/hash가 맞지 않으면 spawn 0이며, `skip: no-codex-hooks`와 함께 일반 요청은 `tier_b_sequential`, 실제 독립 subagent 필수 요청은 `blocked_explicit_independence`다. 위 기본 스모크는 skill 로드와 execution mode 확인용이다. 설치·trust의 의미는 [add-on 가이드](../../plugins/atp-codex-hooks/docs/codex-hooks-usage.md), 현재 제한은 [known-issues.md](./known-issues.md)를 본다.
+> 현재 Codex profile(2.19.0, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md))은 base 설치만으로 Codex 내장 subagent를 사용해 실제 team execution을 지원한다(`host_managed_subagent_orchestration`, 추가 add-on·hook trust 불필요). 결과 취합은 Codex 내장 동작에 위임하며, 2026-08-26 Codex CLI 0.149.1 스모크에서 내장 barrier가 시차 결과 2건 중 1건만 전달한 사례가 있다. 위 기본 스모크는 skill 로드와 execution mode 확인용이다. 실제 child 연결은 [codex-connection-smoke.md](./codex-connection-smoke.md), 현재 제한은 [known-issues.md](./known-issues.md)를 본다.
 
 - [ ] orchestrator 가 번들 `agent-team-protocol.md` core와 적용 가능한 host orchestration skill을 읽었는가?
 - [ ] `.atp/work-session/<sid>/` 디렉토리가 생성됐는가?
