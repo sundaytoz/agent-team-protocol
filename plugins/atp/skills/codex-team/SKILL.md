@@ -16,8 +16,8 @@ description: Codex에서 ATP가 subagent를 spawn, delegate, steer, collect하�
 ## 2. Dispatch와 결과 수집
 
 1. Child마다 `report_invocation_id`를 spawn 전에 할당하고, spawn 결과의 environment identity(`agent_id` 또는 `task_name`)를 연결한다.
-2. `spawn_agent`로 bounded child task를 요청한다. Child prompt에는 정상 경로에서 intermediate message 없이 결과 계약을 충족한 terminal result 한 건을 반환하도록 명시한다. Leaf worker는 기본 `fork_turns: "none"`을 사용하고, 원 요청 전체가 필요할 때만 `"all"`을 쓴다.
-3. 요청한 child를 모두 dispatch한 뒤 결과 대기와 follow-up routing은 Codex built-in workflow에 맡긴다. `list_agents` polling, fixed sleep, shell polling, no-op keepalive를 만들지 않는다.
+2. `spawn_agent`로 child task를 요청하고, child prompt에 반환할 결과 계약을 명시한다.
+3. 결과 대기, follow-up routing과 진행 표시는 Codex 내장 기능이 하는 대로 둔다. `wait_agent`·`list_agents` 등 Codex 내장 도구 사용과 "Waiting for agents", "No agents completed yet" 같은 중간 표시는 ATP가 제한하거나 이상 신호로 보지 않는다.
 4. 전달된 nonterminal update는 `running`이다. 명시적 terminal delivery만 결과로 검증·취합하고, 같은 child의 중복 terminal은 한 번만 소비한다.
 5. 모든 요청 agent의 결과를 검증·취합하기 전에는 report/session completion, `ended_at`, 사용자 final을 만들지 않는다. Host가 concurrency limit 오류를 반환하면 그 task는 spawn되지 않은 것이며, 실행 중 child가 끝난 뒤 다시 dispatch한다.
 

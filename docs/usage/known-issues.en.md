@@ -18,7 +18,7 @@ This document tracks confirmed limitations that affect current user behavior. De
 
 | ID | Surface | Status | User impact |
 |---|---|---|---|
-| ATP-KI-001 | Codex CLI 0.149.1 | Known caveat (2.19.0) | Team execution runs through Codex built-in subagents. Result collection is delegated to Codex's built-in behavior, and some staggered results have been observed missing |
+| ATP-KI-001 | Codex CLI 0.149.1 | Not reproduced on 0.165.0 (2026-10-29) | Team execution runs through Codex built-in subagents. Result collection is delegated to Codex's built-in behavior, and some staggered results have been observed missing |
 | ATP-KI-002 | Codex App/IDE | Verification gap | Managed orchestration support is `unknown` because the same maintainer smoke has not been run |
 | ATP-KI-003 | Codex formal wait/wakeup | Upstream capability gap | A timeout-free targeted subscription cannot be used as ATP's formal scheduling mode |
 | ATP-KI-004 | Codex connection smoke (surface/version unmeasured) | Obsolete (2.19.0) | Child lacked `update_plan`; 2.19.0 removed the bind step, so there is no user impact |
@@ -26,6 +26,8 @@ This document tracks confirmed limitations that affect current user behavior. De
 ## ATP-KI-001 — Codex CLI managed all-results barrier failure
 
 > **Status update 2026-10-29 (2.19.0, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md))**: on Codex, `codex-team` uses Codex built-in subagents without any marker or add-on (spawn → Codex's built-in workflow manages waiting and follow-up → collect every terminal result). The deployed profile is `formal_adapter_enabled: false`, `manual_wait_polling_supported: false`, `host_managed_subagent_orchestration: supported`, `team_execution_enabled: true`. Result collection is delegated to Codex's built-in behavior; as in the 2026-08-26 observation below, the built-in barrier once delivered only 1 of 2 staggered results. This caveat is not a gate. The records below are preserved history.
+
+> **Recheck 2026-10-29 (Codex CLI 0.165.0)**: running a two-agent parallel `$atp:task` on the 2.19.0 install, both agents completed and were collected. "Waiting for agents" and "No agents completed yet" during the run are interim messages from Codex's built-in wait, not failure signals. ATP neither restricts nor interprets them.
 
 ### Historical symptom and scope (2026-08-26)
 

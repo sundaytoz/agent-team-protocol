@@ -79,9 +79,9 @@ formal_capabilities:
 
 정상 dispatch는 다음 계약을 갖는다.
 
-1. `spawn_agent`로 bounded child task를 요청한다. Child prompt에는 정상 경로에서 intermediate `MESSAGE`를 보내지 않고 terminal result 한 건만 반환하도록 명시한다.
+1. `spawn_agent`로 child task를 요청하고 child prompt에 결과 계약을 명시한다.
 2. 요청한 여러 child가 있으면 모두 dispatch하고 Codex built-in workflow가 결과 대기와 follow-up routing을 관리하도록 둔다.
-3. ATP orchestrator는 `wait_agent` polling loop와 `list_agents` polling을 운영하지 않는다.
+3. `wait_agent`·`list_agents` 등 Codex 내장 도구와 "Waiting for agents"/"No agents completed yet" 같은 중간 표시는 Codex 동작에 맡기며 ATP가 제한하거나 이상 신호로 해석하지 않는다(ADR-0026).
 4. 예상 밖 `Message Type: MESSAGE`가 전달돼도 invocation은 `running`이다. `Message Type: FINAL_ANSWER` 또는 environment의 명시적 terminal delivery만 terminal 후보다.
 5. 모든 요청 child의 terminal delivery를 받고 result contract를 검증·취합하기 전에는 report invocation/session completion, `ended_at`, parent final response를 만들지 않는다.
 
@@ -117,7 +117,7 @@ Ledger row는 정확히 `recorded_at`, `await_id`, `owner_report_invocation_id`,
 
 Capability row는 profile의 네 축과 exact `selected_mode: host_managed_subagent_orchestration`을 생략 없이 기록한다. Measurement의 `mode`도 같은 exact value이며 축약 alias를 허용하지 않는다.
 
-정상 fixture는 `requested_agents == spawn_calls == terminal_deliveries == collected_results`, `manual_wait_calls: 0`, `list_calls: 0`, `interrupt_calls: 0`, `semantic_recovery_actions: 0`이다. 관측하지 못한 token/latency telemetry는 `null`이며 0으로 합성하지 않는다.
+Measurement는 관측값을 그대로 기록할 뿐 runtime 제약이 아니다. 아래 0 값은 maintainer contract fixture의 기대값이다. 정상 fixture는 `requested_agents == spawn_calls == terminal_deliveries == collected_results`, `manual_wait_calls: 0`, `list_calls: 0`, `interrupt_calls: 0`, `semantic_recovery_actions: 0`이다. 관측하지 못한 token/latency telemetry는 `null`이며 0으로 합성하지 않는다.
 
 모델은 미래 transcript ordinal을 예측해 쓰지 않는다. 실행 중에는 session/report/environment identity와 monotonic event identity를 사용해 `session:<session_id>:report:<report_invocation_id>:environment:<environment_id>:event:terminal-NNNN` 형태로 기록한다. Maintainer validator가 보존 JSONL의 실제 spawn mapping, terminal delivery 순서와 timestamp에 사후 연결한다. 연결되지 않는 `source_ref`는 실패다.
 
@@ -125,13 +125,13 @@ Capability row는 profile의 네 축과 exact `selected_mode: host_managed_subag
 
 실제 capability error가 관측되면 manual polling, automatic retry/interrupt/fallback, authority mutation 또는 automatic Tier B 전환으로 보상하지 않는다. 마지막 environment-authoritative state, result acceptance authority와 write ownership을 보존하고 요청 의도에 맞는 blocked/user-decision 경로를 사용한다.
 
-`list_agents`는 정상 scheduling이나 capability probe에 사용하지 않는다. 기존 invocation의 명시적 terminal failure/interruption 뒤 사용자가 recovery를 승인했고 completion race 재확인이 필요할 때만 기존 lifecycle 계약에 따른 단발 authoritative 조회가 허용된다. `interrupt_agent`, 새 `spawn_agent`, fallback과 authority mutation도 같은 terminal evidence와 승인 계약 뒤에만 가능하다.
+명시적 terminal failure/interruption 뒤의 retry, fallback과 authority mutation은 공통 사용자 승인 계약을 따른다.
 
 Late completion, read-only result quarantine, write isolation/ownership, partial write 분류, retry cap과 mandatory verification은 공통 protocol §2.5를 그대로 따른다. 공식 문서가 보장하지 않는 approval/failure detail은 `unknown`으로 유지한다.
 
 ### 6.1 Codex tool and lifecycle mapping
 
-Codex의 `spawn_agent`는 새 child environment identity를 만들고, `followup_task`는 같은 environment identity의 continuation을 routing한다. `fork_turns`는 child에 전달할 대화 범위를 정할 뿐 lifecycle state나 retry attempt를 만들지 않는다. `send_message`는 실행 중 steering이며 terminal delivery가 아니다. `interrupt_agent`는 승인된 recovery에서만 사용하고, 반환된 environment event가 명시적 `interrupted`일 때만 termination으로 기록한다. `list_agents`와 `wait_agent`는 정상 managed scheduling에 사용하지 않는다.
+Codex의 `spawn_agent`는 새 child environment identity를 만들고, `followup_task`는 같은 environment identity의 continuation을 routing한다. `fork_turns`는 child에 전달할 대화 범위를 정할 뿐 lifecycle state나 retry attempt를 만들지 않는다. `send_message`는 실행 중 steering이며 terminal delivery가 아니다. `interrupt_agent`는 반환된 environment event가 명시적 `interrupted`일 때만 termination으로 기록한다. `wait_agent`·`list_agents`는 Codex 내장 대기·조회 도구이며 사용을 제한하지 않는다.
 
 Environment가 전달한 nonterminal update는 `running`으로 유지한다. 명시적 terminal delivery만 `completed`로 매핑한다. Status 자체가 unavailable/error이거나 의미가 불명확하면 `environment_state_unknown`이며 silence나 시간으로 `failed`를 합성하지 않는다.
 
@@ -229,8 +229,7 @@ Built-in barrier 실패를 보완하려고 `SessionStart` exact marker로 gate�
 ## 9. 실행 체크리스트
 
 - [ ] 첫 collaboration action 전에 `codex-team` skill 전체를 읽었는가?
-- [ ] 모든 요청 child에 terminal-only 정상 반환과 all-results integration 계약을 전달했는가?
-- [ ] 정상 경로 manual wait/list/interrupt가 0인가?
+- [ ] 모든 요청 child에 결과 계약을 전달하고 전원 결과를 취합했는가?
 - [ ] nonterminal update를 running으로 유지했는가?
 - [ ] dispatch identity mapping과 report invocation identity가 one-to-one인가?
 - [ ] terminal delivery와 collected result가 요청 agent 전원과 일치하는가? 불일치하면 supported 판정을 거부했는가?

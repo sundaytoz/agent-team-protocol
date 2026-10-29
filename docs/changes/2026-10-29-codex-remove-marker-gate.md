@@ -25,6 +25,9 @@ last_reviewed: 2026-10-29
 
 ## 알려진 한계
 
+Codex 내장 도구(`wait_agent`·`list_agents`·`fork_turns` 등) 사용과 중간 표시는 제한하지 않는다. 2026-10-29 Codex CLI 0.165.0 재확인에서 2-agent 결과 2건 모두 취합(미재현).
+
+
 2026-08-26 Codex CLI 0.149.1 smoke 에서 built-in barrier 가 staggered 2-agent 중 결과 1건만 전달한 기록이 있다. 결과 수집은 Codex 기본 동작에 맡긴다(ADR-0026 결과 절).
 
 ## 소비자 조치
