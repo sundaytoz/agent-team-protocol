@@ -102,9 +102,48 @@ class CodexManagedContractTests(unittest.TestCase):
                 result = self.run_validator(stem)
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
                 summary = json.loads(result.stdout.split("\nPASS:", 1)[0])
-                self.assertEqual(0, summary["executed"].get("wait_agent", 0))
-                self.assertEqual(0, summary["executed"].get("list_agents", 0))
                 self.assertEqual(0, summary["executed"].get("interrupt_agent", 0))
+
+    def test_builtin_wait_and_list_calls_are_allowed(self) -> None:
+        """Codex built-in wait_agent/list_agents are not banned as polling."""
+        rows = [
+            json.loads(line)
+            for line in (FIXTURES / "managed-two-agents-session.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+        ]
+        extra = []
+        for offset, (name, call_id) in enumerate(
+            (("wait_agent", "wait-1"), ("list_agents", "list-1"))
+        ):
+            base = 6 + offset * 2
+            extra.append({"timestamp": f"2026-08-19T03:20:03.{offset}00Z", "ordinal": base,
+                          "type": "response_item",
+                          "payload": {"type": "function_call", "name": name,
+                                      "call_id": call_id, "arguments": "{}"}})
+            extra.append({"timestamp": f"2026-08-19T03:20:03.{offset}50Z", "ordinal": base + 1,
+                          "type": "response_item",
+                          "payload": {"type": "function_call_output", "call_id": call_id,
+                                      "output": "{\"status\":\"running\"}"}})
+        for row in rows:
+            if row["ordinal"] >= 6:
+                row["ordinal"] += len(extra)
+        session_rows = rows[:5] + extra + rows[5:]
+        ledger_rows = [
+            json.loads(line)
+            for line in (FIXTURES / "managed-two-agents-ledger.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+        ]
+        ledger_rows[-1]["details"]["manual_wait_calls"] = 1
+        ledger_rows[-1]["details"]["list_calls"] = 1
+        with tempfile.TemporaryDirectory() as directory:
+            session = Path(directory) / "session.jsonl"
+            ledger = Path(directory) / "ledger.jsonl"
+            session.write_text("\n".join(json.dumps(r) for r in session_rows) + "\n", encoding="utf-8")
+            ledger.write_text("\n".join(json.dumps(r) for r in ledger_rows) + "\n", encoding="utf-8")
+            result = self.run_validator("managed-two-agents", session=session, ledger=ledger)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_message_only_cannot_integrate_or_complete(self) -> None:
         rows = [

@@ -36,6 +36,7 @@ last_reviewed: 2026-10-29
 | [2026-09-08-codex-hooks-addon-split.md](./2026-09-08-codex-hooks-addon-split.md) | Codex hook-guarded candidate hook을 base에서 제거하고 Codex CLI 전용 옵트인 add-on `atp-codex-hooks` 1.0.0으로 분리 — base 소비자 "Hooks need review" 제거, marker 재정합, 회귀 2건 추가, 배포 profile 무변경 — base 2.17.0 | 2026-09-08 |
 | [2026-09-08-codex-team-execution-promotion.md](./2026-09-08-codex-team-execution-promotion.md) | Codex team execution 승격 — atp-codex-hooks marker 에 gate 된 hook-guarded bounded pool 을 4-smoke qualification PASS 로 `supported`/`true` 전환(ADR-0025), marker 없는 세션 Tier B 유지 — base 2.18.0 | 2026-09-08 |
 | [2026-10-29-codex-remove-marker-gate.md](./2026-10-29-codex-remove-marker-gate.md) | Codex hook marker gate·`atp-codex-hooks` add-on 제거 — built-in subagent 로 team execution (ADR-0026) — 2.18.0→2.19.0 | 2026-10-29 |
+| [2026-10-29-codex-polling-ban-removal.md](./2026-10-29-codex-polling-ban-removal.md) | Codex `wait_agent`·`list_agents` polling 금지 제거 — 호출 수는 관측값으로만 기록 — 2.19.0→2.19.1 | 2026-10-29 |
 
 ## 관련 카테고리
 

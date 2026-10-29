@@ -1159,13 +1159,9 @@ def validate_host_managed_behavior(
             failures,
         )
 
-    for tool, label in (
-        ("wait_agent", "manual wait_agent"),
-        ("list_agents", "list_agents polling"),
-        ("interrupt_agent", "normal-path interrupt_agent"),
-    ):
-        if executed.get(tool, 0) != 0:
-            fail(f"host-managed orchestration executed forbidden {label}", failures)
+    # wait_agent/list_agents are allowed Codex built-in calls (no polling ban).
+    if executed.get("interrupt_agent", 0) != 0:
+        fail("host-managed orchestration executed forbidden normal-path interrupt_agent", failures)
 
     messages = [
         event for event in behavior["lifecycle_events"] if event["type"] == "MESSAGE"
@@ -1432,7 +1428,7 @@ def validate_host_managed_ledger(
         "interrupt_calls": behavior["executed"].get("interrupt_agent", 0),
         "semantic_recovery_actions": sum(
             behavior["executed"].get(name, 0)
-            for name in ("list_agents", "interrupt_agent", "followup_task", "send_message")
+            for name in ("interrupt_agent", "followup_task", "send_message")
         ),
     }
     for field, value in expected.items():
