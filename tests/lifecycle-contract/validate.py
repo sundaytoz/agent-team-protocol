@@ -2309,8 +2309,9 @@ def validate_wait_wakeup(failures: list[str]) -> None:
         and "team_execution_enabled: true" in appendix
         and "execution_scope: codex_builtin_subagents" in appendix
         and "scope_gate:" not in appendix
-        and "manual_wait_calls: 0" in appendix
-        and "list_calls: 0" in appendix,
+        and "interrupt_calls: 0" in appendix
+        and "manual_wait_calls: 0" not in appendix
+        and "list_calls: 0" not in appendix,
         "Codex appendix does not map the formal gap to managed execution",
         failures,
     )

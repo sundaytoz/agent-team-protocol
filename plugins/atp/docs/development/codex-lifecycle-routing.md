@@ -71,7 +71,7 @@ formal_capabilities:
 ```
 <!-- codex:formal-capabilities:end -->
 
-따라서 `formal_adapter_enabled: false`다. ATP는 timer, bounded `wait_agent`, 반복 `list_agents`로 빈 formal capability를 합성하지 않는다. Formal subscription과 product-managed all-results barrier는 별도 capability다.
+따라서 `formal_adapter_enabled: false`다. `wait_agent`·`list_agents` 호출은 formal capability를 대체하지 않는다. Formal subscription과 product-managed all-results barrier는 별도 capability다.
 
 ## 3. Managed orchestration contract
 
@@ -116,13 +116,13 @@ Ledger row는 정확히 `recorded_at`, `await_id`, `owner_report_invocation_id`,
 
 Capability row는 profile의 네 축과 exact `selected_mode: host_managed_subagent_orchestration`을 생략 없이 기록한다. Measurement의 `mode`도 같은 exact value이며 축약 alias를 허용하지 않는다.
 
-Measurement는 관측값을 그대로 기록할 뿐 runtime 제약이 아니다. 아래 0 값은 maintainer contract fixture의 기대값이다. 정상 fixture는 `requested_agents == spawn_calls == terminal_deliveries == collected_results`, `manual_wait_calls: 0`, `list_calls: 0`, `interrupt_calls: 0`, `semantic_recovery_actions: 0`이다. 관측하지 못한 token/latency telemetry는 `null`이며 0으로 합성하지 않는다.
+Measurement는 관측값을 그대로 기록한다. `manual_wait_calls`·`list_calls`는 Codex `wait_agent`·`list_agents` 호출 수이며 제약이 아니다. 정상 fixture는 `requested_agents == spawn_calls == terminal_deliveries == collected_results`, `interrupt_calls: 0`, `semantic_recovery_actions: 0`이다. 관측하지 못한 token/latency telemetry는 `null`이며 0으로 합성하지 않는다.
 
 모델은 미래 transcript ordinal을 예측해 쓰지 않는다. 실행 중에는 session/report/environment identity와 monotonic event identity를 사용해 `session:<session_id>:report:<report_invocation_id>:environment:<environment_id>:event:terminal-NNNN` 형태로 기록한다. Maintainer validator가 보존 JSONL의 실제 spawn mapping, terminal delivery 순서와 timestamp에 사후 연결한다. 연결되지 않는 `source_ref`는 실패다.
 
 ## 6. Lifecycle and recovery
 
-실제 capability error가 관측되면 manual polling, automatic retry/interrupt/fallback, authority mutation 또는 automatic Tier B 전환으로 보상하지 않는다. 마지막 environment-authoritative state, result acceptance authority와 write ownership을 보존하고 요청 의도에 맞는 blocked/user-decision 경로를 사용한다.
+실제 capability error가 관측되면 automatic retry/interrupt/fallback, authority mutation 또는 automatic Tier B 전환으로 보상하지 않는다. 마지막 environment-authoritative state, result acceptance authority와 write ownership을 보존하고 요청 의도에 맞는 blocked/user-decision 경로를 사용한다.
 
 명시적 terminal failure/interruption 뒤의 retry, fallback과 authority mutation은 공통 사용자 승인 계약을 따른다.
 
