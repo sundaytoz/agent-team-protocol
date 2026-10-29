@@ -25,11 +25,17 @@ A 3-step checklist that takes you from a completed `/plugin install atp@agent-te
 - [ ] (Opt-in) If you need graphify, did you also run `/plugin install atp-graphify@agent-team-protocol`?
 - [ ] Does `/plugin list` show `atp` as enabled?
 
+Codex installs from the shell. In later steps, call `/atp:init` and `/atp:task` as `$atp:init` and `$atp:task` (short forms `$init` and `$task`) in a Codex session.
+
+- [ ] Did `codex plugin marketplace add sundaytoz/agent-team-protocol` succeed?
+- [ ] Did `codex plugin add atp@agent-team-protocol` succeed?
+- [ ] Does `codex plugin list` show `atp` as `installed, enabled`?
+
 ---
 
 ## Step 1. Run `/atp:init`
 
-In a new Claude Code session:
+In a new Claude Code session (Codex: `$atp:init`):
 
 ```
 /atp:init
@@ -42,13 +48,13 @@ init generates the following in your project:
 - `docs/development/verification-strategies.md` — L1/L2/L3 verification strategy registry (with placeholders)
 - `docs/development/document-category-classification.md` — category classification criteria
 - `docs/graph/` skeleton (`index.md` + `.gitignore`)
-- An idempotent append of the `<!-- atp:begin --> ... <!-- atp:end -->` docs-first + `/atp:task` guidance block to `CLAUDE.md`
+- An idempotent append of the `<!-- atp:begin --> ... <!-- atp:end -->` docs-first + `/atp:task` guidance block to `CLAUDE.md` (`AGENTS.md` on Codex)
 - Removal of the `.atp/work-session/` line from `.gitignore` if present (tracking is the default — the line is not added)
 
 ### Verify
 
 - [ ] Was `docs/index.md` created?
-- [ ] Was the `<!-- atp:begin -->` block added to `CLAUDE.md`?
+- [ ] Was the `<!-- atp:begin -->` block added to `CLAUDE.md` (`AGENTS.md` on Codex)?
 - [ ] Does `.gitignore` **not** contain the `.atp/work-session/` line? (tracking is the default — the line should be absent)
 
 > **Existing repos (already completed first migration)**: If `.gitignore` still contains a `.atp/work-session/` line, remove that single line manually to activate tracking (keep the `.claude/work-session/` line if present).

@@ -20,11 +20,17 @@ last_reviewed: 2026-10-29
 - [ ] (옵트인) graphify 기능이 필요하면 `/plugin install atp-graphify@agent-team-protocol` 도 완료했는가?
 - [ ] `/plugin list` 에서 `atp` 상태가 enabled 인가?
 
+Codex 는 셸에서 설치한다. 이후 단계의 `/atp:init`·`/atp:task` 는 Codex 세션에서 `$atp:init`·`$atp:task` (단축형 `$init`·`$task`) 로 호출한다.
+
+- [ ] `codex plugin marketplace add sundaytoz/agent-team-protocol` 성공했는가?
+- [ ] `codex plugin add atp@agent-team-protocol` 성공했는가?
+- [ ] `codex plugin list` 에서 `atp` 가 `installed, enabled` 인가?
+
 ---
 
 ## 1단계. `/atp:init` 실행
 
-새 Claude Code 세션에서:
+새 Claude Code 세션에서 (Codex 는 `$atp:init`):
 
 ```
 /atp:init
@@ -37,13 +43,13 @@ init 이 프로젝트에 아래 항목을 생성한다.
 - `docs/development/verification-strategies.md` — L1/L2/L3 검증 전략 레지스트리 (placeholder 포함)
 - `docs/development/document-category-classification.md` — 카테고리 분류 기준
 - `docs/graph/` 골격 (`index.md` + `.gitignore`)
-- `CLAUDE.md` 에 `<!-- atp:begin --> ... <!-- atp:end -->` docs-first + `/atp:task` 안내 블록 멱등 append
+- `CLAUDE.md`(Codex 는 `AGENTS.md`) 에 `<!-- atp:begin --> ... <!-- atp:end -->` docs-first + `/atp:task` 안내 블록 멱등 append
 - `.gitignore` 에서 `.atp/work-session/` 라인 제거 (추적 기본 — 라인을 추가하지 않음)
 
 ### 확인
 
 - [ ] `docs/index.md` 가 생성됐는가?
-- [ ] `CLAUDE.md` 에 `<!-- atp:begin -->` 블록이 추가됐는가?
+- [ ] `CLAUDE.md`(Codex 는 `AGENTS.md`) 에 `<!-- atp:begin -->` 블록이 추가됐는가?
 - [ ] `.gitignore` 에 `.atp/work-session/` 라인이 **없는가**? (추적 기본 — 라인이 없어야 정상)
 
 > **기존(1차 마이그레이션 완료) 소비 레포**: `.gitignore` 에 `.atp/work-session/` 라인이 남아 있다면 해당 1줄을 직접 제거하면 추적이 활성화된다 (구경로 `.claude/work-session/` 라인은 유지).

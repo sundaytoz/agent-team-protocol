@@ -78,7 +78,19 @@ The full protocol is in [plugins/atp/docs/development/agent-team-protocol.md](pl
 
 ## 3. Installation
 
-Use [docs/usage/setup-checklist.en.md](docs/usage/setup-checklist.en.md) for the current installation and smoke-test flow. The exact command syntax differs by platform.
+Use [docs/usage/setup-checklist.en.md](docs/usage/setup-checklist.en.md) for the current installation and smoke-test flow. The core commands:
+
+```bash
+# Claude Code
+/plugin marketplace add sundaytoz/agent-team-protocol
+/plugin install atp@agent-team-protocol
+/atp:init
+
+# Codex (install from the shell, then run $atp:init in a Codex session)
+codex plugin marketplace add sundaytoz/agent-team-protocol
+codex plugin add atp@agent-team-protocol
+$atp:init
+```
 
 For this repository's self-dogfooding flow, see [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md). The graphify knowledge graph integration is an optional add-on; see [plugins/atp-graphify/docs/graphify-usage.md](plugins/atp-graphify/docs/graphify-usage.md).
 

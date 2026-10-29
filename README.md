@@ -75,9 +75,15 @@ Orchestrator  ← 사용자 유일 창구. 직접 작업 금지. 위임·중재�
 자세한 초기화 절차와 스모크 테스트는 [docs/usage/setup-checklist.md](docs/usage/setup-checklist.md) 를 따른다. 핵심 명령만 요약하면 다음과 같다.
 
 ```bash
+# Claude Code
 /plugin marketplace add sundaytoz/agent-team-protocol
 /plugin install atp@agent-team-protocol
 /atp:init
+
+# Codex (셸에서 설치 후, Codex 세션에서 $atp:init)
+codex plugin marketplace add sundaytoz/agent-team-protocol
+codex plugin add atp@agent-team-protocol
+$atp:init
 ```
 
 플랫폼별 설치 명령과 호출 문법은 [지원 플랫폼](#지원-플랫폼) 표 및 [setup-checklist.md](docs/usage/setup-checklist.md) 를 따른다.
