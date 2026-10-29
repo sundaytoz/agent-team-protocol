@@ -19,7 +19,7 @@ AI 코딩 작업을 역할 기반 에이전트 팀 흐름으로 운영하게 해
 | 플랫폼 | 상태 | 호출 | 지침파일 | 검증 수준 |
 |---|---|---|---|---|
 | Claude Code | ✅ 지원 | `/atp:task` | `CLAUDE.md` | reference 구현 — 상시 사용 검증 |
-| Codex CLI | ✅ 팀 실행 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | Codex 내장 subagent 로 팀 실행(2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)) — marker·add-on 불필요. 결과 취합은 Codex 내장 동작에 위임하며, 2026-08-26 CLI 0.149.1 스모크에서 내장 barrier 가 시차 결과 2건 중 1건만 전달한 사례가 있다 |
+| Codex CLI | ✅ 팀 실행 지원 | `$atp:task` (단축형 `$task`) | `AGENTS.md` | Codex 내장 subagent 로 팀 실행(2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)) — marker·add-on 불필요. 2026-08-26 CLI 0.149.1 에서 시차 결과 1건 누락 관측, 2026-10-29 0.165.0 에서 미재현 |
 | Antigravity IDE | ✅ 지원 | `/atp-task` | `GEMINI.md` | 정식 task PASS (verified 2026-06-30, Antigravity 2.2.1): advisor 체인 전수 + TC 10/10. 설치 = Skills 수동 복사 → `~/.gemini/config/skills/` |
 | opencode | ✅ 지원 (어댑터) | `opencode run --command atp-task "..."` | 생성형 emit (CLAUDE.md형 지침파일 없음) | 정식 스모크 PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 

@@ -26,7 +26,7 @@ last_reviewed: 2026-10-29
    ```
 
 3. Preflight의 선택 mode가 `host_managed_subagent_orchestration`인지 확인한다. 배포 profile은 Codex에서 조건 없이 `team_execution_enabled: true`다.
-4. 실제 spawn 수락 identity, child terminal 결과, report invocation identity가 대응하는지 확인한다. 대기·follow-up은 Codex 내장 workflow가 관리하며, 결과를 모두 수신하기 전에 성공으로 마감하지 않는다.
+4. 실제 spawn 수락 identity, child terminal 결과, report invocation identity가 대응하는지 확인한다. 결과를 모두 수신하기 전에 성공으로 마감하지 않는다.
 5. 세션 보고서에 요청·수락·terminal·취합 각각 1건, 최종 pending/running 0건을 기록한다. 사용 불가 도구·미검증 단계는 별도 concern으로 남긴다.
 
 ## 2026-09-08 연결 관측
@@ -45,4 +45,4 @@ last_reviewed: 2026-10-29
 
 결론은 **이 세션에서 단일 child 실행과 결과 전달·취합이 성공했다**는 것이다.
 
-단일 결과로 다중 child 결과 취합, 승인 후 same-identity continuation, 실행 중 steering·취소, App/IDE 지원을 추가로 검증했다고 해석하지 않는다. 결과 취합은 Codex 내장 동작에 위임하며, 2026-08-26 Codex CLI 0.149.1 스모크에서는 내장 barrier가 시차 결과 2건 중 1건만 전달했다. 이 caveat은 [Known Issues](./known-issues.md)에서 추적한다.
+단일 결과로 다중 child 결과 취합, 승인 후 same-identity continuation, 실행 중 steering·취소, App/IDE 지원을 추가로 검증했다고 해석하지 않는다. 2026-08-26 Codex CLI 0.149.1 스모크에서는 내장 barrier가 시차 결과 2건 중 1건만 전달했고, 2026-10-29 0.165.0에서는 재현되지 않았다. 이 caveat은 [Known Issues](./known-issues.md)에서 추적한다.

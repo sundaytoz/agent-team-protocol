@@ -26,7 +26,7 @@ After installation and skill-loading checks, this smoke verifies actual child sp
    ```
 
 3. Check that the preflight mode is `host_managed_subagent_orchestration`. On Codex the deployed profile is `team_execution_enabled: true` unconditionally.
-4. Check the correspondence between the accepted spawn identity, child terminal result, and report invocation identity. Codex's built-in workflow manages waiting and follow-up; do not claim success before collecting all results.
+4. Check the correspondence between the accepted spawn identity, child terminal result, and report invocation identity. Do not claim success before collecting all results.
 5. Record requested, accepted, terminal, and collected counts of 1 and final pending/running counts of 0 in the session report. Record missing tools and unverified steps as concerns.
 
 ## Connection observed on 2026-09-08
@@ -45,4 +45,4 @@ This public summary is based on an actual repository work session's spawn respon
 
 The conclusion is that **one child executed and its result was delivered and collected in this session**.
 
-One result does not additionally validate multi-child result collection, same-identity approval continuation, in-flight steering/cancellation, or App/IDE support. Result collection is delegated to Codex's built-in behavior; a 2026-08-26 Codex CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results. This caveat is tracked in [Known Issues](./known-issues.en.md).
+One result does not additionally validate multi-child result collection, same-identity approval continuation, in-flight steering/cancellation, or App/IDE support. A 2026-08-26 Codex CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results; this did not reproduce on 0.165.0 (2026-10-29). This caveat is tracked in [Known Issues](./known-issues.en.md).

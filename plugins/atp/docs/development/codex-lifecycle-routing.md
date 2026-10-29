@@ -26,7 +26,7 @@ execution_scope: codex_builtin_subagents
 ```
 <!-- codex:orchestration-capability:end -->
 
-**Built-in 판정(2026-10-29, ADR-0026).** 별도 add-on, hook trust, 세션 marker 없이 Codex의 기본 subagent 기능으로 team execution을 연다. Dispatch 뒤 결과 대기와 follow-up routing은 Codex built-in workflow에 맡기고, ATP는 identity 연결·결과 검증·취합을 맡는다. 이전의 marker gate(ADR-0025)는 기본 subagent 사용을 오히려 막아 제거했다. 아래 §8의 2026-08-26 staggered 2-agent 관측(결과 1건만 전달)은 알려진 한계로 기록하며 실행 gate로 쓰지 않는다.
+**Built-in 판정(2026-10-29, ADR-0026).** 별도 add-on, hook trust, 세션 marker 없이 Codex의 기본 subagent 기능으로 team execution을 연다. 이전의 marker gate(ADR-0025)는 기본 subagent 사용을 오히려 막아 제거했다. 아래 §8의 2026-08-26 staggered 2-agent 관측(결과 1건만 전달)은 알려진 한계로 기록하며 실행 gate로 쓰지 않는다.
 
 공식 OpenAI 문서는 Codex app/CLI/IDE에서 직접 요청 또는 적용 가능한 `AGENTS.md`/skill instruction으로 delegation을 시작할 수 있고, Codex가 spawn, follow-up routing, 결과 대기와 thread lifecycle을 관리하는 product workflow를 설명한다. 그러나 이 설명만으로 ATP의 예상 밖 nonterminal update와 staggered multi-agent all-results barrier를 versioned correctness primitive로 확정하지 않는다.
 
@@ -34,7 +34,7 @@ execution_scope: codex_builtin_subagents
 - Skill loading 계약: <https://learn.chatgpt.com/docs/build-skills> — name/description으로 선택한 뒤 전체 `SKILL.md`를 읽는다.
 - ChatGPT Work는 eligible-account hosted surface이며 이 local Codex profile과 분리한다.
 
-공식 문서는 low-level event schema, failure/approval taxonomy, latency SLA, stable event identity를 보장하지 않는다. 2026-08-26 Codex CLI 0.149.1 격리 smoke는 terminal-only 1-agent와 nonterminal 뒤 delayed terminal 1-agent가 통과했지만, staggered 2-agent에서는 두 spawn 중 fast terminal 하나만 전달된 뒤 parent turn이 종료됐다. 이 관측은 §8 이력으로 보존하며, 현재 profile은 이를 gate로 쓰지 않고 결과 수집을 Codex built-in 동작에 맡긴다(ADR-0026).
+공식 문서는 low-level event schema, failure/approval taxonomy, latency SLA, stable event identity를 보장하지 않는다. 2026-08-26 Codex CLI 0.149.1 격리 smoke는 terminal-only 1-agent와 nonterminal 뒤 delayed terminal 1-agent가 통과했지만, staggered 2-agent에서는 두 spawn 중 fast terminal 하나만 전달된 뒤 parent turn이 종료됐다. 이 관측은 §8 이력으로 보존하며, 현재 profile은 이를 gate로 쓰지 않는다(ADR-0026).
 
 <a id="managed-orchestration-contract-fixture"></a>
 
@@ -80,10 +80,9 @@ formal_capabilities:
 정상 dispatch는 다음 계약을 갖는다.
 
 1. `spawn_agent`로 child task를 요청하고 child prompt에 결과 계약을 명시한다.
-2. 요청한 여러 child가 있으면 모두 dispatch하고 Codex built-in workflow가 결과 대기와 follow-up routing을 관리하도록 둔다.
-3. `wait_agent`·`list_agents` 등 Codex 내장 도구와 "Waiting for agents"/"No agents completed yet" 같은 중간 표시는 Codex 동작에 맡기며 ATP가 제한하거나 이상 신호로 해석하지 않는다(ADR-0026).
-4. 예상 밖 `Message Type: MESSAGE`가 전달돼도 invocation은 `running`이다. `Message Type: FINAL_ANSWER` 또는 environment의 명시적 terminal delivery만 terminal 후보다.
-5. 모든 요청 child의 terminal delivery를 받고 result contract를 검증·취합하기 전에는 report invocation/session completion, `ended_at`, parent final response를 만들지 않는다.
+2. 요청한 여러 child가 있으면 모두 dispatch한다.
+3. 예상 밖 `Message Type: MESSAGE`가 전달돼도 invocation은 `running`이다. `Message Type: FINAL_ANSWER` 또는 environment의 명시적 terminal delivery만 terminal 후보다.
+4. 모든 요청 child의 terminal delivery를 받고 result contract를 검증·취합하기 전에는 report invocation/session completion, `ended_at`, parent final response를 만들지 않는다.
 
 Host는 child execution, follow-up routing, all-results wait와 terminal delivery를 소유한다. ATP는 logical task/DAG, preallocated report identity, result validation/integration, recovery 승인, result acceptance, write ownership, report/session lifecycle을 소유한다.
 
@@ -131,7 +130,7 @@ Late completion, read-only result quarantine, write isolation/ownership, partial
 
 ### 6.1 Codex tool and lifecycle mapping
 
-Codex의 `spawn_agent`는 새 child environment identity를 만들고, `followup_task`는 같은 environment identity의 continuation을 routing한다. `fork_turns`는 child에 전달할 대화 범위를 정할 뿐 lifecycle state나 retry attempt를 만들지 않는다. `send_message`는 실행 중 steering이며 terminal delivery가 아니다. `interrupt_agent`는 반환된 environment event가 명시적 `interrupted`일 때만 termination으로 기록한다. `wait_agent`·`list_agents`는 Codex 내장 대기·조회 도구이며 사용을 제한하지 않는다.
+Codex의 `spawn_agent`는 새 child environment identity를 만들고, `followup_task`는 같은 environment identity의 continuation을 routing한다. `fork_turns`는 child에 전달할 대화 범위를 정할 뿐 lifecycle state나 retry attempt를 만들지 않는다. `send_message`는 실행 중 steering이며 terminal delivery가 아니다. `interrupt_agent`는 반환된 environment event가 명시적 `interrupted`일 때만 termination으로 기록한다.
 
 Environment가 전달한 nonterminal update는 `running`으로 유지한다. 명시적 terminal delivery만 `completed`로 매핑한다. Status 자체가 unavailable/error이거나 의미가 불명확하면 `environment_state_unknown`이며 silence나 시간으로 `failed`를 합성하지 않는다.
 

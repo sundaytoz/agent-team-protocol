@@ -15,7 +15,7 @@ last_reviewed: 2026-10-29
 
 ## 변경
 
-- **`plugins/atp/skills/codex-team/SKILL.md`** — marker gate, `ATP_POOL_*` token, bounded pool/slot budget, hook ledger·root Stop barrier, 축별 표 제거. `spawn_agent` dispatch → Codex built-in workflow 가 대기·routing → 모든 요청 agent 결과 검증·취합만 남김. profile `execution_scope: codex_builtin_subagents`, `scope_gate` 삭제.
+- **`plugins/atp/skills/codex-team/SKILL.md`** — marker gate, `ATP_POOL_*` token, bounded pool/slot budget, hook ledger·root Stop barrier, 축별 표 제거. 프로토콜 기본 계약(identity 연결, 결과 계약, nonterminal=running, 전원 취합 후 완료, 승인형 recovery)만 남김. profile `execution_scope: codex_builtin_subagents`, `scope_gate` 삭제.
 - **`plugins/atp/skills/task/SKILL.md` §0.25 / `platform-adapters.md` §3.3** — host skill scope gate·`skip: no-codex-hooks` 서술 제거.
 - **`codex-lifecycle-routing.md`** — §1 배포 block·판정 문단 갱신, §3 marker 문장 제거, §8.2~§8.6 hook 이력을 §8.2 요약으로 압축, §8.3 제거 기록 추가.
 - **add-on 삭제** — `plugins/atp-codex-hooks/`, marketplace 3곳 등재, `tests/runtime-behavior/test_codex_hook_guard.py`, `build_hook_evidence.py`. Hook evidence JSON 은 history 로 보존.
@@ -25,10 +25,10 @@ last_reviewed: 2026-10-29
 
 ## 알려진 한계
 
-Codex 내장 도구(`wait_agent`·`list_agents`·`fork_turns` 등) 사용과 중간 표시는 제한하지 않는다. 2026-10-29 Codex CLI 0.165.0 재확인에서 2-agent 결과 2건 모두 취합(미재현).
+2026-10-29 Codex CLI 0.165.0 재확인에서 2-agent 결과 2건 모두 취합(미재현).
 
 
-2026-08-26 Codex CLI 0.149.1 smoke 에서 built-in barrier 가 staggered 2-agent 중 결과 1건만 전달한 기록이 있다. 결과 수집은 Codex 기본 동작에 맡긴다(ADR-0026 결과 절).
+2026-08-26 Codex CLI 0.149.1 smoke 에서 built-in barrier 가 staggered 2-agent 중 결과 1건만 전달한 기록이 있다.
 
 ## 소비자 조치
 

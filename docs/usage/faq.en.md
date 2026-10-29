@@ -83,7 +83,7 @@ A. Yes, it is idempotent. Existing files are not overwritten, and the `<!-- atp:
 
 ### Q. Does a real subagent response validate all ATP functionality?
 
-A. A one-child connection smoke checks spawn acceptance, terminal delivery, and collection. On 2026-09-08, requested, accepted, terminal, and collected counts were each 1. Receiving one result alone does not prove multi-child result collection, approval, or cancellation. Result collection is delegated to Codex's built-in behavior; a 2026-08-26 Codex CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results. See the [Codex connection smoke](./codex-connection-smoke.en.md) for observations and reproduction steps.
+A. A one-child connection smoke checks spawn acceptance, terminal delivery, and collection. On 2026-09-08, requested, accepted, terminal, and collected counts were each 1. Receiving one result alone does not prove multi-child result collection, approval, or cancellation. A 2026-08-26 Codex CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results; this did not reproduce on 0.165.0 (2026-10-29). See the [Codex connection smoke](./codex-connection-smoke.en.md) for observations and reproduction steps.
 
 ### Q. What do I do with the `atp-codex-hooks` add-on I installed earlier?
 

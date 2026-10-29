@@ -22,7 +22,7 @@ ADR-0025는 Codex team execution을 옵트인 add-on `atp-codex-hooks`의 `Sessi
 
 ## 결정
 
-1. `codex-team` skill에서 marker gate와 hook 전용 절차를 제거한다. Codex에서는 항상 `host_managed_subagent_orchestration`으로 진행하며 `spawn_agent`로 dispatch하고, 결과 대기·follow-up routing은 Codex built-in workflow에 맡긴 뒤 요청한 모든 결과를 검증·취합한다.
+1. `codex-team` skill에서 marker gate와 hook 전용 절차를 제거한다. Codex에서는 항상 `host_managed_subagent_orchestration`으로 진행하며 `spawn_agent`로 dispatch하고 요청한 모든 결과를 검증·취합한다. skill에는 프로토콜 기본 계약만 둔다.
 2. 배포 profile:
 
    ```yaml
@@ -34,12 +34,12 @@ ADR-0025는 Codex team execution을 옵트인 add-on `atp-codex-hooks`의 `Sessi
    ```
 
 3. `atp-codex-hooks` add-on(`plugins/atp-codex-hooks/`), marketplace 등재, hook 회귀 테스트와 evidence 생성기를 삭제한다. `skip: no-codex-hooks` 경로와 host skill의 scope gate 서술을 task SKILL·platform-adapters에서 제거한다.
-4. `wait_agent`·`list_agents`·`fork_turns` 등 Codex 내장 기능의 사용 방식과 "Waiting for agents" 같은 중간 표시는 Codex에 맡기며 ATP가 제한하지 않는다. nonterminal은 `running`, 사용자 승인형 recovery 등 공통 lifecycle 계약은 그대로다.
+4. nonterminal은 `running`, 사용자 승인형 recovery 등 공통 lifecycle 계약은 그대로다.
 
 ## 결과
 
 - Codex 소비자는 base `atp`만 설치해도 `$atp:task`에서 advisor/worker subagent를 사용한다.
-- 알려진 한계: 2026-08-26 Codex CLI 0.149.1 격리 smoke에서 built-in barrier가 staggered 2-agent 중 결과 1건만 전달하고 parent turn을 끝낸 기록이 있다(`tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json`). 이를 실행 gate로 쓰지 않고 결과 수집을 Codex 기본 동작에 맡기는 것을 사용자가 선택했다. 결과 누락이 재현되면 별도 ADR로 다룬다. 2026-10-29 Codex CLI 0.165.0에서 2.19.0 설치본으로 2-agent 병렬 `$atp:task`를 실행해 2개 모두 완료·취합됐다(미재현).
+- 알려진 한계: 2026-08-26 Codex CLI 0.149.1 격리 smoke에서 built-in barrier가 staggered 2-agent 중 결과 1건만 전달하고 parent turn을 끝낸 기록이 있다(`tests/runtime-behavior/evidence/codex-cli-0.149.1-20260826.json`). 이를 실행 gate로 쓰지 않는다. 결과 누락이 재현되면 별도 ADR로 다룬다. 2026-10-29 Codex CLI 0.165.0에서 2.19.0 설치본으로 2-agent 병렬 `$atp:task`를 실행해 2개 모두 완료·취합됐다(미재현).
 - 기존에 add-on을 설치한 사용자는 `codex plugin remove atp-codex-hooks`로 제거할 수 있다.
 - hook-guarded evidence JSON과 routing appendix §8 이력은 historical record로 보존한다.
 

@@ -18,16 +18,16 @@ last_reviewed: 2026-10-29
 
 | ID | Surface | 상태 | 사용자 영향 |
 |---|---|---|---|
-| ATP-KI-001 | Codex CLI 0.149.1 | 0.165.0에서 미재현 (2026-10-29) | Codex 내장 subagent로 team execution 동작. 결과 취합은 Codex 내장 동작에 위임하며 시차 결과 일부가 누락된 관측이 있다 |
+| ATP-KI-001 | Codex CLI 0.149.1 | 0.165.0에서 미재현 (2026-10-29) | Codex 내장 subagent로 team execution 동작. 0.149.1에서 시차 결과 일부 누락 관측, 0.165.0에서 미재현 |
 | ATP-KI-002 | Codex App/IDE | Verification gap | 동일한 maintainer smoke 미수행으로 managed orchestration 지원 여부 `unknown` |
 | ATP-KI-003 | Codex formal wait/wakeup | Upstream capability gap | timeout-free targeted subscription을 formal scheduling mode로 사용할 수 없음 |
 | ATP-KI-004 | Codex 연결 스모크 (surface·버전 미측정) | Obsolete (2.19.0) | child에 `update_plan` 미노출 관측. 2.19.0에서 bind 단계가 없어져 사용자 영향 없음 |
 
 ## ATP-KI-001 — Codex CLI managed all-results barrier 실패
 
-> **2026-10-29 상태 갱신 (2.19.0, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md))**: Codex에서 `codex-team`은 marker·add-on 없이 Codex 내장 subagent를 사용한다(spawn → 대기·follow-up은 Codex 내장 workflow → 전체 terminal 결과 취합). 배포 profile은 `formal_adapter_enabled: false`, `manual_wait_polling_supported: false`, `host_managed_subagent_orchestration: supported`, `team_execution_enabled: true`다. 결과 취합은 Codex 내장 동작에 위임하며, 아래 2026-08-26 관측처럼 내장 barrier가 시차 결과 2건 중 1건만 전달한 사례가 있다. 이 caveat은 gate가 아니다. 아래 과거 기록은 보존된 이력이다.
+> **2026-10-29 상태 갱신 (2.19.0, [ADR-0026](../adr/ADR-0026-codex-builtin-subagents-without-marker.md))**: Codex에서 `codex-team`은 marker·add-on 없이 Codex 내장 subagent를 사용한다. 배포 profile은 `formal_adapter_enabled: false`, `manual_wait_polling_supported: false`, `host_managed_subagent_orchestration: supported`, `team_execution_enabled: true`다. 아래 2026-08-26 관측처럼 내장 barrier가 시차 결과 2건 중 1건만 전달한 사례가 있다. 이 caveat은 gate가 아니다. 아래 과거 기록은 보존된 이력이다.
 
-> **2026-10-29 재확인 (Codex CLI 0.165.0)**: 2.19.0 설치본으로 `$atp:task` 2-agent 병렬 조사를 실행해 2개 모두 완료·취합됐다. 실행 중 "Waiting for agents"·"No agents completed yet" 표시는 Codex 내장 대기 기능의 중간 표시이며 실패 신호가 아니다. ATP는 이를 제한·해석하지 않는다.
+> **2026-10-29 재확인 (Codex CLI 0.165.0)**: 2.19.0 설치본으로 `$atp:task` 2-agent 병렬 조사를 실행해 2개 모두 완료·취합됐다.
 
 ### 과거 증상과 범위 (2026-08-26)
 
@@ -38,7 +38,7 @@ Codex CLI 0.149.1 격리 smoke에서 terminal-only 1-agent와 nonterminal `MESSA
 ### 현재 사용자 영향
 
 - `$atp:task`는 Codex 내장 subagent로 advisor/worker를 spawn한다. 추가 add-on, hook trust, 실행 환경 scope 조건이 없다.
-- 결과 취합은 Codex 내장 동작에 위임한다. 내장 barrier가 일부 결과를 전달하지 않으면 그 결과는 누락될 수 있으며, ATP는 manual wait/list polling, automatic retry·interrupt·fallback으로 이를 보상하지 않는다.
+- 요청한 모든 child 결과를 검증·취합한 뒤에만 완료로 마감한다.
 - 2.18.0까지의 marker gate와 `atp-codex-hooks` add-on은 2.19.0에서 제거됐다. 설치돼 있다면 `codex plugin remove atp-codex-hooks`로 삭제할 수 있다.
 
 ### 과거 기록 (2.18.0 이전)

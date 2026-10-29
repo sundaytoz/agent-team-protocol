@@ -90,7 +90,7 @@ A. `atp` base 가 먼저 설치돼 있어야 한다. `atp-graphify` 는 `atp` �
 
 ### Q. 실제 subagent가 응답했으면 전체 ATP 기능이 검증된 것인가?
 
-A. 단일 연결 스모크는 spawn 수락과 terminal 결과 수신·취합을 확인한다. 2026-09-08에는 요청·수락·terminal·취합이 각각 1건이었다. 단일 결과 수신만으로 여러 child의 결과 취합이나 승인·취소까지 입증할 수 없다. 결과 취합은 Codex 내장 동작에 위임하며, 2026-08-26 Codex CLI 0.149.1 스모크에서는 내장 barrier 가 시차 결과 2건 중 1건만 전달했다. 상세 결과와 재현 절차는 [Codex 연결 스모크](./codex-connection-smoke.md)를 본다.
+A. 단일 연결 스모크는 spawn 수락과 terminal 결과 수신·취합을 확인한다. 2026-09-08에는 요청·수락·terminal·취합이 각각 1건이었다. 단일 결과 수신만으로 여러 child의 결과 취합이나 승인·취소까지 입증할 수 없다. 2026-08-26 Codex CLI 0.149.1 스모크에서는 내장 barrier 가 시차 결과 2건 중 1건만 전달했고, 2026-10-29 0.165.0에서는 재현되지 않았다. 상세 결과와 재현 절차는 [Codex 연결 스모크](./codex-connection-smoke.md)를 본다.
 
 ### Q. 이전에 설치한 `atp-codex-hooks` add-on 은 어떻게 하나?
 

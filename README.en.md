@@ -19,7 +19,7 @@ A protocol and plugin for running AI coding work through role-based agent teams.
 | Platform | Status | Invocation | Instruction file | Verification level |
 |---|---|---|---|---|
 | Claude Code | Supported | `/atp:task` | `CLAUDE.md` | Reference implementation; continuously used and verified |
-| Codex CLI | Team execution supported | `$atp:task` or `$task` | `AGENTS.md` | Team execution via Codex built-in subagents (2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)); no marker or add-on required. Result collection is delegated to Codex's built-in behavior; a 2026-08-26 CLI 0.149.1 smoke saw the built-in barrier deliver only 1 of 2 staggered results |
+| Codex CLI | Team execution supported | `$atp:task` or `$task` | `AGENTS.md` | Team execution via Codex built-in subagents (2.19.0, [ADR-0026](docs/adr/ADR-0026-codex-builtin-subagents-without-marker.md)); no marker or add-on required. one staggered result was missing on CLI 0.149.1 (2026-08-26); not reproduced on 0.165.0 (2026-10-29) |
 | Antigravity IDE | Supported | `/atp-task` | `GEMINI.md` | Full task PASS (verified 2026-06-30, Antigravity 2.2.1): complete advisor chain and TC 10/10; install by copying Skills into `~/.gemini/config/skills/` |
 | opencode | Supported (adapter) | `opencode run --command atp-task "..."` | Generated emit (no CLAUDE.md-style instruction file) | Formal smoke PASS (verified 2026-06-24, opencode 1.17.9): L1 15/15 + L2 7/7 |
 
